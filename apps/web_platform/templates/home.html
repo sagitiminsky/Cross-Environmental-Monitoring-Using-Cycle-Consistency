@@ -1,0 +1,96 @@
+{% extends "index.html" %}
+{% block content %}
+
+<script>
+    $(document).ready(function () {
+        $("#add_stocks").click(function () {
+            $('.ui.modal').modal('show');
+        })
+
+        $("#save").click(function () {
+            var symbols = $("#symbols").val();
+            console.log(symbols)
+
+            var stockSymbols = symbols.split("\n")
+
+            console.log(stockSymbols)
+
+            for (var i = 0; i < stockSymbols.length; ++i) {
+                console.log(stockSymbols[i]);
+                $.ajax({
+                    url: '/stock',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({"symbol": stockSymbols[i]}),
+                    dataType: 'json'
+
+                })
+            }
+
+            $('.ui.modal').modal('hide');
+
+
+        })
+    });
+
+</script>
+
+
+<h1 align="center">Stock Prediction Using Various DL Models</h1>
+<div align="Center">
+    <button id="add_stocks" class="ui button">
+        Add Stocks
+    </button>
+</div><br>
+<form align="center">
+
+    <div id="controls" style="width: 100%; overflow: hidden;">
+        <div style="float: none; margin-left: 15px;">
+            From: <input type="text" id="fromfield" class="amcharts-input"/>
+            To: <input type="text" id="tofield" class="amcharts-input"/>
+        </div>
+        <br><br>
+        <div style="float: none; margin-right: 15px;">
+            <button id="b1m" class="amcharts-input">1m</button>
+            <button id="b3m" class="amcharts-input">2m</button>
+            <button id="b5m" class="amcharts-input">5m</button>
+            <button id="b15m" class="amcharts-input">15m</button>
+            <button id="b30m" class="amcharts-input">30m</button>
+            <button id="b90m" class="amcharts-input">90m</button>
+            <button id="b1h" class="amcharts-input">1h</button>
+            <button id="b1d" class="amcharts-input">1d</button>
+            <button id="b5d" class="amcharts-input">5d</button>
+            <button id="b1wk" class="amcharts-input">1wk</button>
+            <button id="b1mo" class="amcharts-input">1mo</button>
+            <button id="b3mo" class="amcharts-input">3mo</button>
+        </div>
+        <br><br><br>
+
+
+    </div>
+    <div id="chartdiv"></div>
+</form>
+
+<div class="ui modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Select Stock Symbols
+    </div>
+    <div class="content">
+        <div class="ui form">
+            <div class="field">
+
+                <textarea id="symbols"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="actions">
+        <div id="save" class="ui positive right labeled icon button">
+            Let's Go
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
