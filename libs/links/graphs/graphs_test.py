@@ -1,5 +1,5 @@
 import unittest
-from libs.stocks.graphs.graphs import Graphs_Obj
+from libs.links.graphs.graphs import Graphs_Obj
 from unittest.mock import Mock
 import apps.ai.config as config
 

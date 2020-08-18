@@ -29,18 +29,17 @@ time_scale2seconds = {
 }
 
 ######### MAIN CONFIG #########
-# export PYTHONPATH=$PYTHON_PATH:/Users/sagit/Desktop/stocks_price_prediction
 MANY2ONE = True
 MANY2MANY = False
 TEST=True
-stock_names = ['FB', 'WMT']
+link_names = ['FB', 'WMT']
 signal_names = ['sin', 'cos']
 window_size = max_window_size['1s']
 prediction_type = MANY2ONE
 callback = 10
 
 DL_config = {'prediction_type': prediction_type,
-             'stock_names': stock_names,
+             'stock_names': link_names,
              'perceptron': {'lib': 'Keras', 'path2model': 'libs/dl_models/models_lib/perceptron/model',
                             'version': 'v_1',
                             'path2onnx_model': 'libs/dl_models/models_lib/perceptron/onnx'}}
@@ -49,7 +48,7 @@ DL_config = {'prediction_type': prediction_type,
 ######## GRAPHS #############
 time_scales = ['1s', '1m', '2m', '5m', '15m', '30m', '1h', '1d', '5d', '1mo', '3mo']
 
-url = "https://query1.finance.yahoo.com/v8/finance/chart/%s?symbol=%s&period1=%s&period2=%s&interval=%s&includePrePost=true"
+url = "http://132.66.54.148/"
 
 TWO_MONTH = 5259492  # two month in seconds
 A_WEEK = 604800  # a week in seconds

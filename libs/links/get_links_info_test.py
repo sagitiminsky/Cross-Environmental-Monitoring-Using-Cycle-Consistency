@@ -1,5 +1,5 @@
 import unittest
-from libs.stocks.get_stock_info import GetStocksInfo
+from libs.links.get_stock_info import GetStocksInfo
 from unittest.mock import MagicMock
 import apps.ai.config
 

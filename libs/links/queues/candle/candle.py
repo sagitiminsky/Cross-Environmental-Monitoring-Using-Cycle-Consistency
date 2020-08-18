@@ -1,4 +1,4 @@
-from libs.stocks.queues.queue.queue import Queue
+from libs.links.queues.queue.queue import Queue
 import apps.ai.config as config
 import numpy as np
 

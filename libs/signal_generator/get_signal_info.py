@@ -1,5 +1,5 @@
 import apps.ai.config as config
-from libs.stocks.stock_object.stock_obj import StockObj
+from libs.links.link_object.stock_obj import StockObj
 from threading import Thread
 import numpy as np
 from itertools import cycle

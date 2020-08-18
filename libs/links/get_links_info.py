@@ -1,19 +1,17 @@
-from libs.stocks.stock_object.stock_obj import StockObj
+from libs.links.link_object.link_obj import LinkObj
 import requests
 from bs4 import BeautifulSoup
-import apps
-import threading
 import apps.ai.config as config
 
 
-class GetStocksInfo:
+class GetLinksInfo:
     def __init__(self, mock=None):
-        self.stock_names = config.stock_names
-        self.stocks = {}
+        self.link_names = config.link_names
+        self.links = {}
         self.ticks = 0
-        for stock_name in self.stock_names:
-            self.stocks[stock_name] = {'link': f'https://finance.yahoo.com/quote/{stock_name}?p=',
-                                       'stock_obj': StockObj(stock_name=stock_name, mock=mock, sin=False)}
+        for link_name in self.link_names:
+            self.links[link_name] = {'link': f'https://finance.yahoo.com/quote/{stock_name}?p=',
+                                       'stock_obj': LinkObj(stock_name=link_name, mock=mock, sin=False)}
 
     def measure_sch(self):
 
@@ -22,10 +20,10 @@ class GetStocksInfo:
         if self.ticks >= config.time_scale2seconds['3mo']:
             self.ticks = 0
 
-        for stock_name in self.stocks:
-            value, volume = self.get_cur_price(stock_name)
+        for link_name in self.links:
+            value, volume = self.get_cur_price(link_name)
 
-            stock_object = self.stocks[stock_name]['stock_obj']
+            stock_object = self.links[link_name]['stock_obj']
             stock_object.enqueue({'value': value, 'volume': volume})
 
     def measure(self,mock=None):
@@ -34,8 +32,8 @@ class GetStocksInfo:
             self.measure_sch()
 
         else:  # unittest
-            for stock_name in self.stocks:
-                stock_object = self.stocks[stock_name]['stock_obj']
+            for link_name in self.links:
+                stock_object = self.links[link_name]['stock_obj']
                 stock_object.enqueue(mock)
 
             return True

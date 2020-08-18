@@ -1,18 +1,16 @@
-from libs.stocks.graphs.graphs import Graphs_Obj
-from libs.stocks.queues.queue.queue import Queue
-from libs.stocks.queues.candle.candle import Candle
+from libs.links.graphs.graphs import Graphs_Obj
+from libs.links.queues.queue.queue import Queue
+from libs.links.queues.candle.candle import Candle
 import apps.ai.config as config
 import numpy as np
 
-
-
-class StockObj():
+class LinkObj:
     '''
     Thread-safe, memory-efficient, maximally-sized queue supporting queueing and
     dequeueing in worst-case O(1) time.
     '''
 
-    def __init__(self, stock_name, mock=None,sin=False):
+    def __init__(self, stock_name, mock=None,debug=False):
         '''
         Initialize this queue to the empty queue.
 
@@ -23,7 +21,7 @@ class StockObj():
         '''
 
         self.sec_counter = 0
-        if sin == False:
+        if not debug :
 
             # graphs - scraped
             self.graphs_obj = Graphs_Obj(stock_name=stock_name, mock=mock)
