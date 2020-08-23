@@ -1,7 +1,7 @@
 import unittest
-from libs.links.graphs.graphs import Graphs_Obj
+from libs.links.scrapper.graphs import Graphs_Obj
 from unittest.mock import Mock
-import apps.ai.config as config
+import config as config
 
 
 class GraphsTest(unittest.TestCase):

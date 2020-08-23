@@ -1,13 +1,12 @@
 from libs.dl_models.models_lib.perceptron.impl.keras.percepton import Perceptron
-import apps.ai.config as config
-import threading
+import config as config
 
 
 class DLModels:
     def __init__(self, prediction_type, callback=None):
 
         self.prediction_type = prediction_type
-        self.stock_names = config.stock_names
+        self.stock_names = config.link_names
         self.callback = callback
 
         if self.stock_names == None or len(self.stock_names) == 0:

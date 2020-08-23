@@ -1,7 +1,7 @@
 from libs.links.link_object.link_obj import LinkObj
 import requests
 from bs4 import BeautifulSoup
-import apps.ai.config as config
+import config as config
 
 
 class GetLinksInfo:
@@ -10,8 +10,10 @@ class GetLinksInfo:
         self.links = {}
         self.ticks = 0
         for link_name in self.link_names:
-            self.links[link_name] = {'link': f'https://finance.yahoo.com/quote/{stock_name}?p=',
-                                       'stock_obj': LinkObj(stock_name=link_name, mock=mock, sin=False)}
+            self.links[link_name] = {
+                'path2link': f'libs/dataset/links/{link_name}',
+                'link_obj': LinkObj(stock_name=link_name, mock=mock, debug=False)
+            }
 
     def measure_sch(self):
 

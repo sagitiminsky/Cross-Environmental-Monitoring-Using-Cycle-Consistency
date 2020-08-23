@@ -1,6 +1,6 @@
 import numpy as np
 from libs.links.queues.queue.queue import Queue
-import apps.ai.config as config
+import config as config
 
 
 class DateSet:

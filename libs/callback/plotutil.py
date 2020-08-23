@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from tensorflow import keras
 import numpy as np
 import wandb
-import apps.ai.config as config
+import config as config
 
 
 def fig2data(fig):

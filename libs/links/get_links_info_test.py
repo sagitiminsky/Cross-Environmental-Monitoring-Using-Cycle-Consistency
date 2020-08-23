@@ -1,12 +1,12 @@
 import unittest
 from libs.links.get_stock_info import GetStocksInfo
 from unittest.mock import MagicMock
-import apps.ai.config
+import config
 
 
 class StocksTest(unittest.TestCase):
     def setUp(self):
-        self.stock_names= apps.ai.config.stock_names
+        self.stock_names= config.stock_names
 
     def test_create_GetStockInfo(self):
         """

@@ -1,8 +1,7 @@
 import unittest
-from unittest.mock import Mock
 from libs.dl_models.dl_models import DLModels
 import numpy as np
-import apps.ai.config as config
+import config as config
 
 
 def get_dataset(prediction_type, time_scale):

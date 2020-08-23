@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from apps.web_platform.models import Stock
 
 import json
-from libs.links.graphs.graphs import Graphs_Obj
+from libs.links.scrapper.graphs import Graphs_Obj
 
 apps.web_platform.models.Base.metadata.create_all(bind=engine)
 app = FastAPI()

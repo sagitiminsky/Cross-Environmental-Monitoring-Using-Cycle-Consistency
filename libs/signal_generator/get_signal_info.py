@@ -1,27 +1,27 @@
-import apps.ai.config as config
-from libs.links.link_object.stock_obj import StockObj
-from threading import Thread
+import config as config
+from libs.links.link_object.link_obj import LinkObj
 import numpy as np
 from itertools import cycle
 
 
 class GetSignalInfo:
     def __init__(self, mock=None):
-        self.stock_names = config.signal_names
-        self.stocks = {}
+        self.link_names = config.signal_names
+        self.links = {}
         self.ticks = 0
-        for stock_name in self.stock_names:
-            self.stocks[stock_name] = {'cycle': cycle(np.linspace(0, 2 * np.pi, config.max_window_size['1s'])),
-                                       'stock_obj': StockObj(stock_name=stock_name, mock=mock, sin=True)}
+        for link_name in self.link_names:
+            self.links[link_name] = {
+                'cycle': cycle(np.linspace(0, 2 * np.pi, config.max_window_size['15m'])),
+                'stock_obj': LinkObj(link_name=link_name, mock=mock, debug=True)}
 
     def measure(self,time_scale=None):
         self.ticks = self.ticks + 1
 
-        if self.ticks >= config.time_scale2seconds['3mo']:
+        if self.ticks >= config.time_scale_to_15m['3mo']:
             self.ticks = 0
 
-        for signal_name in self.stock_names:
-            value, volume = self.stocks[signal_name]['cycle'].__next__(), 0
+        for link_name in self.link_names:
+            value = self.links[link_name]['cycle'].__next__()
 
-            stock_object = self.stocks[signal_name]['stock_obj']
-            stock_object.enqueue({'value': value, 'volume': volume})
+            link_object = self.links[link_name]['link_object']
+            link_object.enqueue({'value': value})
