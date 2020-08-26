@@ -4,17 +4,17 @@ import config as config
 
 
 class DateSet:
-    def __init__(self,stock_names):
+    def __init__(self,link_names):
         self.trainX_s = None
         self.trainY_s = None
         self.testX_s = None
         self.testY_s = None
-        self.stock_names=stock_names #could be signal_names
+        self.link_names=link_names #could be signal_names
 
-    def dataset_handler(self,  time_scale,stocks_obj,dl_models_obj):
+    def dataset_handler(self,  time_scale,links_obj,dl_models_obj):
 
-        for stock_name in self.stock_names:
-            batch = stocks_obj.stocks[stock_name]['stock_obj'].time_scales[time_scale]  # Queue or Candle
+        for link_name in self.link_names:
+            batch = links_obj.links[link_name]['link_obj'].time_scales[time_scale]  # Queue or Candle
 
             trainX, trainY, testX, testY = self.pre_process(batch, int(config.max_window_size[time_scale] * 0.5))
 

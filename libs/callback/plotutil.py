@@ -49,7 +49,7 @@ class PlotCallback(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         # Generate a figure with matplotlib
 
-        if self.time_scale == '1s':
+        if self.time_scale == '15m':
             figure = matplotlib.pyplot.figure(figsize=self.figure_size)
             plot = figure.add_subplot(111)
 
@@ -85,7 +85,7 @@ class PlotCallback(keras.callbacks.Callback):
             wandb.log({f"{self.time_scale}/loss-{self.format_decimal_points(logs['loss'])}-val_loss-{self.format_decimal_points(logs['val_loss'])}": wandb.Image(data)}, commit=False, sync=True)
 
     def inverse_queue(self, arr, mode=None):
-        if self.time_scale == '1s':  # Queue
+        if self.time_scale == '15m':  # Queue
             return arr * (self.stock_monitor._max - self.stock_monitor._min) + self.stock_monitor._min
         else:  # Candle
             return arr * (self.stock_monitor.candle[mode]._max - self.stock_monitor.candle[mode]._min) + self.stock_monitor.candle[mode]._min

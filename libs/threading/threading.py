@@ -3,6 +3,7 @@ import threading
 class CustomTimer(threading.Timer):
     def __init__(self, interval, function, args=[], kwargs={}):
         self._original_function = function
+        self.result=function
         super(CustomTimer, self).__init__(interval, self._do_execute, args, kwargs)
 
     def _do_execute(self, *a, **kw):
