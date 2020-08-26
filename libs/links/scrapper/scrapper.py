@@ -67,14 +67,20 @@ class Scrapper_obj:
     def extract_merge_save_csv(self,file_path,link_name):
         zip_file_object = zipfile.ZipFile(file_path, 'r')
         merged_df = pd.DataFrame()
+        stats = ""
         for file_name in zip_file_object.namelist():
             bytes = zip_file_object.open(file_name).read()
-            merged_df=self.preprocess_df(merged_df.append(pd.read_csv(io.StringIO(bytes.decode('utf-8')),sep=',')))
+            stats,merged_df=self.preprocess_df(stats,merged_df.append(pd.read_csv(io.StringIO(bytes.decode('utf-8')),sep=',')))
 
-        merged_df.to_csv(self.root_data_files+link_name+'.csv',mode='a',index=False)
+        save_to=self.root_data_files+link_name+'.csv'
+        merged_df.to_csv(save_to,mode='a',index=False)
+        print("file saved to {}\nstats: {}\n---".format(save_to,stats))
 
-    def preprocess_df(self,df):
-        return df
+    def preprocess_df(self,stats,df):
+        # order by time
+        df=df.sort_values(by='Time')
+        return stats,df
+
 
     def get_link_config(self, link_name):
         return {'link_name': link_name}
@@ -106,8 +112,9 @@ class Scrapper_obj:
         filter.send_keys(date_value['dd'] + date_value['mm'] + date_value['yyyy'])
 
         if date['select'] == 'In range':
+            date_value_range = date['value_range']
             filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
-            filter.send_keys(date_value['dd'] + date_value['mm'] + date_value['yyyy'])
+            filter.send_keys(date_value_range['dd'] + date_value_range['mm'] + date_value_range['yyyy'])
 
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
