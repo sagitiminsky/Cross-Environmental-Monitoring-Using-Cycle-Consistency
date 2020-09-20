@@ -11,51 +11,60 @@ import ast
 import pickle
 import numpy as np
 from .save_and_load import Save_Or_Load_Model
-
+from sklearn.model_selection import train_test_split
 
 
 class DL_Models:
     def __init__(self):
-        self.generator = self.pre_train_generator()
+        # load dme and ims data
+        self.dme_data = self.load_dme_data()
+        self.ims_data = self.load_ims_data()
+        self.dme_max_value = np.max(self.dme_data)
+        self.ims_max_value = np.max(self.ims_data)
+
+        # norm.
+        self.dme_data = np.array(self.dme_data.astype('float32') / self.dme_max_value)
+        self.ims_data = np.array(self.ims_data.astype('float32') / self.ims_max_value)
+
+        # validate dim
+        if self.dme_data.shape[1] != self.ims_data.shape[1]:
+            raise ValueError(
+                "dimension of k in x_train and x_test do not feet {} {}".format(self.dme_data.shape[1],
+                                                                                self.ims_data.shape[1]))
+
+        # set dim.
+        self.m, self.k = self.dme_data.shape
+        self.n, self.k = self.ims_data.shape
+
+        self.generator, self.generated_features = self.pre_train_generator()
         self.critic = self.pre_train_critic()
 
     def pre_train_generator(self):
-        run = wandb.init()
-        wandb_config = run.config
-        wandb_config.encoding_dim = config.generator_encoding_dim
-        wandb_config.epochs = config.generator_epoches
+        model_manager = Save_Or_Load_Model()
 
-        # load dme and ims data
-        dme_data = self.load_dme_data()
-        ims_data = self.load_ims_data()
+        if not config.load_pre_trained_generator:
+            run = wandb.init()
+            wandb_config = run.config
+            wandb_config.encoding_dim = config.generator_encoding_dim
+            wandb_config.epochs = config.generator_epoches
 
-        # norm.
-        dme_data = np.array(dme_data.astype('float32') / np.max(dme_data))
-        ims_data = np.array(ims_data.astype('float32') / np.max(ims_data))
+            model = Sequential()
+            model.add(Dense(self.n))
+            model.add(Dense(config.generator_encoding_dim, activation='relu'))
+            model.add(Dense(self.m, activation='sigmoid'))
+            model.compile(optimizer='adam', loss='mse')
 
-        # validate dim
-        if dme_data.shape[1] != ims_data.shape[1]:
-            raise ValueError(
-                "dimension of k in x_train and x_test do not feet {} {}".format(dme_data.shape[1], ims_data.shape[1]))
+            model.fit(self.dme_data.T[:int(len(self.dme_data) * 0.8)], self.ims_data.T[:int(len(self.ims_data) * 0.8)],
+                      epochs=config.generator_epoches,
+                      validation_data=(
+                          self.dme_data[int(len(self.dme_data) * 0.8):], self.ims_data[int(len(self.dme_data) * 0.8):]))
 
-        # set dim.
-        m, k = dme_data.shape
-        n, k = ims_data.shape
+            model_manager.save_onnx_model(model,config.generator_onnx_path)
+            model_manager.save_model(model,config.generator_path)
+        else:
+            model = model_manager.load_model(config.generator_path)
 
-        model = Sequential()
-        model.add(Dense(n))
-        model.add(Dense(config.generator_encoding_dim, activation='relu'))
-        model.add(Dense(m, activation='sigmoid'))
-        model.compile(optimizer='adam', loss='mse')
-
-        model.fit(dme_data.T[:int(len(dme_data) * 0.8)], ims_data.T[:int(len(ims_data) * 0.8)],
-                  epochs=config.generator_epoches,
-                  validation_data=(dme_data[int(len(dme_data) * 0.8):], ims_data[int(len(dme_data) * 0.8):]))
-
-
-        model_manager=Save_Or_Load_Model()
-        model_manager.save_onnx_model(model)
-        model_manager.save_model(model)
+        return model, [model.predict(x) for x in self.dme_data.T]
 
     def load_ims_data(self):
 
@@ -81,12 +90,47 @@ class DL_Models:
                 x_test = pickle.load(f)
             return x_test
 
+    def load_dme_data(self):
+        raise NotImplemented
+
     def pre_train_critic(self):
-        raise (NotImplemented)
+        model_manager = Save_Or_Load_Model()
 
+        if not config.load_pre_trained_critic:
 
+            # logging code
+            run = wandb.init()
+            wandb_config = run.config
 
+            wandb_config.epochs = config.critic_epochs
 
+            # load data
+            X_train, y_train, X_test, y_test = train_test_split(
+                np.vstack((self.generated_features, self.ims_data)),
+                [0] * len(self.generated_features) + [1] * len(self.ims_data), test_size=0.33, random_state=42)
+
+            is_GRA_train = y_train == 0
+            is_GRA_test = y_test == 0
+            labels = ["GRA", "RA"]
+
+            # create model
+            model = Sequential()
+            model.add(Dense(self.k))
+            model.add(Dense(1), activation='sigmoid')
+            model.compile(loss='mse', optimizer='adam',
+                          metrics=['accuracy'])
+
+            # Fit the model
+            model.fit(X_train, is_GRA_train, epochs=config.critic_epochs, validation_data=(X_test, is_GRA_test),
+                      callbacks=[WandbCallback(labels=labels)])
+
+            model_manager.save_onnx_model(model,config.critic_onnx_path)
+            model_manager.save_model(model,config.critic_path)
+
+        else:
+            model = model_manager.load_model(config.critic_path)
+
+        return model
 
 if __name__ == "__main__":
     DL_Models()

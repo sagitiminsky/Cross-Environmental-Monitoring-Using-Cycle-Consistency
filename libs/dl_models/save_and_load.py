@@ -12,16 +12,16 @@ class Save_Or_Load_Model:
         self.onnx_validation(path)
         return onnxruntime.InferenceSession(path)
 
-    def save_onnx_model(self,model):
+    def save_onnx_model(self,model,path):
         onnx_model = keras2onnx.convert_keras(model)
-        self.onnx_validation(config.generator_onnx_path)
-        onnx.save_model(onnx_model, config.generator_onnx_path)
+        self.onnx_validation(path)
+        onnx.save_model(onnx_model, path)
 
     def load_model(self,path):
         return load_model(path)
 
-    def save_model(self,model):
-        model.save(config.generator_path)
+    def save_model(self,model,path):
+        model.save(path)
         return model
 
     def onnx_validation(self,path):
