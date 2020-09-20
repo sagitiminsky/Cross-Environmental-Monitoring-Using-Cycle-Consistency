@@ -7,9 +7,10 @@ from apps.web_platform.database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from apps.web_platform.models import Stock
+import config
 
 import json
-from libs.links.scrapper.graphs import Graphs_Obj
+
 
 apps.web_platform.models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -32,20 +33,20 @@ def fetch_stock_data(id: int):
     """
     preforms a background task and updates db when done
     """
-    db = SessionLocal()
-    stock = db.query(Stock).filter(Stock.id == id).first()
-    g = Graphs_Obj(stock.symbol)
-
-    for time_scale in ['1m', '2m', '5m', '15m', '30m', '1h', '1d', '5d', '1mo', '3mo']:
-        stock.time_scale = time_scale
-        stock.open = json.dumps(g.graphs[time_scale]['open']) if 'open' in g.graphs[time_scale] else ""
-        stock.low = json.dumps(g.graphs[time_scale]['low']) if 'low' in g.graphs[time_scale] else ""
-        stock.high = json.dumps(g.graphs[time_scale]['high']) if 'high' in g.graphs[time_scale] else ""
-        stock.close = json.dumps(g.graphs[time_scale]['close']) if 'close' in g.graphs[time_scale] else ""
-        stock.volume = json.dumps(g.graphs[time_scale]['volume']) if 'volume' in g.graphs[time_scale] else ""
-        stock.perceptron_model_path = ""
-        db.add(stock)
-        db.commit()
+    # db = SessionLocal()
+    # stock = db.query(Stock).filter(Stock.id == id).first()
+    # g = Graphs_Obj(stock.symbol)
+    #
+    # for time_scale in config.time_scales:
+    #     stock.time_scale = time_scale
+    #     stock.open = json.dumps(g.graphs[time_scale]['open']) if 'open' in g.graphs[time_scale] else ""
+    #     stock.low = json.dumps(g.graphs[time_scale]['low']) if 'low' in g.graphs[time_scale] else ""
+    #     stock.high = json.dumps(g.graphs[time_scale]['high']) if 'high' in g.graphs[time_scale] else ""
+    #     stock.close = json.dumps(g.graphs[time_scale]['close']) if 'close' in g.graphs[time_scale] else ""
+    #     stock.volume = json.dumps(g.graphs[time_scale]['volume']) if 'volume' in g.graphs[time_scale] else ""
+    #     stock.perceptron_model_path = ""
+    #     db.add(stock)
+    #     db.commit()
 
 
 @app.get("/")

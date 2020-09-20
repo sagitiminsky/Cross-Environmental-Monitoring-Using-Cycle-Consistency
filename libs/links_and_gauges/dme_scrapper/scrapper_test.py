@@ -1,12 +1,14 @@
 import unittest
+from unittest.mock import Mock
+import config as config
 
 
-class StockRnnUnitTests(unittest.TestCase):
+class ScrapperTest(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_setup(self):
-        self.assertTrue(True)
+
+
 if __name__ == '__main__':
     unittest.main()
 

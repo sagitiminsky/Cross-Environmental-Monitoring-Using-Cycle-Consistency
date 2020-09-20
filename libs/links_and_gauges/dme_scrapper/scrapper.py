@@ -14,7 +14,7 @@ import threading
 import zipfile
 import pandas as pd
 
-class Scrapper_obj:
+class DME_Scrapper_obj:
 
     def __init__(self, mock=None):
         self.chrome_options = Options()
@@ -174,4 +174,4 @@ class Scrapper_obj:
                     raise FileNotFoundError('unable to remove file : {}'.format(self.root_download + file))
 
 
-Scrapper_obj().scrape()
+DME_Scrapper_obj().scrape()
