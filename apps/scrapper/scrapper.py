@@ -1,5 +1,5 @@
-from libs.links_and_gauges.dme_scrapper.scrapper import DME_Scrapper_obj
-from libs.links_and_gauges.ims_scrapper.scrapper import IMS_Scrapper_obj
+from libs.scrappers.dme_scrapper.scrapper import DME_Scrapper_obj
+from libs.scrappers.ims_scrapper.scrapper import IMS_Scrapper_obj
 
 
 
