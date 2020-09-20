@@ -24,7 +24,6 @@ class DME_Scrapper_obj:
         self.chrome_options.add_argument("--disable-popup-blocking")
         self.delay = 30
         self.selector = '//*[@id="btnExportByFilter"]'
-        self.scrape_config = config.scrape_config
         self.xpaths = {
             'xpath_download': '//*[@id="btnExportByFilter"]',
             'link_id': {
@@ -42,7 +41,7 @@ class DME_Scrapper_obj:
             }
         }
         self.root_download = '/Users/sagit/Downloads/'
-        self.root_data_files=self.scrape_config['path_to_data_files']
+        self.root_data_files=config.dme_scrape_config['path_to_data_files']
         self.exclude_file = ['.DS_Store', '.localized', '.com.google.Chrome.tlwaEL']
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
 
@@ -51,7 +50,7 @@ class DME_Scrapper_obj:
         self.delete_prev_data_files_if_poss()
 
         # log in
-        self.browser.get(self.scrape_config['url'])
+        self.browser.get(config.dme_scrape_config['url'])
         self.log_in(self.browser)
 
         # accept alert
@@ -60,7 +59,7 @@ class DME_Scrapper_obj:
         alert.dismiss()
 
     def scrape(self):
-        for link_name in self.scrape_config['link_objects']:
+        for link_name in config.dme_scrape_config['link_objects']:
             file = self.download_zip_file(link_name)
             self.extract_merge_save_csv(file,link_name)
 
@@ -93,7 +92,7 @@ class DME_Scrapper_obj:
         # ready to download
         print('starting download...')
 
-        link_obj = self.scrape_config['link_objects'][link_name]
+        link_obj = config.dme_scrape_config['link_objects'][link_name]
 
         # link id
         element_xpath = self.xpaths['link_id']
@@ -141,8 +140,8 @@ class DME_Scrapper_obj:
         username = browser.find_element_by_name("username")
         password = browser.find_element_by_name("password")
 
-        username.send_keys(self.scrape_config['username'])
-        password.send_keys(self.scrape_config['password'])
+        username.send_keys(config.dme_scrape_config['username'])
+        password.send_keys(config.dme_scrape_config['password'])
 
         browser.find_element_by_xpath(remember_me_xpth).click()
         browser.find_element_by_xpath(submit_button).click()

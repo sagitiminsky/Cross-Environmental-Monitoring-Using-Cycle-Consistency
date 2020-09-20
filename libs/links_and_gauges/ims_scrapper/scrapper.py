@@ -18,7 +18,7 @@ class IMS_Scrapper_obj:
         self.station_id = station_id
         self._from = _from
         self._to = _to
-        self.root = 'libs/dataset/gauges/'
+        self.root = 'libs/dataset/gauges/raw'
         self.station_meta_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}"
         self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
 
@@ -36,19 +36,19 @@ class IMS_Scrapper_obj:
             data = json.loads(data_response.text.encode('utf8'))
 
             folder = "{}-{}-{}".format(self.index, metadata['stationId'], metadata['name'])
-            if not os.path.exists(self.root + folder):
-                os.makedirs(self.root + folder)
+            if not os.path.exists(self.root + '/' + folder):
+                os.makedirs(self.root + '/' + folder)
             else:
                 try:
-                    os.remove(self.root + 'monitors.csv')
-                    os.remove(self.root + 'metadata.txt')
-                    os.remove(self.root + 'data.csv')
+                    os.remove(self.root + '/' + 'monitors.csv')
+                    os.remove(self.root + '/' + 'metadata.txt')
+                    os.remove(self.root + '/' + 'data.csv')
                 except FileNotFoundError:
                     pass
 
-            pd.DataFrame(metadata['monitors']).to_csv(self.root + folder + '/' + "monitors.csv", index=False)
-            pd.DataFrame(data['data']).to_csv(self.root + folder + '/' + "data.csv", index=False)
-            with open(self.root + folder + '/' + "metadata.txt", 'w') as file:
+            pd.DataFrame(metadata['monitors']).to_csv(self.root + '/' + folder + '/' + "monitors.csv", index=False)
+            pd.DataFrame(data['data']).to_csv(self.root + '/' + folder + '/' + "data.csv", index=False)
+            with open(self.root + '/' + folder + '/' + "metadata.txt", 'w') as file:
                 file.write('stationId: {}\n'.format(metadata['stationId']))
                 file.write('stationName: {}\n'.format(metadata['name']))
                 file.write('location: {}\n'.format(metadata['location']))

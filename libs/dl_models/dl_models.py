@@ -3,64 +3,63 @@ from keras.layers import Input, Dense, Flatten, Reshape
 from keras.models import Model, Sequential
 from keras.datasets import mnist
 from keras.callbacks import Callback
-import numpy as np
 import wandb
 from wandb.keras import WandbCallback
 import pandas as pd
 import os
 import ast
 import pickle
+import numpy as np
+from .save_and_load import Save_Or_Load_Model
+
 
 
 class DL_Models:
     def __init__(self):
-        self.generator = self.pretrain_generator()
-        self.critic = self.pretrain_critic()
+        self.generator = self.pre_train_generator()
+        self.critic = self.pre_train_critic()
 
-
-    def pretrain_generator(self):
+    def pre_train_generator(self):
         run = wandb.init()
         wandb_config = run.config
         wandb_config.encoding_dim = config.generator_encoding_dim
         wandb_config.epochs = config.generator_epoches
 
         # load dme and ims data
-        x_test = self.load_ims_data()
-        x_train = self.load_dme_data()
+        dme_data = self.load_dme_data()
+        ims_data = self.load_ims_data()
 
         # norm.
-        x_train = x_train.astype('float32') / 255.
-        x_test = x_test.astype('float32') / 255.
+        dme_data = np.array(dme_data.astype('float32') / np.max(dme_data))
+        ims_data = np.array(ims_data.astype('float32') / np.max(ims_data))
+
+        # validate dim
+        if dme_data.shape[1] != ims_data.shape[1]:
+            raise ValueError(
+                "dimension of k in x_train and x_test do not feet {} {}".format(dme_data.shape[1], ims_data.shape[1]))
+
+        # set dim.
+        m, k = dme_data.shape
+        n, k = ims_data.shape
 
         model = Sequential()
-        model.add(Flatten(input_shape=(28, 28)))
-        model.add(Dense(config.encoding_dim, activation='relu'))
-        model.add(Dense(28 * 28, activation='sigmoid'))
-        model.add(Reshape((28, 28)))
+        model.add(Dense(n))
+        model.add(Dense(config.generator_encoding_dim, activation='relu'))
+        model.add(Dense(m, activation='sigmoid'))
         model.compile(optimizer='adam', loss='mse')
 
-        # For visualization
-        class Images(Callback):
-            def on_epoch_end(self, epoch, logs):
-                indices = np.random.randint(self.validation_data[0].shape[0], size=8)
-                test_data = self.validation_data[0][indices]
-                pred_data = self.model.predict(test_data)
-                run.history.row.update({
-                    "examples": [
-                        wandb.Image(np.hstack([data, pred_data[i]]), caption=str(i))
-                        for i, data in enumerate(test_data)]
-                })
+        model.fit(dme_data.T[:int(len(dme_data) * 0.8)], ims_data.T[:int(len(ims_data) * 0.8)],
+                  epochs=config.generator_epoches,
+                  validation_data=(dme_data[int(len(dme_data) * 0.8):], ims_data[int(len(dme_data) * 0.8):]))
 
-        model.fit(x_train, x_train,
-                  epochs=config.epochs,
-                  validation_data=(x_test, x_test),
-                  callbacks=[Images(), WandbCallback()])
 
-        model.save('auto.h5')
+        model_manager=Save_Or_Load_Model()
+        model_manager.save_onnx_model(model)
+        model_manager.save_model(model)
 
     def load_ims_data(self):
 
-        if not config.load_previous:
+        if not config.ims_pre_load_data:
             x_test = []
             for index, station_folder in enumerate(os.listdir(config.ims_root_files)):
 
@@ -72,15 +71,21 @@ class DL_Models:
                 except FileNotFoundError:
                     print("data does not exist in {}".format(station_folder))
 
-            with open('parrot.pkl', 'wb') as f:
-                pickle.dump(mylist, f)
+            with open(config.ims_root_values + '/' + 'ims_values.pkl', 'wb') as f:
+                pickle.dump(x_test, f)
 
             return x_test
 
+        else:
+            with open(config.ims_root_values + '/' + 'ims_values.pkl', 'rb') as f:
+                x_test = pickle.load(f)
+            return x_test
+
+    def pre_train_critic(self):
+        raise (NotImplemented)
 
 
-    def pretrain_critic(self):
-        pass
+
 
 
 if __name__ == "__main__":
