@@ -59,7 +59,7 @@ class DME_Scrapper_obj:
         alert.dismiss()
 
     def scrape(self):
-        for link_name in config.dme_scrape_config['link_objects']:
+        for link_name in config.dme_scrape_config['link_objects']['link_id']:
             file = self.download_zip_file(link_name)
             self.extract_merge_save_csv(file,link_name)
 
@@ -92,14 +92,15 @@ class DME_Scrapper_obj:
         # ready to download
         print('starting download...')
 
-        link_obj = config.dme_scrape_config['link_objects'][link_name]
+        link_obj = config.dme_scrape_config['link_objects']
 
         # link id
-        element_xpath = self.xpaths['link_id']
-        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
-        filter.send_keys(link_name)
-        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+        if link_name:
+            element_xpath = self.xpaths['link_id']
+            self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+            filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
+            filter.send_keys(link_name)
+            self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
         # date
         date = link_obj['date']
