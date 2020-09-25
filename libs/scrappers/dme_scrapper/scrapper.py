@@ -103,7 +103,7 @@ class DME_Scrapper_obj:
         for file_name in file_names:
             link=file_name.split('_')[4]
             if link not in d:
-                d[link]=pd.DataFrame()
+                d[link]={'df':pd.DataFrame(),'stats':{}}
 
         if not d:
             raise Exception("no files in zip")
@@ -116,26 +116,24 @@ class DME_Scrapper_obj:
         zip_file_object = zipfile.ZipFile(file_path, 'r')
         print("preprocessing...")
         merged_df_dict = self.create_merged_df_dict(zip_file_object.namelist())
-        stats = ""
         for file_name in zip_file_object.namelist():
             link = file_name.split('_')[4]
             bytes = zip_file_object.open(file_name).read()
-            stats, merged_df_dict[link] = self.preprocess_df(stats, merged_df_dict[link].append(
-                pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')))
+            merged_df_dict[link]['df'] = merged_df_dict[link]['df'].append(pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=','))
 
 
         for link in merged_df_dict:
-            merged_df_dict[link].to_csv(config.dme_scrape_config['path_to_data_files']+link+'.csv', mode='a', index=False)
-            print("file saved to {}\nstats: {}\n---".format(link, stats))
+            self.preprocess_df(merged_df_dict[link]['df']).to_csv(config.dme_scrape_config['path_to_data_files']+link+'.csv', mode='a', index=False)
+            print("file saved to {}\nstats: {}\n---".format(link, merged_df_dict[link]['stats']))
 
 
 
 
 
-    def preprocess_df(self,stats,df):
+    def preprocess_df(self,df):
         # order by time
         df=df.sort_values(by='Time')
-        return stats,df
+        return df
 
 
     def get_link_config(self, link_name):
