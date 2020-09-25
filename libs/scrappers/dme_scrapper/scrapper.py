@@ -1,6 +1,7 @@
 import time
 import config as config
 import os
+import shutil
 import io
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -38,7 +39,36 @@ class DME_Scrapper_obj:
                 'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/div/input',
                 'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/div/input',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-            }
+            },
+            'rx_site_longitude':{
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+            'rx_site_latitude': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+            'tx_site_longitude': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input'
+            },
+            'tx_site_latitude': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+
         }
         self.root_download = '/Users/sagit/Downloads/'
         self.root_data_files=config.dme_scrape_config['path_to_data_files']
@@ -59,21 +89,48 @@ class DME_Scrapper_obj:
         alert.dismiss()
 
     def scrape(self):
-        for link_name in config.dme_scrape_config['link_objects']['link_id']:
-            file = self.download_zip_file(link_name)
-            self.extract_merge_save_csv(file,link_name)
+        if config.dme_scrape_config['link_objects']['link_id']:
+            for link_name in config.dme_scrape_config['link_objects']['link_id']:
+                file_path = self.download_zip_file(link_name)
+                self.extract_merge_save_csv(file_path,link_name)
+        else:
+            file_path = self.download_zip_file()
+            self.extract_merge_save_csv(file_path)
 
-    def extract_merge_save_csv(self,file_path,link_name):
+
+    def create_merged_df_dict(self,file_names):
+        d={}
+        for file_name in file_names:
+            link=file_name.split('_')[4]
+            if link not in d:
+                d[link]=pd.DataFrame()
+
+        if not d:
+            raise Exception("no files in zip")
+
+        return d
+
+    def extract_merge_save_csv(self,file_path,link_name=None):
+
+        print("extracting files...")
         zip_file_object = zipfile.ZipFile(file_path, 'r')
-        merged_df = pd.DataFrame()
+        print("preprocessing...")
+        merged_df_dict = self.create_merged_df_dict(zip_file_object.namelist())
         stats = ""
         for file_name in zip_file_object.namelist():
+            link = file_name.split('_')[4]
             bytes = zip_file_object.open(file_name).read()
-            stats,merged_df=self.preprocess_df(stats,merged_df.append(pd.read_csv(io.StringIO(bytes.decode('utf-8')),sep=',')))
+            stats, merged_df_dict[link] = self.preprocess_df(stats, merged_df_dict[link].append(
+                pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')))
 
-        save_to=self.root_data_files+link_name+'.csv'
-        merged_df.to_csv(save_to,mode='a',index=False)
-        print("file saved to {}\nstats: {}\n---".format(save_to,stats))
+
+        for link in merged_df_dict:
+            merged_df_dict[link].to_csv(config.dme_scrape_config['path_to_data_files']+link+'.csv', mode='a', index=False)
+            print("file saved to {}\nstats: {}\n---".format(link, stats))
+
+
+
+
 
     def preprocess_df(self,stats,df):
         # order by time
@@ -88,12 +145,36 @@ class DME_Scrapper_obj:
         if len(os.listdir(self.root_download)) - prev_number_of_files == delta:
             return
 
-    def download_zip_file(self, link_name):
-        # ready to download
-        print('starting download...')
+    def ranged_filter(self,mux):
+        link_obj=config.dme_scrape_config['link_objects']
+        select = link_obj[mux]
+        select_value = select['value']
+        element_xpath = self.xpaths[mux]
+        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+        Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(select['select'])
+        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
 
-        link_obj = config.dme_scrape_config['link_objects']
+        if mux=='date':
+            filter.send_keys(select_value['dd'] + select_value['mm'] + select_value['yyyy'])
+        elif mux=='tx_site_longitude' or mux=='tx_site_latitude' or mux=='rx_site_longitude' or mux=='rx_site_latitude' :
+            filter.send_keys(select_value)
+        else:
+            raise ValueError("mux type is undefined {}".format(mux))
 
+        if select['select'] == 'In range':
+            select_value_range = select['value_range']
+            filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
+
+            if mux == 'date':
+                filter.send_keys(select_value_range['dd'] + select_value_range['mm'] + select_value_range['yyyy'])
+            elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
+                filter.send_keys(select_value_range)
+            else:
+                raise ValueError("mux type is undefined {}".format(mux))
+
+        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+
+    def download_zip_file(self, link_name=None):
         # link id
         if link_name:
             element_xpath = self.xpaths['link_id']
@@ -103,22 +184,22 @@ class DME_Scrapper_obj:
             self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
         # date
-        date = link_obj['date']
-        date_value = date['value']
-        element_xpath = self.xpaths['date']
-        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-        Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(date['select'])
-        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
-        filter.send_keys(date_value['dd'] + date_value['mm'] + date_value['yyyy'])
+        self.ranged_filter('date')
 
-        if date['select'] == 'In range':
-            date_value_range = date['value_range']
-            filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
-            filter.send_keys(date_value_range['dd'] + date_value_range['mm'] + date_value_range['yyyy'])
+        #tx site longitude
+        self.ranged_filter('tx_site_longitude')
 
-        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+        #tx site latitude
+        self.ranged_filter('tx_site_latitude')
+
+        #rx site longitude
+        self.ranged_filter('rx_site_longitude')
+
+        #rx site latitude
+        self.ranged_filter('rx_site_latitude')
 
         # download
+        print('starting download...')
         number_of_files = len([file for file in os.listdir(self.root_download) if file not in self.exclude_file])
         self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
         th = threading.Thread(target=self.background_task, args=(number_of_files,), kwargs={'delta': 1})
@@ -126,7 +207,7 @@ class DME_Scrapper_obj:
 
         # wait here for the result of thread
         th.join()
-        time.sleep(3)
+        time.sleep(15)
 
 
         file_path = max([self.root_download + f for f in os.listdir(self.root_download) if f not in self.exclude_file],key=os.path.getctime)
@@ -162,7 +243,7 @@ class DME_Scrapper_obj:
         for file in os.listdir(self.root_data_files):
             try:
                 os.remove(self.root_data_files + file)
-            except:
+            except FileNotFoundError:
                 pass
 
     def delete_prev_from_downloads_if_poss(self):
@@ -170,8 +251,10 @@ class DME_Scrapper_obj:
             if 'cldb' in file:
                 try:
                     os.remove(self.root_download + file)
-                except FileNotFoundError:
-                    raise FileNotFoundError('unable to remove file : {}'.format(self.root_download + file))
+                except PermissionError:
+                    shutil.rmtree(self.root_download + file)
+                except Exception:
+                    raise Exception('unable to remove file : {}'.format(self.root_download + file))
 
 
 DME_Scrapper_obj().scrape()
