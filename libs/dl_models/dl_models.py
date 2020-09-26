@@ -18,8 +18,8 @@ from datetime import timedelta as dt_delta
 class DL_Models:
     def __init__(self):
         # load dme and ims data
-        self.dme_data = np.array(self.load_dme_data())
         self.ims_data = np.array(self.load_ims_data())
+        self.dme_data = np.array(self.load_dme_data())
         self.dme_max_value = np.max(self.dme_data)
         self.dme_min_value = np.min(self.dme_data)
         self.ims_max_value = np.max(self.ims_data)
@@ -70,18 +70,23 @@ class DL_Models:
         return model, [model.predict(x) for x in self.dme_data.T]
 
     def load_ims_data(self):
-
         if not config.ims_pre_load_data:
-            x_test = []
+            x_test = np.empty((1, 6 * 24 * config.coverage))
             for index, station_folder in enumerate(os.listdir(config.ims_root_files)):
 
                 print("now processing gauge: {}".format(station_folder))
                 try:
                     df = pd.read_csv(config.ims_root_files + '/' + station_folder + '/' + 'data.csv')
-                    x_test.append([ast.literal_eval(row)[0]['value'] for row in list(df.channels)])
+                    values=np.empty(1)
+                    for row in list(df.channels):
+                        values = np.vstack((values, np.array([ast.literal_eval(row)[0]['value']])))
+                    values = values[1:].T
+                    x_test = np.vstack((x_test, values))
 
                 except FileNotFoundError:
                     print("data does not exist in {}".format(station_folder))
+
+            x_test = x_test[1:]
 
             with open(config.ims_root_values + '/' + 'ims_values.pkl', 'wb') as f:
                 pickle.dump(x_test, f)
