@@ -14,7 +14,7 @@ from selenium.webdriver.support.ui import Select
 import threading
 import zipfile
 import pandas as pd
-from datetime import datetime as dt
+
 
 
 class DME_Scrapper_obj:
@@ -77,16 +77,7 @@ class DME_Scrapper_obj:
         self.exclude_file = ['.DS_Store', '.localized', '.com.google.Chrome.tlwaEL']
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
 
-        # date validation
-        value = self.parse_date(config.dme_scrape_config['link_objects']['date']['value']).strip()
-        value_range = self.parse_date(config.dme_scrape_config['link_objects']['date']['value_range']).strip()
-        date_select = config.dme_scrape_config['link_objects']['date']['select']
-
-        if not value or date_select == 'In range' and dt.strptime(value, "%m/%d/%y") > dt.strptime(value_range,
-                                                                                                   "%m/%d/%y"):
-            raise ValueError('missing value in date, or value_range is earlier than value')
-
-        self.covrage = (dt.strptime(value_range, "%m/%d/%y") - dt.strptime(value, "%m/%d/%y")).days + 1
+        self.covrage=config.coverage
 
         # clear old files from downloads
         self.delete_prev_from_downloads_if_poss()
@@ -100,9 +91,6 @@ class DME_Scrapper_obj:
         time.sleep(3)
         alert = self.browser.switch_to_alert()
         alert.dismiss()
-
-    def parse_date(self, d):
-        return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
 
     def scrape(self):
         if config.dme_scrape_config['link_objects']['link_id']:
@@ -149,8 +137,8 @@ class DME_Scrapper_obj:
 
         for link in merged_df_dict:
             for link_type in ['SOURCE', 'SINK']:
-                daily_coverage = merged_df_dict[link]["coverage"][link_type]["dailey"] / self.covrage
-                _15_minutes_coverage = merged_df_dict[link]["coverage"][link_type]["15m"] / (self.covrage * 4 * 24)
+                daily_coverage = merged_df_dict[link]["coverage"][link_type]["dailey"] / self.coverage
+                _15_minutes_coverage = merged_df_dict[link]["coverage"][link_type]["15m"] / (self.coverage * 4 * 24)
                 self.preprocess_df(merged_df_dict[link][link_type]).to_csv(
                     config.dme_scrape_config['path_to_data_files'] +
                     link + f'_{link_type}' +
