@@ -15,6 +15,7 @@ from sklearn.model_selection import train_test_split
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 
+
 class DL_Models:
     def __init__(self):
         # load dme and ims data
@@ -29,15 +30,12 @@ class DL_Models:
         self.dme_data = (np.array(self.dme_data) - self.dme_min_value) / (self.dme_max_value - self.dme_min_value)
         self.ims_data = (np.array(self.ims_data) - self.ims_min_value) / (self.ims_max_value - self.ims_min_value)
 
-        # validate dim
-        if self.dme_data.shape[1] != self.ims_data.shape[1]:
-            raise ValueError(
-                "dimension of k in x_train and x_test do not feet {} {}".format(self.dme_data.shape[1],
-                                                                                self.ims_data.shape[1]))
-
         # set dim.
-        self.m, self.k = self.dme_data.shape
-        self.n, self.k = self.ims_data.shape
+        self.m, self.k_m = self.dme_data.shape
+        self.n, self.k_n = self.ims_data.shape
+
+        print("X dim: {} - has {} links, {} samples each \nY dim: {} - has {} gauges, {} samples each".format(
+            self.dme_data.shape, self.m, self.k_m, self.ims_data.shape, self.n, self.k_n))
 
         self.generator, self.generated_features = self.pre_train_generator()
         self.critic = self.pre_train_critic()
@@ -73,12 +71,11 @@ class DL_Models:
         if not config.ims_pre_load_data:
             x_test = np.empty((1, 6 * 24 * config.coverage))
             for index, station_folder in enumerate(os.listdir(config.ims_root_files)):
-
                 print("now processing gauge: {}".format(station_folder))
                 try:
                     df = pd.read_csv(config.ims_root_files + '/' + station_folder + '/' + 'data.csv')
-                    values=np.empty(1)
-                    for row in list(df.channels):
+                    values = np.empty(1)
+                    for row_time, row in zip(list(df.datetime), list(df.channels)):
                         values = np.vstack((values, np.array([ast.literal_eval(row)[0]['value']])))
                     values = values[1:].T
                     x_test = np.vstack((x_test, values))
@@ -107,33 +104,33 @@ class DL_Models:
                 print("now processing link: {} of type: {}".format(link_name, link_type))
                 df = pd.read_csv(config.dme_root_files + '/' + link)
                 init_date = config.dme_scrape_config['link_objects']['date']['value']
-                time_value = dt.strptime(f"{init_date['yyyy']}-{init_date['mm']}-{init_date['dd']} 00:00:00","%Y-%m-%d %H:%M:%S") + dt_delta(days=1)
+                time_value = dt.strptime(f"{init_date['yyyy']}-{init_date['mm']}-{init_date['dd']} 00:00:00",
+                                         "%Y-%m-%d %H:%M:%S") + dt_delta(days=1)
 
-
-                df_min_header= 'PowerRLTMmin' if link_type=='SINK' else 'PowerTLTMmin'
-                df_max_header = 'PowerTLTMmax' if link_type=='SOURCE' else 'PowerRLTMmax'
+                df_min_header = 'PowerRLTMmin' if link_type == 'SINK' else 'PowerTLTMmin'
+                df_max_header = 'PowerTLTMmax' if link_type == 'SOURCE' else 'PowerRLTMmax'
                 min_max_values = np.empty(2)
-                for row_min, row_max, row_time, row_interval in zip(list(df[df_min_header]), list(df[df_max_header]),list(df.Time), list(df.Interval)):
-
+                for row_min, row_max, row_time, row_interval in zip(list(df[df_min_header]), list(df[df_max_header]),
+                                                                    list(df.Time), list(df.Interval)):
 
                     if row_interval != 24:
 
-                        while time_value< dt.strptime(row_time,"%Y-%m-%d %H:%M:%S") :
+                        while time_value < dt.strptime(row_time, "%Y-%m-%d %H:%M:%S"):
                             min_max_values = np.vstack((min_max_values, np.array([np.nan, np.nan])))
                             time_value = dt.strptime(row_time, "%Y-%m-%d %H:%M:%S") + dt_delta(minutes=15)
 
                         min_max_values = np.vstack((min_max_values, np.array([row_min, row_max])))
 
-                        time_value=dt.strptime(row_time, "%Y-%m-%d %H:%M:%S")+dt_delta(minutes = 15)
+                        time_value = dt.strptime(row_time, "%Y-%m-%d %H:%M:%S") + dt_delta(minutes=15)
 
                 min_max_values = min_max_values[1:].T
 
-                if min_max_values.shape==(2,4 * 24 * config.coverage):
-                    x_test=np.vstack((x_test,min_max_values))
+                if min_max_values.shape == (2, 4 * 24 * config.coverage):
+                    x_test = np.vstack((x_test, min_max_values))
                 else:
                     print('dim missmatch: {}'.format(min_max_values.shape))
 
-            x_test=x_test[2:]
+            x_test = x_test[2:]
 
             with open(config.dme_root_values + '/' + 'dme_values.pkl', 'wb') as f:
                 pickle.dump(x_test, f)

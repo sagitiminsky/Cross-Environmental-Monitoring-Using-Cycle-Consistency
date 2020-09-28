@@ -18,7 +18,7 @@ class IMS_Scrapper_obj:
         self.station_id = station_id
         self._from = _from
         self._to = _to
-        self.root = 'libs/dataset/gauges/raw'
+        self.root = 'libs/dataset/ims/raw'
         self.station_meta_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}"
         self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
 

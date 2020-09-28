@@ -77,7 +77,7 @@ class DME_Scrapper_obj:
         self.exclude_file = ['.DS_Store', '.localized', '.com.google.Chrome.tlwaEL']
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
 
-        self.covrage=config.coverage
+
 
         # clear old files from downloads
         self.delete_prev_from_downloads_if_poss()
@@ -137,8 +137,8 @@ class DME_Scrapper_obj:
 
         for link in merged_df_dict:
             for link_type in ['SOURCE', 'SINK']:
-                daily_coverage = merged_df_dict[link]["coverage"][link_type]["dailey"] / self.coverage
-                _15_minutes_coverage = merged_df_dict[link]["coverage"][link_type]["15m"] / (self.coverage * 4 * 24)
+                daily_coverage = merged_df_dict[link]["coverage"][link_type]["dailey"] / config.coverage
+                _15_minutes_coverage = merged_df_dict[link]["coverage"][link_type]["15m"] / (config.coverage * 4 * 24)
                 self.preprocess_df(merged_df_dict[link][link_type]).to_csv(
                     config.dme_scrape_config['path_to_data_files'] +
                     link + f'_{link_type}' +
