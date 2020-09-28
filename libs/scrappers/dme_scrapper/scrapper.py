@@ -76,7 +76,7 @@ class DME_Scrapper_obj:
         self.root_data_files = config.dme_scrape_config['path_to_data_files']
         self.exclude_file = ['.DS_Store', '.localized', '.com.google.Chrome.tlwaEL']
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
-
+        self.accepted_link_type=['SOURCE', 'SINK']
 
 
         # clear old files from downloads
@@ -106,6 +106,8 @@ class DME_Scrapper_obj:
         for file_name in file_names:
             link = file_name.split('_')[4]
             if link not in d:
+
+                #todo: iterate over self.accepted_link_types
                 d[link] = {'SOURCE': pd.DataFrame(), 'SINK': pd.DataFrame(),
                            'coverage':
                                {'SOURCE': {'15m': 0, 'dailey': 0},
@@ -128,15 +130,21 @@ class DME_Scrapper_obj:
         print("preprocessing...")
         merged_df_dict = self.create_merged_df_dict(zip_file_object.namelist())
         for file_name in zip_file_object.namelist():
-            link_type = file_name.split('_')[3]
-            link = file_name.split('_')[4]
-            bytes = zip_file_object.open(file_name).read()
-            add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
-            self.get_coverage(merged_df_dict[link]['coverage'][link_type], add_df)
-            merged_df_dict[link][link_type] = merged_df_dict[link][link_type].append(add_df)
+            date=file_name.split('_')[-1].split('.')[0]
+            link_name= file_name.split('_')[-2]
+            link_type = file_name.split('_')[-3]
+
+            if link_type in self.accepted_link_type:
+                bytes = zip_file_object.open(file_name).read()
+                add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
+                self.get_coverage(merged_df_dict[link_name]['coverage'][link_type], add_df)
+                merged_df_dict[link_name][link_type] = merged_df_dict[link_name][link_type].append(add_df)
+
+            else:
+                print("{}_{} is of type: {} and not one of types:{} | complete:{}".format(link_name,date,link_type,self.accepted_link_type,file_name))
 
         for link in merged_df_dict:
-            for link_type in ['SOURCE', 'SINK']:
+            for link_type in self.accepted_link_type:
                 daily_coverage = merged_df_dict[link]["coverage"][link_type]["dailey"] / config.coverage
                 _15_minutes_coverage = merged_df_dict[link]["coverage"][link_type]["15m"] / (config.coverage * 4 * 24)
                 self.preprocess_df(merged_df_dict[link][link_type]).to_csv(
