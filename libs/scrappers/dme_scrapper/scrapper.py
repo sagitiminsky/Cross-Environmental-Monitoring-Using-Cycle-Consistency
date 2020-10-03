@@ -16,7 +16,6 @@ import zipfile
 import pandas as pd
 
 
-
 class DME_Scrapper_obj:
 
     def __init__(self, mock=None):
@@ -41,6 +40,14 @@ class DME_Scrapper_obj:
                 'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/div/input',
                 'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/div/input',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+            'measurement_type': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[1]',
+                'xpath_select_all': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[1]/label/span',
+                'xpath_hc_radio_sink': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[1]/label',
+                'xpath_hc_radio_source': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[2]/label',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+
             },
             'rx_site_longitude': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[1]/span[2]',
@@ -76,8 +83,7 @@ class DME_Scrapper_obj:
         self.root_data_files = config.dme_scrape_config['path_to_data_files']
         self.exclude_file = ['.DS_Store', '.localized', '.com.google.Chrome.tlwaEL']
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
-        self.accepted_link_type=['SOURCE', 'SINK']
-
+        self.accepted_link_type = ['SOURCE', 'SINK']
 
         # clear old files from downloads
         self.delete_prev_from_downloads_if_poss()
@@ -106,8 +112,7 @@ class DME_Scrapper_obj:
         for file_name in file_names:
             link = file_name.split('_')[4]
             if link not in d:
-
-                #todo: iterate over self.accepted_link_types
+                # todo: iterate over self.accepted_link_types
                 d[link] = {'SOURCE': pd.DataFrame(), 'SINK': pd.DataFrame(),
                            'coverage':
                                {'SOURCE': {'15m': 0, 'dailey': 0},
@@ -130,8 +135,8 @@ class DME_Scrapper_obj:
         print("preprocessing...")
         merged_df_dict = self.create_merged_df_dict(zip_file_object.namelist())
         for file_name in zip_file_object.namelist():
-            date=file_name.split('_')[-1].split('.')[0]
-            link_name= file_name.split('_')[-2]
+            date = file_name.split('_')[-1].split('.')[0]
+            link_name = file_name.split('_')[-2]
             link_type = file_name.split('_')[-3]
 
             if link_type in self.accepted_link_type:
@@ -141,7 +146,9 @@ class DME_Scrapper_obj:
                 merged_df_dict[link_name][link_type] = merged_df_dict[link_name][link_type].append(add_df)
 
             else:
-                print("{}_{} is of type: {} and not one of types:{} | complete:{}".format(link_name,date,link_type,self.accepted_link_type,file_name))
+                print("{}_{} is of type: {} and not one of types:{} | complete:{}".format(link_name, date, link_type,
+                                                                                          self.accepted_link_type,
+                                                                                          file_name))
 
         for link in merged_df_dict:
             for link_type in self.accepted_link_type:
@@ -201,6 +208,21 @@ class DME_Scrapper_obj:
 
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
+    def check_boxes(self):
+        link_obj = config.dme_scrape_config['link_objects']
+        element_xpath = self.xpaths['measurement_type']
+        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+        self.browser.find_element_by_xpath(element_xpath['xpath_select_all']).click()
+
+        if 'HC_RADIO_SINK' in link_obj['measurement_type']:
+            self.browser.find_element_by_xpath(element_xpath['xpath_hc_radio_sink']).click()
+        if 'HC_RADIO_SOURCE' in link_obj['measurement_type']:
+            self.browser.find_element_by_xpath(element_xpath['xpath_hc_radio_source']).click()
+
+
+        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+
+
     def download_zip_file(self, link_name=None):
         # link id
         if link_name:
@@ -212,6 +234,9 @@ class DME_Scrapper_obj:
 
         # date
         self.ranged_filter('date')
+
+        # measurement type
+        self.check_boxes()
 
         # tx site longitude
         self.ranged_filter('tx_site_longitude')
