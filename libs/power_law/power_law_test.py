@@ -13,9 +13,9 @@ class PowerLawTest(unittest.TestCase):
         PowerLaw(chosen_power_law='Basic', frequency=400,polarization='vertical', L=10)
         PowerLaw(chosen_power_law='Basic', frequency=400, polarization='horizontal', L=10)
 
-        # with self.assertRaises(ValueError):
-        PowerLaw(chosen_power_law='Basic', frequency=400, polarization='cyrcular', L=10)
-        PowerLaw(chosen_power_law='Basic',frequency=101,polarization='vertical',L=10)
+        with self.assertRaises(ValueError):
+            PowerLaw(chosen_power_law='Basic', frequency=400, polarization='cyrcular', L=10)
+            PowerLaw(chosen_power_law='Basic',frequency=101,polarization='vertical',L=10)
 
 
     def test_basic_all_frequecies(self):
