@@ -6,6 +6,7 @@ import io
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
@@ -14,6 +15,8 @@ from selenium.webdriver.support.ui import Select
 import threading
 import zipfile
 import pandas as pd
+from datetime import datetime as dt
+from datetime import timedelta as dt_delta
 
 
 class DME_Scrapper_obj:
@@ -28,6 +31,7 @@ class DME_Scrapper_obj:
         self.selector = '//*[@id="btnExportByFilter"]'
         self.xpaths = {
             'xpath_download': '//*[@id="btnExportByFilter"]',
+            'xpath_metadata_download':'/html/body/div[3]/div/div[7]/div/div/div[1]/span[2]',
             'link_id': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[1]',
                 'xpath_select': '',
@@ -46,7 +50,15 @@ class DME_Scrapper_obj:
                 'xpath_select_all': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[1]/label/span',
                 'xpath_hc_radio_sink': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[1]/label',
                 'xpath_hc_radio_source': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[2]/label',
+                'xpath_tn_rfinputpower':'//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[4]/label/span',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+
+            },
+            'sampling_period[sec]':{
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[1]/span[2]',
+                'input_box':'//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
+                'xpath_apply':'//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
 
             },
             'rx_site_longitude': {
@@ -93,18 +105,40 @@ class DME_Scrapper_obj:
         self.browser.get(config.dme_scrape_config['url'])
         self.log_in(self.browser)
 
+        #time frame
+        self.start_datetime = self.convert_to_datetime_and_add_delta_days(
+            config.dme_scrape_config['link_objects']['date']['value'])
+        self.end_datetime = self.convert_to_datetime_and_add_delta_days(
+            config.dme_scrape_config['link_objects']['date']['value_range'])
+
         # accept alert
         time.sleep(3)
         alert = self.browser.switch_to_alert()
         alert.dismiss()
 
+    def parse_date(self,d):
+        return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
+
+    def convert_to_datetime_and_add_delta_days(self,date,delta_days=0):
+        res = dt.strptime(self.parse_date(date), "%m/%d/%y") + dt_delta(days=delta_days)
+        return {
+            'datetime_rep': res,
+            'str_rep': f"{str(res.day).zfill(2)+str(res.month).zfill(2)+str(res.year)}",
+            'dict_rep':{
+                        'dd': str(res.day).zfill(2),
+                        'mm': str(res.month).zfill(2),
+                        'yyyy':str(res.year)
+            }
+        }
+
+
     def scrape(self):
         if config.dme_scrape_config['link_objects']['link_id']:
             for link_name in config.dme_scrape_config['link_objects']['link_id']:
-                file_path = self.download_zip_file(link_name)
+                file_path = self.download_zip_files(link_name)
                 self.extract_merge_save_csv(file_path)
         else:
-            file_path = self.download_zip_file()
+            file_path = self.download_zip_files()
             self.extract_merge_save_csv(file_path)
 
     def create_merged_df_dict(self, file_names):
@@ -184,24 +218,46 @@ class DME_Scrapper_obj:
         select_value = select['value']
         element_xpath = self.xpaths[mux]
         self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-        Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
-            select['select'])
         filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
 
         if mux == 'date':
-            filter.send_keys(select_value['dd'] + select_value['mm'] + select_value['yyyy'])
+            pass
+
         elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
+            Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(select['select'])
             filter.send_keys(select_value)
         else:
             raise ValueError("mux type is undefined {}".format(mux))
 
         if select['select'] == 'In range':
             select_value_range = select['value_range']
-            filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
 
             if mux == 'date':
-                filter.send_keys(select_value_range['dd'] + select_value_range['mm'] + select_value_range['yyyy'])
+
+                # download
+                print('starting download...')
+
+                day_iter = self.start_datetime
+                while day_iter['datetime_rep'] <= self.end_datetime['datetime_rep']:
+
+                    self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
+                    filter.send_keys(day_iter['str_rep'])
+                    self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+
+                    day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
+                    self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+
+                    time.sleep(15)
+
+                    ActionChains(self.browser).context_click(self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
+                    self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
+                    self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
+
+
+
             elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
+                Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(select['select'])
+                filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
                 filter.send_keys(select_value_range)
             else:
                 raise ValueError("mux type is undefined {}".format(mux))
@@ -218,12 +274,18 @@ class DME_Scrapper_obj:
             self.browser.find_element_by_xpath(element_xpath['xpath_hc_radio_sink']).click()
         if 'HC_RADIO_SOURCE' in link_obj['measurement_type']:
             self.browser.find_element_by_xpath(element_xpath['xpath_hc_radio_source']).click()
+        if 'TN_RFInputPower' in link_obj['measurement_type']:
+            self.browser.find_element_by_xpath(element_xpath['xpath_tn_rfinputpower']).click()
 
-
+    def input_box(self,input_type):
+        element_xpath = self.xpaths[input_type]
+        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
+        filter.send_keys(config.dme_scrape_config['link_objects'][input_type])
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
 
-    def download_zip_file(self, link_name=None):
+    def download_zip_files(self, link_name=None):
         # link id
         if link_name:
             element_xpath = self.xpaths['link_id']
@@ -232,40 +294,32 @@ class DME_Scrapper_obj:
             filter.send_keys(link_name)
             self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-        # date
-        self.ranged_filter('date')
-
         # measurement type
         self.check_boxes()
 
-        # tx site longitude
-        self.ranged_filter('tx_site_longitude')
+        # # tx site longitude
+        # self.ranged_filter('tx_site_longitude')
+        #
+        # # tx site latitude
+        # self.ranged_filter('tx_site_latitude')
+        #
+        # # rx site longitude
+        # self.ranged_filter('rx_site_longitude')
+        #
+        # # rx site latitude
+        # self.ranged_filter('rx_site_latitude')
 
-        # tx site latitude
-        self.ranged_filter('tx_site_latitude')
+        #sampling period description
+        self.input_box('sampling_period[sec]')
 
-        # rx site longitude
-        self.ranged_filter('rx_site_longitude')
+        # date
+        self.ranged_filter('date')
 
-        # rx site latitude
-        self.ranged_filter('rx_site_latitude')
+        file_paths = [self.root_download + f for f in os.listdir(self.root_download) if f not in self.exclude_file]
+        for file_path in file_paths:
+            print('download of link complete, file path: {}'.format(file_path))
 
-        # download
-        print('starting download...')
-        number_of_files = len([file for file in os.listdir(self.root_download) if file not in self.exclude_file])
-        self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
-        th = threading.Thread(target=self.background_task, args=(number_of_files,), kwargs={'delta': 1})
-        th.start()
-
-        # wait here for the result of thread
-        th.join()
-        time.sleep(15)
-
-        file_path = max([self.root_download + f for f in os.listdir(self.root_download) if f not in self.exclude_file],
-                        key=os.path.getctime)
-
-        print('download of CMK-link: {} complete\nfile path: {}'.format(link_name, file_path))
-        return file_path
+        return file_paths
 
     def log_in(self, browser):
         remember_me_xpth = '/html/body/div/form/div[4]/label/input'
