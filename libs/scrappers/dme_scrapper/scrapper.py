@@ -89,12 +89,12 @@ class DME_Scrapper_obj:
                 'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
             },
-            'link_frequency[MHz]':{
-                'xpath_open': '',
-                'xpath_select': '',
-                'xpath_filter': '',
-                'xpath_filter_range': '',
-                'xpath_apply': ''
+            'link_frequency[mhz]':{
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
             }
 
         }
@@ -153,45 +153,42 @@ class DME_Scrapper_obj:
             link = file_name.split('_')[4]
             if link not in d:
                 # todo: iterate over self.accepted_link_types
-                d[link] = pd.DataFrame()
+                d[link] = {
+                    'data':pd.DataFrame(),
+                    'frequency': '',
+                    'L': '',
+                    'polarization':''
+                }
 
         if not d:
             raise Exception("no files in zip")
 
         return d
 
-    def merge_and_duplicate(self,df1,df2):
-        return df1
-
     def extract_merge_save_csv(self, file_paths):
         for data_path,metadata_path in zip(file_paths['data_paths'],file_paths['metadata_paths']):
             zip_file_object = zipfile.ZipFile(data_path, 'r')
             merged_df_dict = self.create_merged_df_dict(zip_file_object.namelist())
 
-            for file_name,metadata_row in zip(zip_file_object.namelist(),pd.read_csv(metadata_path)):
+            for file_name,(index,metadata_row) in zip(zip_file_object.namelist(),pd.read_csv(metadata_path).iterrows()):
                 date = file_name.split('_')[-1].split('.')[0]
                 link_name = file_name.split('_')[-2]
                 link_type = file_name.split('_')[-3]
 
                 bytes = zip_file_object.open(file_name).read()
                 add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
-                merged_df_dict[link_name][link_type] = merged_df_dict[link_name][link_type].append(self.merge_and_duplicate(add_df,metadata_row))
+                merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
+                merged_df_dict[link_name]['frequency']=metadata_row['Link Frequency [MHz]']
+                merged_df_dict[link_name]['polarization'] = metadata_row['Link Polarization']
+                merged_df_dict[link_name]['L'] = metadata_row['Link Length (KM)']
 
         for link in merged_df_dict:
-            for link_type in self.accepted_link_type:
-                daily_coverage = merged_df_dict[link]["coverage"][link_type]["dailey"] / config.coverage
-                _15_minutes_coverage = merged_df_dict[link]["coverage"][link_type]["15m"] / (config.coverage * 4 * 24)
-                self.preprocess_df(merged_df_dict[link][link_type]).to_csv(
-                    config.dme_scrape_config['path_to_data_files'] +
-                    link + f'_{link_type}' +
-                    f'_daily-coverage-{daily_coverage}' +
-                    f'_15m-coverage-{_15_minutes_coverage}' +
-                    '.csv',
-                    mode='a', index=False)
 
-                print("file saved to {}\ndaily coverage: {}\n15m coverage: {}".format(link + f'_{link_type}',
-                                                                                      daily_coverage,
-                                                                                      _15_minutes_coverage))
+            self.preprocess_df(merged_df_dict[link]['data']).to_csv(
+                config.dme_scrape_config['path_to_data_files'] +
+                link + f'_{link_type}' +'.csv',mode='a', index=False)
+
+            print("file saved to {}".format(link + f'_{link_type}'))
 
     def preprocess_df(self, df):
         # order by time
@@ -216,7 +213,7 @@ class DME_Scrapper_obj:
         if mux == 'date':
             pass
 
-        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux=='link_frequency[MHz]':
+        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux=='link_frequency[mhz]':
             Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(select['select'])
             filter.send_keys(select_value)
         else:
@@ -250,13 +247,6 @@ class DME_Scrapper_obj:
 
                     # download data
                     self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
-
-
-
-
-
-
-
 
             elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
                 Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(select['select'])
@@ -316,7 +306,7 @@ class DME_Scrapper_obj:
         self.input_box('sampling_period[sec]')
 
         #Link frequency[MHz]
-        self.ranged_filter('link_frequency[MHz]')
+        self.ranged_filter('link_frequency[mhz]')
 
         # date
         self.ranged_filter('date')
