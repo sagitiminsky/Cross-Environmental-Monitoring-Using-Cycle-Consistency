@@ -89,13 +89,20 @@ class DME_Scrapper_obj:
                 'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
             },
+            'link_frequency[MHz]':{
+                'xpath_open': '',
+                'xpath_select': '',
+                'xpath_filter': '',
+                'xpath_filter_range': '',
+                'xpath_apply': ''
+            }
 
         }
         self.root_download = '/Users/sagit/Downloads/'
         self.root_data_files = config.dme_scrape_config['path_to_data_files']
-        self.exclude_file = ['.DS_Store', '.localized', '.com.google.Chrome.tlwaEL']
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
         self.accepted_link_type = ['SOURCE', 'SINK']
+
 
         # clear old files from downloads
         self.delete_prev_from_downloads_if_poss()
@@ -110,6 +117,7 @@ class DME_Scrapper_obj:
             config.dme_scrape_config['link_objects']['date']['value'])
         self.end_datetime = self.convert_to_datetime_and_add_delta_days(
             config.dme_scrape_config['link_objects']['date']['value_range'])
+        self.time_frame = (self.end_datetime['datetime_rep'] - self.start_datetime['datetime_rep']).days+1
 
         # accept alert
         time.sleep(3)
@@ -135,11 +143,9 @@ class DME_Scrapper_obj:
     def scrape(self):
         if config.dme_scrape_config['link_objects']['link_id']:
             for link_name in config.dme_scrape_config['link_objects']['link_id']:
-                file_path = self.download_zip_files(link_name)
-                self.extract_merge_save_csv(file_path)
+                self.extract_merge_save_csv(self.download_zip_files(link_name))
         else:
-            file_path = self.download_zip_files()
-            self.extract_merge_save_csv(file_path)
+            self.extract_merge_save_csv(self.download_zip_files())
 
     def create_merged_df_dict(self, file_names):
         d = {}
@@ -147,42 +153,29 @@ class DME_Scrapper_obj:
             link = file_name.split('_')[4]
             if link not in d:
                 # todo: iterate over self.accepted_link_types
-                d[link] = {'SOURCE': pd.DataFrame(), 'SINK': pd.DataFrame(),
-                           'coverage':
-                               {'SOURCE': {'15m': 0, 'dailey': 0},
-                                'SINK': {'15m': 0, 'dailey': 0}
-                                }
-                           }
+                d[link] = pd.DataFrame()
 
         if not d:
             raise Exception("no files in zip")
 
         return d
 
-    def get_coverage(self, coverage, add_df):
-        coverage['dailey'] += sum(add_df.Interval == 24)
-        coverage['15m'] += sum(add_df.Interval == 15)
+    def merge_and_duplicate(self,df1,df2):
+        return df1
 
-    def extract_merge_save_csv(self, file_path):
-        print("extracting files...")
-        zip_file_object = zipfile.ZipFile(file_path, 'r')
-        print("preprocessing...")
-        merged_df_dict = self.create_merged_df_dict(zip_file_object.namelist())
-        for file_name in zip_file_object.namelist():
-            date = file_name.split('_')[-1].split('.')[0]
-            link_name = file_name.split('_')[-2]
-            link_type = file_name.split('_')[-3]
+    def extract_merge_save_csv(self, file_paths):
+        for data_path,metadata_path in zip(file_paths['data_paths'],file_paths['metadata_paths']):
+            zip_file_object = zipfile.ZipFile(data_path, 'r')
+            merged_df_dict = self.create_merged_df_dict(zip_file_object.namelist())
 
-            if link_type in self.accepted_link_type:
+            for file_name,metadata_row in zip(zip_file_object.namelist(),pd.read_csv(metadata_path)):
+                date = file_name.split('_')[-1].split('.')[0]
+                link_name = file_name.split('_')[-2]
+                link_type = file_name.split('_')[-3]
+
                 bytes = zip_file_object.open(file_name).read()
                 add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
-                self.get_coverage(merged_df_dict[link_name]['coverage'][link_type], add_df)
-                merged_df_dict[link_name][link_type] = merged_df_dict[link_name][link_type].append(add_df)
-
-            else:
-                print("{}_{} is of type: {} and not one of types:{} | complete:{}".format(link_name, date, link_type,
-                                                                                          self.accepted_link_type,
-                                                                                          file_name))
+                merged_df_dict[link_name][link_type] = merged_df_dict[link_name][link_type].append(self.merge_and_duplicate(add_df,metadata_row))
 
         for link in merged_df_dict:
             for link_type in self.accepted_link_type:
@@ -223,7 +216,7 @@ class DME_Scrapper_obj:
         if mux == 'date':
             pass
 
-        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
+        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux=='link_frequency[MHz]':
             Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(select['select'])
             filter.send_keys(select_value)
         else:
@@ -238,20 +231,30 @@ class DME_Scrapper_obj:
                 print('starting download...')
 
                 day_iter = self.start_datetime
+                counter=0
                 while day_iter['datetime_rep'] <= self.end_datetime['datetime_rep']:
 
+                    print('download day #{}/{}, date:{}'.format(counter+1,self.time_frame,day_iter['str_rep']))
                     self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
                     filter.send_keys(day_iter['str_rep'])
                     self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
                     day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
-                    self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+                    counter=counter+1
 
-                    time.sleep(15)
 
+                    #download metadata
                     ActionChains(self.browser).context_click(self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
                     self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
                     self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
+
+                    # download data
+                    self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+
+
+
+
+
 
 
 
@@ -312,14 +315,25 @@ class DME_Scrapper_obj:
         #sampling period description
         self.input_box('sampling_period[sec]')
 
+        #Link frequency[MHz]
+        self.ranged_filter('link_frequency[MHz]')
+
         # date
         self.ranged_filter('date')
 
-        file_paths = [self.root_download + f for f in os.listdir(self.root_download) if f not in self.exclude_file]
-        for file_path in file_paths:
-            print('download of link complete, file path: {}'.format(file_path))
+        time.sleep(30)
 
-        return file_paths
+        data_paths = [self.root_download + f for f in os.listdir(self.root_download) if 'cldb' in f]
+        metadata_paths=[self.root_download + f for f in os.listdir(self.root_download) if 'export' in f]
+
+        data_paths.sort(key=os.path.getmtime)
+        metadata_paths.sort(key=os.path.getmtime)
+
+
+        return {
+            'data_paths': data_paths,
+            'metadata_paths':metadata_paths
+        }
 
     def log_in(self, browser):
         remember_me_xpth = '/html/body/div/form/div[4]/label/input'
@@ -354,7 +368,7 @@ class DME_Scrapper_obj:
 
     def delete_prev_from_downloads_if_poss(self):
         for file in os.listdir(self.root_download):
-            if 'cldb' in file:
+            if 'cldb' in file or 'export' in file:
                 try:
                     os.remove(self.root_download + file)
                 except PermissionError:
