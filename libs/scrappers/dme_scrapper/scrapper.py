@@ -145,12 +145,11 @@ class DME_Scrapper_obj:
         else:
             self.extract_merge_save_csv(self.download_zip_files())
 
-    def create_merged_df_dict(self, file_names,metadata_df):
+    def create_merged_df_dict(self, metadata_df):
         d = {}
-        for file_name,(index,metadata_row) in zip(file_names,metadata_df.iterrows()):
+        for index,metadata_row in metadata_df.iterrows():
             link_name = metadata_row['Link ID']
             if link_name not in d:
-                # todo: iterate over self.accepted_link_types
                 d[link_name] = {
                     'data': pd.DataFrame(),
                     'frequency': '',
@@ -174,29 +173,34 @@ class DME_Scrapper_obj:
         for data_path, metadata_path in zip(file_paths['data_paths'], file_paths['metadata_paths']):
             zip_file_object = zipfile.ZipFile(data_path, 'r')
             metadata_df=pd.read_csv(metadata_path)
-            merged_df_dict = {**self.create_merged_df_dict(zip_file_object.namelist(),metadata_df=metadata_df), **merged_df_dict}
+            merged_df_dict = {**self.create_merged_df_dict(metadata_df=metadata_df), **merged_df_dict}
 
-            for file_name, (index, metadata_row) in zip(zip_file_object.namelist(),
+            for zip_file_name, (index, metadata_row) in zip(zip_file_object.namelist(),
                                                         metadata_df.iterrows()):
 
-                link_name = metadata_row['Link ID']
+                split_date=metadata_row['Date '].split(' ')
+                date=split_date[3]+config.months[split_date[2]]+split_date[1]
+                file_name = metadata_row['Link Carrier']+'_'+metadata_row['Measurement Type']+'_'+metadata_row['Link ID']+'_'+date+'.txt'
+                link_name=metadata_row['Link ID']
 
-
-                bytes = zip_file_object.open(file_name).read()
-                add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
-                merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
-                merged_df_dict[link_name]['frequency'] = self.is_different(metadata_row['Link Frequency [MHz]'],
-                                                                           link_name=link_name,
-                                                                           link_dict=merged_df_dict[link_name],
-                                                                           key='frequency')
-                merged_df_dict[link_name]['polarization'] = self.is_different(metadata_row['Link Polarization'],
-                                                                              link_name=link_name,
-                                                                              link_dict=merged_df_dict[link_name],
-                                                                              key='polarization')
-                merged_df_dict[link_name]['L'] = self.is_different(metadata_row['Link Length (KM)'],
-                                                                   link_name=link_name,
-                                                                   link_dict=merged_df_dict[link_name],
-                                                                   key='L')
+                try:
+                    bytes = zip_file_object.open(zip_file_name).read()
+                    add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
+                    merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
+                    merged_df_dict[link_name]['frequency'] = self.is_different(metadata_row['Link Frequency [MHz]'],
+                                                                               link_name=link_name,
+                                                                               link_dict=merged_df_dict[link_name],
+                                                                               key='frequency')
+                    merged_df_dict[link_name]['polarization'] = self.is_different(metadata_row['Link Polarization'],
+                                                                                  link_name=link_name,
+                                                                                  link_dict=merged_df_dict[link_name],
+                                                                                  key='polarization')
+                    merged_df_dict[link_name]['L'] = self.is_different(metadata_row['Link Length (KM)'],
+                                                                       link_name=link_name,
+                                                                       link_dict=merged_df_dict[link_name],
+                                                                       key='L')
+                except KeyError:
+                    print('exit in metadata, but does not exist in data:{}'.format(file_name))
 
         for link_name in merged_df_dict:
             link_file_name = config.dme_scrape_config['path_to_data_files'] + link_name + '_' + \
@@ -257,10 +261,9 @@ class DME_Scrapper_obj:
                     day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
                     counter = counter + 1
 
-                    time.sleep(15)
+                    time.sleep(25)
                     # download metadata
-                    ActionChains(self.browser).context_click(
-                        self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
+                    ActionChains(self.browser).context_click(self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
                     self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
                     self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
 
