@@ -31,7 +31,7 @@ class DME_Scrapper_obj:
         self.selector = '//*[@id="btnExportByFilter"]'
         self.xpaths = {
             'xpath_download': '//*[@id="btnExportByFilter"]',
-            'xpath_metadata_download':'/html/body/div[3]/div/div[7]/div/div/div[1]/span[2]',
+            'xpath_metadata_download': '/html/body/div[3]/div/div[7]/div/div/div[1]/span[2]',
             'link_id': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[1]',
                 'xpath_select': '',
@@ -50,15 +50,15 @@ class DME_Scrapper_obj:
                 'xpath_select_all': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[1]/label/span',
                 'xpath_hc_radio_sink': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[1]/label',
                 'xpath_hc_radio_source': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[2]/label',
-                'xpath_tn_rfinputpower':'//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[4]/label/span',
+                'xpath_tn_rfinputpower': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[4]/label/span',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
 
             },
-            'sampling_period[sec]':{
+            'sampling_period[sec]': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[1]/span[2]',
-                'input_box':'//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
+                'input_box': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
                 'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
-                'xpath_apply':'//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
 
             },
             'rx_site_longitude': {
@@ -89,7 +89,7 @@ class DME_Scrapper_obj:
                 'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
             },
-            'link_frequency[mhz]':{
+            'link_frequency[mhz]': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[1]/span[2]',
                 'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
                 'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
@@ -103,7 +103,6 @@ class DME_Scrapper_obj:
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
         self.accepted_link_type = ['SOURCE', 'SINK']
 
-
         # clear old files from downloads
         self.delete_prev_from_downloads_if_poss()
         self.delete_prev_data_files_if_poss()
@@ -112,33 +111,32 @@ class DME_Scrapper_obj:
         self.browser.get(config.dme_scrape_config['url'])
         self.log_in(self.browser)
 
-        #time frame
+        # time frame
         self.start_datetime = self.convert_to_datetime_and_add_delta_days(
             config.dme_scrape_config['link_objects']['date']['value'])
         self.end_datetime = self.convert_to_datetime_and_add_delta_days(
             config.dme_scrape_config['link_objects']['date']['value_range'])
-        self.time_frame = (self.end_datetime['datetime_rep'] - self.start_datetime['datetime_rep']).days+1
+        self.time_frame = (self.end_datetime['datetime_rep'] - self.start_datetime['datetime_rep']).days + 1
 
         # accept alert
         time.sleep(3)
         alert = self.browser.switch_to_alert()
         alert.dismiss()
 
-    def parse_date(self,d):
+    def parse_date(self, d):
         return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
 
-    def convert_to_datetime_and_add_delta_days(self,date,delta_days=0):
+    def convert_to_datetime_and_add_delta_days(self, date, delta_days=0):
         res = dt.strptime(self.parse_date(date), "%m/%d/%y") + dt_delta(days=delta_days)
         return {
             'datetime_rep': res,
-            'str_rep': f"{str(res.day).zfill(2)+str(res.month).zfill(2)+str(res.year)}",
-            'dict_rep':{
-                        'dd': str(res.day).zfill(2),
-                        'mm': str(res.month).zfill(2),
-                        'yyyy':str(res.year)
+            'str_rep': f"{str(res.day).zfill(2) + str(res.month).zfill(2) + str(res.year)}",
+            'dict_rep': {
+                'dd': str(res.day).zfill(2),
+                'mm': str(res.month).zfill(2),
+                'yyyy': str(res.year)
             }
         }
-
 
     def scrape(self):
         if config.dme_scrape_config['link_objects']['link_id']:
@@ -150,14 +148,14 @@ class DME_Scrapper_obj:
     def create_merged_df_dict(self, file_names):
         d = {}
         for file_name in file_names:
-            link = file_name.split('_')[4]
+            link = file_name.split('_')[-2]
             if link not in d:
                 # todo: iterate over self.accepted_link_types
                 d[link] = {
-                    'data':pd.DataFrame(),
+                    'data': pd.DataFrame(),
                     'frequency': '',
-                    'L': '',
-                    'polarization':''
+                    'polarization': '',
+                    'L': ''
                 }
 
         if not d:
@@ -165,30 +163,49 @@ class DME_Scrapper_obj:
 
         return d
 
-    def extract_merge_save_csv(self, file_paths):
-        for data_path,metadata_path in zip(file_paths['data_paths'],file_paths['metadata_paths']):
-            zip_file_object = zipfile.ZipFile(data_path, 'r')
-            merged_df_dict = self.create_merged_df_dict(zip_file_object.namelist())
+    def is_different(self, new_param,link_name, link_dict, key):
+        if link_dict[key] and new_param != link_dict[key]:
+            raise ValueError(
+                'link_name:{} current param: {} of type: {} is different from:{}'.format(link_name,link_dict[key], key, new_param))
+        return new_param
 
-            for file_name,(index,metadata_row) in zip(zip_file_object.namelist(),pd.read_csv(metadata_path).iterrows()):
-                date = file_name.split('_')[-1].split('.')[0]
-                link_name = file_name.split('_')[-2]
-                link_type = file_name.split('_')[-3]
+    def extract_merge_save_csv(self, file_paths):
+        merged_df_dict = {}
+        for data_path, metadata_path in zip(file_paths['data_paths'], file_paths['metadata_paths']):
+            zip_file_object = zipfile.ZipFile(data_path, 'r')
+            merged_df_dict = {**self.create_merged_df_dict(zip_file_object.namelist()), **merged_df_dict}
+
+            for file_name, (index, metadata_row) in zip(zip_file_object.namelist(),
+                                                        pd.read_csv(metadata_path).iterrows()):
+
+                link_name = metadata_row['Link ID']
+
 
                 bytes = zip_file_object.open(file_name).read()
                 add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
                 merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
-                merged_df_dict[link_name]['frequency']=metadata_row['Link Frequency [MHz]']
-                merged_df_dict[link_name]['polarization'] = metadata_row['Link Polarization']
-                merged_df_dict[link_name]['L'] = metadata_row['Link Length (KM)']
+                merged_df_dict[link_name]['frequency'] = self.is_different(metadata_row['Link Frequency [MHz]'],
+                                                                           link_name=link_name,
+                                                                           link_dict=merged_df_dict[link_name],
+                                                                           key='frequency')
+                merged_df_dict[link_name]['polarization'] = self.is_different(metadata_row['Link Polarization'],
+                                                                              link_name=link_name,
+                                                                              link_dict=merged_df_dict[link_name],
+                                                                              key='polarization')
+                merged_df_dict[link_name]['L'] = self.is_different(metadata_row['Link Length (KM)'],
+                                                                   link_name=link_name,
+                                                                   link_dict=merged_df_dict[link_name],
+                                                                   key='L')
 
-        for link in merged_df_dict:
+        for link_name in merged_df_dict:
+            link_file_name = config.dme_scrape_config['path_to_data_files'] + link_name + '_' + \
+                             'frequency:' + str(merged_df_dict[link_name]['frequency']) + '_' + \
+                             'polarization:' + merged_df_dict[link_name]['polarization'] + '_' + \
+                             'L:' + str(merged_df_dict[link_name]['L']) + '.csv'
 
-            self.preprocess_df(merged_df_dict[link]['data']).to_csv(
-                config.dme_scrape_config['path_to_data_files'] +
-                link + f'_{link_type}' +'.csv',mode='a', index=False)
+            self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
 
-            print("file saved to {}".format(link + f'_{link_type}'))
+            print("file saved to {}".format(link_file_name))
 
     def preprocess_df(self, df):
         # order by time
@@ -213,8 +230,9 @@ class DME_Scrapper_obj:
         if mux == 'date':
             pass
 
-        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux=='link_frequency[mhz]':
-            Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(select['select'])
+        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux == 'link_frequency[mhz]':
+            Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
+                select['select'])
             filter.send_keys(select_value)
         else:
             raise ValueError("mux type is undefined {}".format(mux))
@@ -228,20 +246,19 @@ class DME_Scrapper_obj:
                 print('starting download...')
 
                 day_iter = self.start_datetime
-                counter=0
+                counter = 0
                 while day_iter['datetime_rep'] <= self.end_datetime['datetime_rep']:
-
-                    print('download day #{}/{}, date:{}'.format(counter+1,self.time_frame,day_iter['str_rep']))
+                    print('download day #{}/{}, date:{}'.format(counter + 1, self.time_frame, day_iter['str_rep']))
                     self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
                     filter.send_keys(day_iter['str_rep'])
                     self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
                     day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
-                    counter=counter+1
+                    counter = counter + 1
 
-
-                    #download metadata
-                    ActionChains(self.browser).context_click(self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
+                    # download metadata
+                    ActionChains(self.browser).context_click(
+                        self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
                     self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
                     self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
 
@@ -249,7 +266,8 @@ class DME_Scrapper_obj:
                     self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
 
             elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
-                Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(select['select'])
+                Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
+                    select['select'])
                 filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
                 filter.send_keys(select_value_range)
             else:
@@ -270,13 +288,12 @@ class DME_Scrapper_obj:
         if 'TN_RFInputPower' in link_obj['measurement_type']:
             self.browser.find_element_by_xpath(element_xpath['xpath_tn_rfinputpower']).click()
 
-    def input_box(self,input_type):
+    def input_box(self, input_type):
         element_xpath = self.xpaths[input_type]
         self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
         filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
         filter.send_keys(config.dme_scrape_config['link_objects'][input_type])
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
-
 
     def download_zip_files(self, link_name=None):
         # link id
@@ -302,10 +319,10 @@ class DME_Scrapper_obj:
         # # rx site latitude
         # self.ranged_filter('rx_site_latitude')
 
-        #sampling period description
+        # sampling period description
         self.input_box('sampling_period[sec]')
 
-        #Link frequency[MHz]
+        # Link frequency[MHz]
         self.ranged_filter('link_frequency[mhz]')
 
         # date
@@ -314,15 +331,14 @@ class DME_Scrapper_obj:
         time.sleep(30)
 
         data_paths = [self.root_download + f for f in os.listdir(self.root_download) if 'cldb' in f]
-        metadata_paths=[self.root_download + f for f in os.listdir(self.root_download) if 'export' in f]
+        metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if 'export' in f]
 
         data_paths.sort(key=os.path.getmtime)
         metadata_paths.sort(key=os.path.getmtime)
 
-
         return {
             'data_paths': data_paths,
-            'metadata_paths':metadata_paths
+            'metadata_paths': metadata_paths
         }
 
     def log_in(self, browser):
