@@ -145,13 +145,13 @@ class DME_Scrapper_obj:
         else:
             self.extract_merge_save_csv(self.download_zip_files())
 
-    def create_merged_df_dict(self, file_names):
+    def create_merged_df_dict(self, file_names,metadata_df):
         d = {}
-        for file_name in file_names:
-            link = file_name.split('_')[-2]
-            if link not in d:
+        for file_name,(index,metadata_row) in zip(file_names,metadata_df.iterrows()):
+            link_name = metadata_row['Link ID']
+            if link_name not in d:
                 # todo: iterate over self.accepted_link_types
-                d[link] = {
+                d[link_name] = {
                     'data': pd.DataFrame(),
                     'frequency': '',
                     'polarization': '',
@@ -173,10 +173,11 @@ class DME_Scrapper_obj:
         merged_df_dict = {}
         for data_path, metadata_path in zip(file_paths['data_paths'], file_paths['metadata_paths']):
             zip_file_object = zipfile.ZipFile(data_path, 'r')
-            merged_df_dict = {**self.create_merged_df_dict(zip_file_object.namelist()), **merged_df_dict}
+            metadata_df=pd.read_csv(metadata_path)
+            merged_df_dict = {**self.create_merged_df_dict(zip_file_object.namelist(),metadata_df=metadata_df), **merged_df_dict}
 
             for file_name, (index, metadata_row) in zip(zip_file_object.namelist(),
-                                                        pd.read_csv(metadata_path).iterrows()):
+                                                        metadata_df.iterrows()):
 
                 link_name = metadata_row['Link ID']
 
@@ -199,9 +200,9 @@ class DME_Scrapper_obj:
 
         for link_name in merged_df_dict:
             link_file_name = config.dme_scrape_config['path_to_data_files'] + link_name + '_' + \
-                             'frequency:' + str(merged_df_dict[link_name]['frequency']) + '_' + \
+                             'frequency[MHz]:' + str(merged_df_dict[link_name]['frequency']) + '_' + \
                              'polarization:' + merged_df_dict[link_name]['polarization'] + '_' + \
-                             'L:' + str(merged_df_dict[link_name]['L']) + '.csv'
+                             'L[Km]:' + str(merged_df_dict[link_name]['L']) + '.csv'
 
             self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
 
@@ -256,12 +257,14 @@ class DME_Scrapper_obj:
                     day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
                     counter = counter + 1
 
+                    time.sleep(15)
                     # download metadata
                     ActionChains(self.browser).context_click(
                         self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
                     self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
                     self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
 
+                    time.sleep(1)
                     # download data
                     self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
 
