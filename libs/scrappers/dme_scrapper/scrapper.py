@@ -48,9 +48,10 @@ class DME_Scrapper_obj:
             'measurement_type': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[1]',
                 'xpath_select_all': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[1]/label/span',
+                'search_box':'//*[@id="ag-mini-filter"]/input',
                 'xpath_hc_radio_sink': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[1]/label',
                 'xpath_hc_radio_source': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[2]/label',
-                'xpath_tn_rfinputpower': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[4]/label/span',
+                'xpath_tn_rfinputpower': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div/label/span',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
 
             },
@@ -287,12 +288,12 @@ class DME_Scrapper_obj:
         self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
         self.browser.find_element_by_xpath(element_xpath['xpath_select_all']).click()
 
-        if 'HC_RADIO_SINK' in link_obj['measurement_type']:
-            self.browser.find_element_by_xpath(element_xpath['xpath_hc_radio_sink']).click()
-        if 'HC_RADIO_SOURCE' in link_obj['measurement_type']:
-            self.browser.find_element_by_xpath(element_xpath['xpath_hc_radio_source']).click()
+        search_box = self.browser.find_element_by_xpath(element_xpath['search_box'])
+
         if 'TN_RFInputPower' in link_obj['measurement_type']:
-            self.browser.find_element_by_xpath(element_xpath['xpath_tn_rfinputpower']).click()
+            search_box.send_keys('TN_RFInputPower')
+
+        self.browser.find_element_by_xpath(element_xpath['xpath_select_all']).click()
 
     def input_box(self, input_type):
         element_xpath = self.xpaths[input_type]
