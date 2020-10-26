@@ -27,7 +27,7 @@ class DME_Scrapper_obj:
         self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.chrome_options.add_argument("--disable-popup-blocking")
-        self.delay = 30
+        self.delay = 10
         self.selector = '//*[@id="btnExportByFilter"]'
         self.xpaths = {
             'xpath_download': '//*[@id="btnExportByFilter"]',
@@ -259,18 +259,31 @@ class DME_Scrapper_obj:
                     filter.send_keys(day_iter['str_rep'])
                     self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-                    day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
-                    counter = counter + 1
+                    #wait to metadata to appear
 
-                    time.sleep(25)
+                    # wait for data to be loaded
+                    for i in range(3):
+                        try:
+                            ActionChains(self.browser).context_click(self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
+                            WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located((By.XPATH, '//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]' )))
+
+                        except TimeoutException:
+                            if i==2:
+                                raise TimeoutException('Loading took too much time!')
+                            else:
+                                print('Loading i:{} took too much time!'.format(i))
+
                     # download metadata
-                    ActionChains(self.browser).context_click(self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
                     self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
                     self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
 
-                    time.sleep(1)
                     # download data
                     self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+
+
+                    #next day
+                    day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
+                    counter = counter + 1
 
             elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
                 Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
