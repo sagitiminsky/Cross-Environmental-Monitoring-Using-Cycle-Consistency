@@ -100,11 +100,13 @@ class DME_Scrapper_obj:
 
         }
         self.root_download = '/Users/sagit/Downloads/'
-        self.root_data_files = config.dme_scrape_config['path_to_data_files']
+        self.root_data_files = config.dme_root_files
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
-        self.accepted_link_type = ['SOURCE', 'SINK']
 
-        # clear old files from downloads
+        if not os.path.isdir(self.root_data_files):
+            os.mkdir(self.root_data_files)
+
+        # clear old
         self.delete_prev_from_downloads_if_poss()
         self.delete_prev_data_files_if_poss()
 
@@ -204,10 +206,10 @@ class DME_Scrapper_obj:
                     print('exit in metadata, but does not exist in data:{}'.format(file_name))
 
         for link_name in merged_df_dict:
-            link_file_name = config.dme_scrape_config['path_to_data_files'] + link_name + '_' + \
-                             'frequency[MHz]:' + str(merged_df_dict[link_name]['frequency']) + '_' + \
-                             'polarization:' + merged_df_dict[link_name]['polarization'] + '_' + \
-                             'L[Km]:' + str(merged_df_dict[link_name]['L']) + '.csv'
+            link_file_name = config.dme_root_files + link_name + '_' + \
+                             'frequency[MHz]:_' + str(merged_df_dict[link_name]['frequency']) + '_' + \
+                             'polarization:_' + merged_df_dict[link_name]['polarization'] + '_' + \
+                             'L[Km]:_' + str(merged_df_dict[link_name]['L']) + '_.csv'
 
             self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
 
@@ -262,7 +264,7 @@ class DME_Scrapper_obj:
                     #wait to metadata to appear
 
                     # wait for data to be loaded
-                    for i in range(3):
+                    for i in range(5):
                         try:
                             ActionChains(self.browser).context_click(self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
                             WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located((By.XPATH, '//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]' )))
@@ -386,6 +388,7 @@ class DME_Scrapper_obj:
             self.browser.quit()
 
     def delete_prev_data_files_if_poss(self):
+        'deletes from local directory'
         for file in os.listdir(self.root_data_files):
             try:
                 os.remove(self.root_data_files + file)
@@ -393,6 +396,7 @@ class DME_Scrapper_obj:
                 pass
 
     def delete_prev_from_downloads_if_poss(self):
+        'Deletes from Downloads'
         for file in os.listdir(self.root_download):
             if 'cldb' in file or 'export' in file:
                 try:
@@ -401,6 +405,8 @@ class DME_Scrapper_obj:
                     shutil.rmtree(self.root_download + file)
                 except Exception:
                     raise Exception('unable to remove file : {}'.format(self.root_download + file))
+
+
 
 
 DME_Scrapper_obj().scrape()
