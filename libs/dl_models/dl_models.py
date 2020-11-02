@@ -14,7 +14,7 @@ from libs.dl_models.save_and_load import Save_Or_Load_Model
 from sklearn.model_selection import train_test_split
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
-from libs.power_law.power_law import PowerLaw
+
 
 
 class DL_Models:
@@ -125,7 +125,7 @@ class DL_Models:
                 The following part will take into account the metadata and input it to the PowerLaw
                 """
 
-                power_law=PowerLaw(frequency=link_frequency,polarization=link_polarization,L=link_L)
+
 
 
 
@@ -137,7 +137,7 @@ class DL_Models:
 
                 dme_vector = []
                 try:
-                    for row_value, row_time, row_interval in zip(list(df['RFInputPower']),list(df.Time), list(df.Interval)):
+                    for row_value, row_time, row_interval in zip(list(df['rain']),list(df.Time), list(df.Interval)):
 
                         #fill with nan for missing data
                         while time_value < dt.strptime(row_time, "%Y-%m-%d %H:%M:%S"):
@@ -150,7 +150,7 @@ class DL_Models:
 
                         if row_interval != 24:
                             if row_value!=np.nan:
-                                dme_vector.append(power_law.basic_attinuation_to_rain(float(row_value)))
+                                dme_vector.append(row_value)
                             else:
                                 dme_vector.append(np.nan)
                             time_value = dt.strptime(row_time, "%Y-%m-%d %H:%M:%S") + dt_delta(minutes=15)

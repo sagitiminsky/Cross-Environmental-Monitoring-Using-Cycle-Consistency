@@ -17,6 +17,8 @@ import zipfile
 import pandas as pd
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
+import numpy as np
+from libs.power_law.power_law import PowerLaw
 
 
 class DME_Scrapper_obj:
@@ -189,6 +191,17 @@ class DME_Scrapper_obj:
                 try:
                     bytes = zip_file_object.open(zip_file_name).read()
                     add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
+
+                    #zero-level
+                    median=np.median(add_df['RFInputPower'])
+
+                    #preprocessing
+                    power_law = PowerLaw(frequency=metadata_row['Link Frequency [MHz]'], polarization=metadata_row['Link Polarization'], L=metadata_row['Link Length (KM)'])
+
+
+                    #todo: 'RFInputPower' is only good for one type of link
+                    add_df['rain']=power_law.basic_attinuation_to_rain_multiple(add_df['RFInputPower']*(-1) - median)
+
                     merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
                     merged_df_dict[link_name]['frequency'] = self.is_different(metadata_row['Link Frequency [MHz]'],
                                                                                link_name=link_name,
