@@ -46,7 +46,7 @@ class PowerLaw:
         else:
             raise ValueError('provided frequency does not exist in table: {}'.format(frequency))
 
-    def basic_attinuation_to_rain(self, A):
+    def basic_attinuation_to_rain_single(self, A):
         '''
         :param A: a single dim. ndarray that represent the link attenuation in db/km
         :return: a single dim. ndarray that represent the rain amount in mm/h
@@ -71,6 +71,11 @@ class PowerLaw:
             A=0
 
         return (A / (self.L * self.a)) ** self.b
+
+    def basic_attinuation_to_rain_multiple(self,A_array):
+        R_array=[]
+        for A in A_array:
+            R_array.append(self.basic_attinuation_to_rain_single(A))
 
     def basic_rain_to_attinuation(self, R):
         '''
