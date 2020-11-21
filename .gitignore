@@ -3,7 +3,8 @@
 /wandb/
 /venv/
 *.pyc
-/libs/dataset
+/libs/dataset/dme
+/libs/dataset/ims
 
 #passwords and configurations
 config.py
