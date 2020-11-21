@@ -16,15 +16,16 @@ from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 
 
+
 class DL_Models:
     def __init__(self):
-        # load dme and ims data
         self.ims_data = np.array(self.load_ims_data())
         self.dme_data = np.array(self.load_dme_data())
         self.dme_max_value = np.max(self.dme_data)
         self.dme_min_value = np.min(self.dme_data)
         self.ims_max_value = np.max(self.ims_data)
         self.ims_min_value = np.min(self.ims_data)
+
 
         # norm. - https://datascience.stackexchange.com/questions/5885/how-to-scale-an-array-of-signed-integers-to-range-from-0-to-1
         self.dme_data = (np.array(self.dme_data) - self.dme_min_value) / (self.dme_max_value - self.dme_min_value)
@@ -97,50 +98,80 @@ class DL_Models:
 
     def load_dme_data(self):
         if not config.dme_pre_load_data:
-            x_test = np.empty((2, 4 * 24 * config.coverage))
+
+            """
+            The following dme_matrix is constructed as follows:
+            each element consist of link data, refrence can be found at link_matrix
+            """
+            dme_matrix=[]
+
             for link in os.listdir(config.dme_root_files):
+
+                """
+                The following link_matrix is constructed as follows:
+                each row consist of 4*96 values the represent a day's worth of mesasurement of a link
+                """
+                link_matrix=[]
+
                 link_name = link.split('_')[0]
-                link_type = link.split('_')[1]
+                link_type = config.dme_scrape_config['link_objects']['measurement_type']
+                link_frequency = int(int(link.split('_')[2])*10**-3) ## link frequency needs to be in Ghz and in metadata it is in MHz
+                link_polarization= link.split('_')[4]
+                link_L = link.split('_')[6]
+
                 print("now processing link: {} of type: {}".format(link_name, link_type))
+
+                """
+                The following part will take into account the metadata and input it to the PowerLaw
+                """
+
+
+
+
+
                 df = pd.read_csv(config.dme_root_files + '/' + link)
                 init_date = config.dme_scrape_config['link_objects']['date']['value']
-                time_value = dt.strptime(f"{init_date['yyyy']}-{init_date['mm']}-{init_date['dd']} 00:00:00",
-                                         "%Y-%m-%d %H:%M:%S") + dt_delta(days=1)
+                time_value = dt.strptime(f"{init_date['yyyy']}-{init_date['mm']}-{init_date['dd']} 00:00:00", "%Y-%m-%d %H:%M:%S") + dt_delta(days=1)
 
-                df_min_header = 'PowerRLTMmin' if link_type == 'SINK' else 'PowerTLTMmin'
-                df_max_header = 'PowerTLTMmax' if link_type == 'SOURCE' else 'PowerRLTMmax'
-                min_max_values = np.empty(2)
-                for row_min, row_max, row_time, row_interval in zip(list(df[df_min_header]), list(df[df_max_header]),
-                                                                    list(df.Time), list(df.Interval)):
 
-                    if row_interval != 24:
 
+                dme_vector = []
+                try:
+                    for row_value, row_time, row_interval in zip(list(df['rain']),list(df.Time), list(df.Interval)):
+
+                        #fill with nan for missing data
                         while time_value < dt.strptime(row_time, "%Y-%m-%d %H:%M:%S"):
-                            min_max_values = np.vstack((min_max_values, np.array([np.nan, np.nan])))
+                            dme_vector.append(np.nan)
+                            time_value = time_value + dt_delta(minutes=15)
+                            if len(dme_vector) == 4 * 24:
+                                link_matrix.append(dme_vector)
+                                dme_vector = []
+
+
+                        if row_interval != 24:
+                            if row_value!=np.nan:
+                                dme_vector.append(row_value)
+                            else:
+                                dme_vector.append(np.nan)
                             time_value = dt.strptime(row_time, "%Y-%m-%d %H:%M:%S") + dt_delta(minutes=15)
+                            if len(dme_vector) == 4 * 24:
+                                link_matrix.append(dme_vector)
+                                dme_vector = []
 
-                        min_max_values = np.vstack((min_max_values, np.array([row_min, row_max])))
+                    dme_matrix.append(link_matrix)
+                except KeyError:
+                    print("now processing link: {} of type: {} was not successful".format(link_name, link_type))
 
-                        time_value = dt.strptime(row_time, "%Y-%m-%d %H:%M:%S") + dt_delta(minutes=15)
-
-                min_max_values = min_max_values[1:].T
-
-                if min_max_values.shape == (2, 4 * 24 * config.coverage):
-                    x_test = np.vstack((x_test, min_max_values))
-                else:
-                    print('dim missmatch: {}'.format(min_max_values.shape))
-
-            x_test = x_test[2:]
 
             with open(config.dme_root_values + '/' + 'dme_values.pkl', 'wb') as f:
-                pickle.dump(x_test, f)
+                pickle.dump(dme_matrix, f)
 
-            return x_test
+            return dme_matrix
 
         else:
             with open(config.dme_root_values + '/' + 'dme_values.pkl', 'rb') as f:
-                x_test = pickle.load(f)
-            return x_test
+                dme_matrix = pickle.load(f)
+            return dme_matrix
 
     def pre_train_critic(self):
         model_manager = Save_Or_Load_Model()
