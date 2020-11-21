@@ -101,7 +101,7 @@ class DME_Scrapper_obj:
             }
 
         }
-        self.root_download = '/Users/sagit/Downloads/'
+        self.root_download = config.download_path
         self.root_data_files = config.dme_root_files
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
 
