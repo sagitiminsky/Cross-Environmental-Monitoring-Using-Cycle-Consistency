@@ -50,7 +50,7 @@ class DME_Scrapper_obj:
             'measurement_type': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[1]',
                 'xpath_select_all': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[1]/label/span',
-                'search_box':'//*[@id="ag-mini-filter"]/input',
+                'search_box': '//*[@id="ag-mini-filter"]/input',
                 'xpath_hc_radio_sink': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[1]/label',
                 'xpath_hc_radio_source': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[2]/label',
                 'xpath_tn_rfinputpower': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div/label/span',
@@ -152,7 +152,7 @@ class DME_Scrapper_obj:
 
     def create_merged_df_dict(self, metadata_df):
         d = {}
-        for index,metadata_row in metadata_df.iterrows():
+        for index, metadata_row in metadata_df.iterrows():
             link_name = metadata_row['Link ID']
             if link_name not in d:
                 d[link_name] = {
@@ -167,40 +167,47 @@ class DME_Scrapper_obj:
 
         return d
 
-    def is_different(self, new_param,link_name, link_dict, key):
+    def is_different(self, new_param, link_name, link_dict, key):
         if link_dict[key] and new_param != link_dict[key]:
             raise ValueError(
-                'link_name:{} current param: {} of type: {} is different from:{}'.format(link_name,link_dict[key], key, new_param))
+                'link_name:{} current param: {} of type: {} is different from:{}'.format(link_name, link_dict[key], key,
+                                                                                         new_param))
         return new_param
 
     def extract_merge_save_csv(self, file_paths):
         merged_df_dict = {}
         for data_path, metadata_path in zip(file_paths['data_paths'], file_paths['metadata_paths']):
             zip_file_object = zipfile.ZipFile(data_path, 'r')
-            metadata_df=pd.read_csv(metadata_path)
+            metadata_df = pd.read_csv(metadata_path)
             merged_df_dict = {**self.create_merged_df_dict(metadata_df=metadata_df), **merged_df_dict}
 
             for zip_file_name, (index, metadata_row) in zip(zip_file_object.namelist(),
-                                                        metadata_df.iterrows()):
+                                                            metadata_df.iterrows()):
 
-                split_date=metadata_row['Date '].split(' ')
-                date=split_date[3]+config.months[split_date[2]]+split_date[1]
-                file_name = metadata_row['Link Carrier']+'_'+metadata_row['Measurement Type']+'_'+metadata_row['Link ID']+'_'+date+'.txt'
-                link_name=metadata_row['Link ID']
+                split_date = metadata_row['Date '].split(' ')
+                date = split_date[3] + config.months[split_date[2]] + split_date[1]
+                file_name = metadata_row['Link Carrier'] + '_' + metadata_row['Measurement Type'] + '_' + metadata_row[
+                    'Link ID'] + '_' + date + '.txt'
+                link_name = metadata_row['Link ID']
 
                 try:
                     bytes = zip_file_object.open(zip_file_name).read()
                     add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
 
-                    #zero-level
-                    median=np.median(add_df['RFInputPower'])
+                    # zero-level
+                    median = np.median((-1) * add_df['RFInputPower'])
 
-                    #preprocessing
-                    power_law = PowerLaw(frequency=metadata_row['Link Frequency [MHz]'], polarization=metadata_row['Link Polarization'], L=metadata_row['Link Length (KM)'])
+                    # preprocessing - turn link frequency from MHz to GHz - because PowerLaw is in GHz
+                    power_law = PowerLaw(frequency=metadata_row['Link Frequency [MHz]'] / 1000,
+                                         polarization=metadata_row['Link Polarization'],
+                                         L=metadata_row['Link Length (KM)'])
 
+                    # todo: 'RFInputPower' is only good for one type of link
+                    add_df['rain'] = power_law.basic_attinuation_to_rain_multiple(
+                        (-1) * add_df['RFInputPower'] - median)
 
-                    #todo: 'RFInputPower' is only good for one type of link
-                    add_df['rain']=power_law.basic_attinuation_to_rain_multiple(add_df['RFInputPower']*(-1) - median)
+                    if 'DEBUG' in os.environ:
+                        print('DEBUG: link id is: {} median is:{}'.format(link_name, median))
 
                     merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
                     merged_df_dict[link_name]['frequency'] = self.is_different(metadata_row['Link Frequency [MHz]'],
@@ -216,17 +223,21 @@ class DME_Scrapper_obj:
                                                                        link_dict=merged_df_dict[link_name],
                                                                        key='L')
                 except KeyError:
-                    print('exit in metadata, but does not exist in data:{}'.format(file_name))
+                    print('exist in metadata, but does not exist in data:{}'.format(file_name))
 
         for link_name in merged_df_dict:
-            link_file_name = config.dme_root_files + link_name + '_' + \
-                             'frequency[MHz]:_' + str(merged_df_dict[link_name]['frequency']) + '_' + \
-                             'polarization:_' + merged_df_dict[link_name]['polarization'] + '_' + \
-                             'L[Km]:_' + str(merged_df_dict[link_name]['L']) + '_.csv'
 
-            self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
+            try:
+                link_file_name = config.dme_root_files + link_name + '_' + \
+                                 'frequency[GHz]:_' + str(float(merged_df_dict[link_name]['frequency']) / 1000) + '_' + \
+                                 'polarization:_' + merged_df_dict[link_name]['polarization'] + '_' + \
+                                 'L[Km]:_' + str(merged_df_dict[link_name]['L']) + '_.csv'
 
-            print("file saved to {}".format(link_file_name))
+                self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
+
+                print("file saved to {}".format(link_file_name))
+            except ValueError:
+                print('frequecy missing for this file: {}'.format(link_name))
 
     def preprocess_df(self, df):
         # order by time
@@ -274,16 +285,18 @@ class DME_Scrapper_obj:
                     filter.send_keys(day_iter['str_rep'])
                     self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-                    #wait to metadata to appear
+                    # wait to metadata to appear
 
                     # wait for data to be loaded
                     for i in range(5):
                         try:
-                            ActionChains(self.browser).context_click(self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
-                            WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located((By.XPATH, '//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]' )))
+                            ActionChains(self.browser).context_click(self.browser.find_element_by_xpath(
+                                '//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
+                            WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
+                                (By.XPATH, '//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]')))
 
                         except TimeoutException:
-                            if i==2:
+                            if i == 2:
                                 raise TimeoutException('Loading took too much time!')
                             else:
                                 print('Loading i:{} took too much time!'.format(i))
@@ -295,8 +308,7 @@ class DME_Scrapper_obj:
                     # download data
                     self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
 
-
-                    #next day
+                    # next day
                     day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
                     counter = counter + 1
 
@@ -418,8 +430,6 @@ class DME_Scrapper_obj:
                     shutil.rmtree(self.root_download + file)
                 except Exception:
                     raise Exception('unable to remove file : {}'.format(self.root_download + file))
-
-
 
 
 DME_Scrapper_obj().scrape()

@@ -18,7 +18,7 @@ class IMS_Scrapper_obj:
         self.station_id = station_id
         self._from = _from
         self._to = _to
-        self.root = 'libs/dataset/ims/raw'
+        self.root = config.ims_root_files
         self.station_meta_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}"
         self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
 
@@ -57,8 +57,9 @@ class IMS_Scrapper_obj:
 
 
 if __name__ == "__main__":
-    for index, station_id in enumerate(
-            config.ims_mapping[config.ims_scrape_config['left_bound']:config.ims_scrape_config['right_bound']]):
+    for index, station_id in enumerate(config.ims_mapping[config.ims_scrape_config['left_bound']:config.ims_scrape_config['right_bound']]):
+
         print('processing station: {}'.format(index + 1 + config.ims_scrape_config['left_bound']))
+
         IMS_Scrapper_obj(index=index + 1 + config.ims_scrape_config['left_bound'], station_id=station_id,
                          _from=config.ims_scrape_config['_from'], _to=config.ims_scrape_config['_to']).save_metadata()

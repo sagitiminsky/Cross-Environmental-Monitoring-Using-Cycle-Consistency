@@ -1,7 +1,6 @@
 import pandas as pd
-import numpy as np
 import config
-
+import numpy as np
 
 class PowerLaw:
     def __init__(self, frequency, polarization, L,chosen_power_law='Basic'):
@@ -21,7 +20,7 @@ class PowerLaw:
 
     def calculate_basic_power_law_constants(self, frequency,polarization):
         df = pd.read_csv(self.db_path)
-        row = df[df['frequency[Ghz]'] == frequency]
+        row = df.iloc[[df['frequency[Ghz]'].sub(frequency).abs().idxmin()]]
 
         if len(row) != 0:
 
@@ -77,6 +76,8 @@ class PowerLaw:
         for A in A_array:
             R_array.append(self.basic_attinuation_to_rain_single(A))
 
+        return R_array
+
     def basic_rain_to_attinuation(self, R):
         '''
         :param R: a single dim. ndarray that represent the rain amount in mm/h
@@ -90,4 +91,4 @@ class PowerLaw:
 
 
 if __name__ == "__main__":
-    PowerLaw(chosen_power_law='Basic',frequency=101,polarization='vertical',L=10)
+    PowerLaw(chosen_power_law='Basic',frequency=101,polarization='Vertical',L=10)
