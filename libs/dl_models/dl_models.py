@@ -19,7 +19,7 @@ from datetime import timedelta as dt_delta
 
 class DL_Models:
     def __init__(self):
-        # self.ims_data = np.array(self.load_ims_data())
+        self.ims_data = np.array(self.load_ims_data())
         self.dme_data = np.array(self.load_dme_data())
         self.dme_max_value = np.max(self.dme_data)
         self.dme_min_value = np.min(self.dme_data)

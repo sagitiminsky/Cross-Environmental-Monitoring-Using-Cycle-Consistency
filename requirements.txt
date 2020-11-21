@@ -11,14 +11,13 @@ Pillow==7.1.2
 numpy
 onnxruntime==1.2.0
 keras2onnx==1.6.1
+pandas==0.25.1
 
 #scrapper
 webdriver-manager
 
 #web-platform
-fastapi
 uvicorn
 jinja2
-yfinance
 sqlalchemy
 databases
