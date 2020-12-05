@@ -106,7 +106,7 @@ class DME_Scrapper_obj:
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
 
         if not os.path.isdir(self.root_data_files):
-            os.mkdir(self.root_data_files)
+            os.makedirs(self.root_data_files)
 
         # clear old
         self.delete_prev_from_downloads_if_poss()
@@ -125,8 +125,8 @@ class DME_Scrapper_obj:
 
         # accept alert
         time.sleep(3)
-        alert = self.browser.switch_to_alert()
-        alert.dismiss()
+        # alert = self.browser.switch_to_alert()
+        # alert.dismiss()
 
     def parse_date(self, d):
         return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
