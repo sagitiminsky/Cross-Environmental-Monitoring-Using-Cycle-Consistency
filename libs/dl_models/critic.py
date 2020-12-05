@@ -10,63 +10,20 @@ import os
 import ast
 import pickle
 import numpy as np
-from libs.dl_models.save_and_load import Save_Or_Load_Model
+from libs.dl_models.model_manager import Model_Manager
+from libs.dl_models.extractor import Extractor
 from sklearn.model_selection import train_test_split
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 
 
 
-class DL_Models:
-    def __init__(self):
-        self.ims_data = np.array(self.load_ims_data())
-        self.dme_data = np.array(self.load_dme_data())
-        self.dme_max_value = np.max(self.dme_data)
-        self.dme_min_value = np.min(self.dme_data)
-        self.ims_max_value = np.max(self.ims_data)
-        self.ims_min_value = np.min(self.ims_data)
-
-
-        # norm. - https://datascience.stackexchange.com/questions/5885/how-to-scale-an-array-of-signed-integers-to-range-from-0-to-1
-        self.dme_data = (np.array(self.dme_data) - self.dme_min_value) / (self.dme_max_value - self.dme_min_value)
-        self.ims_data = (np.array(self.ims_data) - self.ims_min_value) / (self.ims_max_value - self.ims_min_value)
-
-        # set dim.
-        self.m, self.k_m = self.dme_data.shape
-        self.n, self.k_n = self.ims_data.shape
-
-        print("X dim: {} - has {} links, {} samples each \nY dim: {} - has {} gauges, {} samples each".format(
-            self.dme_data.shape, self.m, self.k_m, self.ims_data.shape, self.n, self.k_n))
-
-        self.generator, self.generated_features = self.pre_train_generator()
+class Critic(Extractor):
+    def __init__(self,version):
+        super().__init__()
+        self.model_manager = Model_Manager(config.critic_path,version)
         self.critic = self.pre_train_critic()
 
-    def pre_train_generator(self):
-        model_manager = Save_Or_Load_Model()
-
-        if not config.load_pre_trained_generator:
-            run = wandb.init()
-            wandb_config = run.config
-            wandb_config.encoding_dim = config.generator_encoding_dim
-            wandb_config.epochs = config.generator_epoches
-
-            model = Sequential()
-            model.add(Dense(self.n))
-            model.add(Dense(config.generator_encoding_dim, activation='relu'))
-            model.add(Dense(self.m, activation='sigmoid'))
-            model.compile(optimizer='adam', loss='mse')
-
-            model.fit(self.dme_data.T[:int(len(self.dme_data) * 0.8)], self.ims_data.T[:int(len(self.ims_data) * 0.8)],
-                      epochs=config.generator_epoches,
-                      validation_data=(
-                          self.dme_data[int(len(self.dme_data) * 0.8):], self.ims_data[int(len(self.dme_data) * 0.8):]))
-
-            model_manager.save_onnx_model(model, config.generator_onnx_path)
-            model_manager.save_model(model, config.generator_path)
-        else:
-            model = model_manager.load_model(config.generator_path)
-
-        return model, [model.predict(x) for x in self.dme_data.T]
 
     def load_ims_data(self):
         if not config.ims_pre_load_data:
@@ -174,7 +131,6 @@ class DL_Models:
             return dme_matrix
 
     def pre_train_critic(self):
-        model_manager = Save_Or_Load_Model()
 
         if not config.load_pre_trained_critic:
 
@@ -204,8 +160,7 @@ class DL_Models:
             model.fit(X_train, is_GRA_train, epochs=config.critic_epochs, validation_data=(X_test, is_GRA_test),
                       callbacks=[WandbCallback(labels=labels)])
 
-            model_manager.save_onnx_model(model, config.critic_onnx_path)
-            model_manager.save_model(model, config.critic_path)
+            self.model_manager.save(model, version)
 
         else:
             model = model_manager.load_model(config.critic_path)
@@ -214,4 +169,4 @@ class DL_Models:
 
 
 if __name__ == "__main__":
-    DL_Models()
+    Critic(version="0.0.0")

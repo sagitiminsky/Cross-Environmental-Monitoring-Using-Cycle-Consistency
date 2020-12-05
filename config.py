@@ -31,6 +31,8 @@ date = {
     }
 }
 
+date_str_rep=add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']+'_'+add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']
+
 months = {
     'Jan':'01',
     'Feb':'02',
@@ -51,8 +53,8 @@ months = {
 #######################################
 
 ims_pre_load_data = False
-ims_root_files = f"libs/dataset/ims/raw_{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY'
-ims_root_values = 'libs/dataset/ims/processed'
+ims_root_files = f"libs/relics/datasets/ims/raw/{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY'
+ims_root_values = 'libs/relics/datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
     '241', '348', '202', '10', '106', '73', '353', '343', '62',
@@ -134,7 +136,7 @@ ims_mapping = [
     '64']
 ims_scrape_config = {
     '_from': f"{add_days_to_date(date['value'], delta_days=1)['str_rep']}",  # MM/DD/YYYY
-    '_to': f"{add_days_to_date(date['value_range'], delta_days=1)['str_rep']}",  # MM/DD/YYYY
+    '_to': f"{add_days_to_date(date['value_range'], delta_days=2)['str_rep']}",  # MM/DD/YYYY , delta_days=2
 
     'left_bound': 1 - 1,
     'right_bound': len(ims_mapping)
@@ -145,8 +147,8 @@ ims_scrape_config = {
 ################################
 
 dme_pre_load_data = False
-dme_root_files = f"libs/dataset/dme/raw_{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY
-dme_root_values = 'libs/dataset/dme/processed'
+dme_root_files = f"libs/relics/datasets/dme/raw/{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY
+dme_root_values = 'libs/relics/datasets/dme/processed'
 dme_scrape_config = {
     'username': 'SagiT',
     'password': 'W@st2020',
@@ -287,13 +289,11 @@ basic_db_path = 'libs/power_law/frequency_dependent_coefficients_for_estimating_
 load_pre_trained_generator = False
 generator_encoding_dim = 32
 generator_epoches = 10
-generator_onnx_path = 'libs/dl_models/generator/generator.onnx'
-generator_path = 'generator.keras'
+generator_path = 'libs/relics/models/generator'
 
 ################################
 ########### CRITIC #############
 ################################
 load_pre_trained_critic = False
 critic_epochs = 10
-critic_onnx_path = 'libs/dl_models/generator/critic.onnx'
-critic_path = 'critic.keras'
+critic_path = 'libs/relics/models/critic'
