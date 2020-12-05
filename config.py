@@ -51,7 +51,7 @@ months = {
 #######################################
 
 ims_pre_load_data = False
-ims_root_files = f"libs/dataset/ims/raw__{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=2)['str_rep_with_replace']}/" # MM/DD/YYYY'
+ims_root_files = f"libs/dataset/ims/raw_{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=2)['str_rep_with_replace']}/" # MM/DD/YYYY'
 ims_root_values = 'libs/dataset/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
