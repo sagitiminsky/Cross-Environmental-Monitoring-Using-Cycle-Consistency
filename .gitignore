@@ -3,6 +3,6 @@
 /wandb/
 /venv/
 *.pyc
-/libs/dataset/dme
-/libs/dataset/ims
+/libs/relics/datasets/dme
+/libs/relics/datasets/ims
 
