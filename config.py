@@ -3,7 +3,7 @@ from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 
 
-download_path='/Users/sagit/Downloads/'
+download_path='/Users/sagitiminsky/Downloads/'
 
 def parse_date(d):
     return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
@@ -20,9 +20,9 @@ def add_days_to_date(date, delta_days=0):
 
 date = {
     'value': {
-        'dd': '01',  # (+1) day for dme & ims
-        'mm': '01',
-        'yyyy': '2019'
+        'dd': '31',  # (+1) day for dme & ims
+        'mm': '12',
+        'yyyy': '2018'
     },
     'value_range': {
         'dd': '02',  # (+1) day for dme & ims
@@ -51,7 +51,7 @@ months = {
 #######################################
 
 ims_pre_load_data = False
-ims_root_files = f"libs/dataset/ims/raw_{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=2)['str_rep_with_replace']}/" # MM/DD/YYYY'
+ims_root_files = f"libs/dataset/ims/raw_{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY'
 ims_root_values = 'libs/dataset/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
@@ -134,7 +134,7 @@ ims_mapping = [
     '64']
 ims_scrape_config = {
     '_from': f"{add_days_to_date(date['value'], delta_days=1)['str_rep']}",  # MM/DD/YYYY
-    '_to': f"{add_days_to_date(date['value_range'], delta_days=2)['str_rep']}",  # MM/DD/YYYY
+    '_to': f"{add_days_to_date(date['value_range'], delta_days=1)['str_rep']}",  # MM/DD/YYYY
 
     'left_bound': 1 - 1,
     'right_bound': len(ims_mapping)
