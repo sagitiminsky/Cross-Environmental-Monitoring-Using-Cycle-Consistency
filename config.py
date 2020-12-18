@@ -32,6 +32,7 @@ date = {
 }
 
 date_str_rep=add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']+'_'+add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']
+date_datetime_rep=add_days_to_date(date['value'],delta_days=1)['datetime_rep']
 
 months = {
     'Jan':'01',
@@ -52,7 +53,6 @@ months = {
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_pre_load_data = False
 ims_root_files = f"libs/relics/datasets/ims/raw/{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY'
 ims_root_values = 'libs/relics/datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
@@ -146,7 +146,6 @@ ims_scrape_config = {
 ######### DME SCRAPPER #########
 ################################
 
-dme_pre_load_data = False
 dme_root_files = f"libs/relics/datasets/dme/raw/{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY
 dme_root_values = 'libs/relics/datasets/dme/processed'
 dme_scrape_config = {
@@ -282,6 +281,18 @@ coverage = (dt.strptime(value_range, "%m/%d/%y") - dt.strptime(value, "%m/%d/%y"
 ########## EVALUATE a,b,L POWER-LAW ###########
 ###############################################
 basic_db_path = 'libs/power_law/frequency_dependent_coefficients_for_estimating_specific.csv'
+
+########################################################################################################################
+###########################################    LEARNING   ##############################################################
+########################################################################################################################
+
+
+################################
+########## EXTRACTOR ###########
+################################
+ims_pre_load_data = True
+dme_pre_load_data = False
+
 
 ################################
 ########## GENERATOR ###########
