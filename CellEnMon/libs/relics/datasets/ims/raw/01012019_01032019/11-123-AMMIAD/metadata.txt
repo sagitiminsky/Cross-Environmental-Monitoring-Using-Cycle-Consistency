@@ -1,0 +1,5 @@
+stationId: 123
+stationName: AMMIAD
+location: {'latitude': 32.916, 'longitude': 35.533}
+timebase: 10
+regionId: 8

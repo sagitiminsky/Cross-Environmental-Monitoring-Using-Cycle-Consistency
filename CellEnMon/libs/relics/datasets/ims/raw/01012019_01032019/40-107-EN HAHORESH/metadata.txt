@@ -1,0 +1,5 @@
+stationId: 107
+stationName: EN HAHORESH
+location: {'latitude': 32.388, 'longitude': 34.938}
+timebase: 10
+regionId: 15

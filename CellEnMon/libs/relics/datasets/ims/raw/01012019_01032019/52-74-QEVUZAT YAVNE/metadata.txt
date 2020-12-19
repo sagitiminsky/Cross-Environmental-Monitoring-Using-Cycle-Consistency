@@ -1,0 +1,5 @@
+stationId: 74
+stationName: QEVUZAT YAVNE
+location: {'latitude': 31.816, 'longitude': 34.7}
+timebase: 10
+regionId: 14

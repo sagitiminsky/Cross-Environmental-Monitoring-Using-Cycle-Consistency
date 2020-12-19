@@ -1,0 +1,5 @@
+stationId: 211
+stationName: EN GEDI
+location: {'latitude': 31.419, 'longitude': 35.386}
+timebase: 10
+regionId: 10

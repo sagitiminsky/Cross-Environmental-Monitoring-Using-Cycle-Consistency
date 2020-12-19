@@ -1,0 +1,5 @@
+stationId: 206
+stationName: EDEN FARM
+location: {'latitude': 32.47, 'longitude': 35.489}
+timebase: 10
+regionId: 9

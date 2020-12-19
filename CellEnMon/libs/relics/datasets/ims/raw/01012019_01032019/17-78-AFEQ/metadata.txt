@@ -1,0 +1,5 @@
+stationId: 78
+stationName: AFEQ
+location: {'latitude': 32.848, 'longitude': 35.112}
+timebase: 10
+regionId: 15

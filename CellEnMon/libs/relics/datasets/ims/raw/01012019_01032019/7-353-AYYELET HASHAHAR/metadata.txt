@@ -1,0 +1,5 @@
+stationId: 353
+stationName: AYYELET HASHAHAR
+location: {'latitude': 33.02, 'longitude': 35.57}
+timebase: 10
+regionId: 9

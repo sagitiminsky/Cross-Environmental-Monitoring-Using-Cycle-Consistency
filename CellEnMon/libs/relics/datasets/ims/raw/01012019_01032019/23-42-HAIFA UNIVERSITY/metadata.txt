@@ -1,0 +1,5 @@
+stationId: 42
+stationName: HAIFA UNIVERSITY
+location: {'latitude': 32.762, 'longitude': 35.021}
+timebase: 10
+regionId: 11

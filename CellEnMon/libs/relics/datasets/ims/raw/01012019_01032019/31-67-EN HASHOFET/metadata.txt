@@ -1,0 +1,5 @@
+stationId: 67
+stationName: EN HASHOFET
+location: {'latitude': 32.633, 'longitude': 35.099}
+timebase: 10
+regionId: 11

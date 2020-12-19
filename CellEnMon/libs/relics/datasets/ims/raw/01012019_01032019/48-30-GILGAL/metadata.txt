@@ -1,0 +1,5 @@
+stationId: 30
+stationName: GILGAL
+location: {'latitude': 31.983, 'longitude': 35.45}
+timebase: 10
+regionId: 9

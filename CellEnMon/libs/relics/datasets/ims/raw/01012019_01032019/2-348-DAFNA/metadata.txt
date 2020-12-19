@@ -1,0 +1,5 @@
+stationId: 348
+stationName: DAFNA
+location: {'latitude': 33.23, 'longitude': 35.6}
+timebase: 10
+regionId: 9

@@ -1,0 +1,5 @@
+stationId: 218
+stationName: MAALE ADUMMIM
+location: {'latitude': 31.773, 'longitude': 35.296}
+timebase: 10
+regionId: 7

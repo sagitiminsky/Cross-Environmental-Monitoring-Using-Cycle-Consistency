@@ -1,0 +1,5 @@
+stationId: 75
+stationName: BEIT JIMAL
+location: {'latitude': 31.716, 'longitude': 34.966}
+timebase: 10
+regionId: 7

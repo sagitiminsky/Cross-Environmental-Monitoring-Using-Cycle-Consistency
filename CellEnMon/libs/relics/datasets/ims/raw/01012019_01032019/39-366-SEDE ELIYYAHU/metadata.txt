@@ -1,0 +1,5 @@
+stationId: 366
+stationName: SEDE ELIYYAHU
+location: {'latitude': 32.44, 'longitude': 35.51}
+timebase: 10
+regionId: 9

@@ -1,0 +1,5 @@
+stationId: 90
+stationName: ITAMAR
+location: {'latitude': 32.166, 'longitude': 35.349}
+timebase: 10
+regionId: 7

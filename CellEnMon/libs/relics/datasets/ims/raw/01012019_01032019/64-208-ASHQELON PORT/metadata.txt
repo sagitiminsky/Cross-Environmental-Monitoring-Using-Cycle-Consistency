@@ -1,0 +1,5 @@
+stationId: 208
+stationName: ASHQELON PORT
+location: {'latitude': 31.633, 'longitude': 34.516}
+timebase: 10
+regionId: 14

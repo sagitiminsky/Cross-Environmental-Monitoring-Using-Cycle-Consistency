@@ -1,0 +1,5 @@
+stationId: 121
+stationName: HAFEZ HAYYIM
+location: {'latitude': 31.793, 'longitude': 34.804}
+timebase: 10
+regionId: 14

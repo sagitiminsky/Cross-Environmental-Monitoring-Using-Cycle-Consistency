@@ -1,0 +1,5 @@
+stationId: 271
+stationName: AVDAT
+location: {'latitude': 30.8, 'longitude': 34.77}
+timebase: 10
+regionId: 12

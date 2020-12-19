@@ -1,0 +1,5 @@
+stationId: 28
+stationName: SHANI
+location: {'latitude': 31.35, 'longitude': 35.049}
+timebase: 10
+regionId: 7

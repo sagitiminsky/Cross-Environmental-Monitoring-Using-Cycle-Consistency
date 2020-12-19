@@ -1,0 +1,5 @@
+stationId: 10
+stationName: MEROM GOLAN PICMAN
+location: {'latitude': 33.133, 'longitude': 35.783}
+timebase: 10
+regionId: 8

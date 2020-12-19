@@ -1,0 +1,5 @@
+stationId: 29
+stationName: ARAD
+location: {'latitude': 31.251, 'longitude': 35.186}
+timebase: 10
+regionId: 7

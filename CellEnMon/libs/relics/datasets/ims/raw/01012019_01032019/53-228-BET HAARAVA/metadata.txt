@@ -1,0 +1,5 @@
+stationId: 228
+stationName: BET HAARAVA
+location: {'latitude': 31.805, 'longitude': 35.501}
+timebase: 10
+regionId: 10

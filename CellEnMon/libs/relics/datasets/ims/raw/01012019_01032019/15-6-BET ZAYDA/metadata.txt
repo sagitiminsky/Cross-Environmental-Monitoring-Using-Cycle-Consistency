@@ -1,0 +1,5 @@
+stationId: 6
+stationName: BET ZAYDA
+location: {'latitude': 32.881, 'longitude': 35.653}
+timebase: 10
+regionId: 9
