@@ -291,20 +291,16 @@ basic_db_path = 'libs/power_law/frequency_dependent_coefficients_for_estimating_
 ########## EXTRACTOR ###########
 ################################
 ims_pre_load_data = True
-dme_pre_load_data = False
+dme_pre_load_data = True
 
 
 ################################
-########## GENERATOR ###########
+########## AUGMENTOR ###########
 ################################
-load_pre_trained_generator = False
-generator_encoding_dim = 32
-generator_epoches = 10
-generator_path = 'libs/relics/models/generator'
+"""
+0 -  no augmentation
+1 - mix up
+2 - cut mux
+"""
+augmentations=[0]
 
-################################
-########### CRITIC #############
-################################
-load_pre_trained_critic = False
-critic_epochs = 10
-critic_path = 'libs/relics/models/critic'

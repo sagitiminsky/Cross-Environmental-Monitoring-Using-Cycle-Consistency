@@ -1,6 +1,6 @@
 import pandas as pd
-import config
-import numpy as np
+import CellEnMon.config as config
+
 
 class PowerLaw:
     def __init__(self, frequency, polarization, L,chosen_power_law='Basic'):
