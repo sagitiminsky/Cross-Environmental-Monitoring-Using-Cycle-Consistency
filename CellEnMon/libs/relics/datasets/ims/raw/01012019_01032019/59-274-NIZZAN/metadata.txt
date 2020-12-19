@@ -1,0 +1,5 @@
+stationId: 274
+stationName: NIZZAN
+location: {'latitude': 31.733, 'longitude': 34.635}
+timebase: 10
+regionId: 14

@@ -1,0 +1,5 @@
+stationId: 62
+stationName: ZEFAT HAR KENAAN
+location: {'latitude': 32.982, 'longitude': 35.507}
+timebase: 10
+regionId: 8

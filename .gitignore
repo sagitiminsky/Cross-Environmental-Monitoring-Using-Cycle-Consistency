@@ -6,3 +6,5 @@
 /libs/relics/datasets/dme
 /libs/relics/datasets/ims
 
+/CellEnMon/venv/
+/CellEnMon/libs/relics/datasets/dme2ims/

@@ -1,0 +1,5 @@
+stationId: 82
+stationName: NEGBA
+location: {'latitude': 31.658, 'longitude': 34.681}
+timebase: 10
+regionId: 14

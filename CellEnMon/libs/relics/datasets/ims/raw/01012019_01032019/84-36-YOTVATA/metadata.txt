@@ -1,0 +1,5 @@
+stationId: 36
+stationName: YOTVATA
+location: {'latitude': 29.886, 'longitude': 35.078}
+timebase: 10
+regionId: 10

@@ -1,0 +1,5 @@
+stationId: 355
+stationName: MASSADA
+location: {'latitude': 32.67, 'longitude': 35.6}
+timebase: 10
+regionId: 9

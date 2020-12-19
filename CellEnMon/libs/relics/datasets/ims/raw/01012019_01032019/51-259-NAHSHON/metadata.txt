@@ -1,0 +1,5 @@
+stationId: 259
+stationName: NAHSHON
+location: {'latitude': 31.834, 'longitude': 34.961}
+timebase: 10
+regionId: 7

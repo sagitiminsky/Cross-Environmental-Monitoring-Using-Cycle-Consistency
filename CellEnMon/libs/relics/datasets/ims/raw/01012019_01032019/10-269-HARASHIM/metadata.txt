@@ -1,0 +1,5 @@
+stationId: 269
+stationName: HARASHIM
+location: {'latitude': 32.956, 'longitude': 35.328}
+timebase: 10
+regionId: 8

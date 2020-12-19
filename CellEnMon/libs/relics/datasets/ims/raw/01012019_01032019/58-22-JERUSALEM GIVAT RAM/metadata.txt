@@ -1,0 +1,5 @@
+stationId: 22
+stationName: JERUSALEM GIVAT RAM
+location: {'latitude': 31.771, 'longitude': 35.197}
+timebase: 10
+regionId: 7

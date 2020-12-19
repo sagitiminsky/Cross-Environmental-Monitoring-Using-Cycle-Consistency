@@ -1,0 +1,5 @@
+stationId: 275
+stationName: HAKFAR HAYAROK
+location: {'latitude': None, 'longitude': None}
+timebase: 5
+regionId: 13

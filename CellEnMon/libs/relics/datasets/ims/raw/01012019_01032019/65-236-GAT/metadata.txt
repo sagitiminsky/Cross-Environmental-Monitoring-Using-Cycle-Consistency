@@ -1,0 +1,5 @@
+stationId: 236
+stationName: GAT
+location: {'latitude': 31.616, 'longitude': 34.783}
+timebase: 10
+regionId: 14

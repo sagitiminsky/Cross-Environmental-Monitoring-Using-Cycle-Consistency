@@ -1,0 +1,5 @@
+stationId: 16
+stationName: AFULA NIR HAEMEQ
+location: {'latitude': 32.597, 'longitude': 35.278}
+timebase: 10
+regionId: 9

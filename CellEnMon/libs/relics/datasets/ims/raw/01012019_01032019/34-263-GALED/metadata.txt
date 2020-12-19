@@ -1,0 +1,5 @@
+stationId: 263
+stationName: GALED
+location: {'latitude': None, 'longitude': None}
+timebase: 10
+regionId: 11

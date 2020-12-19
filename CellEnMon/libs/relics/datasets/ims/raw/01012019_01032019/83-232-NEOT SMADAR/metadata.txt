@@ -1,0 +1,5 @@
+stationId: 232
+stationName: NEOT SMADAR
+location: {'latitude': 30.048, 'longitude': 35.023}
+timebase: 10
+regionId: 10

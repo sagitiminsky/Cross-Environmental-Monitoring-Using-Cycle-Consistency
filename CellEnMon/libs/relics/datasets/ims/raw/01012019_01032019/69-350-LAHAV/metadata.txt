@@ -1,0 +1,5 @@
+stationId: 350
+stationName: LAHAV
+location: {'latitude': 31.3, 'longitude': 34.87}
+timebase: 10
+regionId: 12

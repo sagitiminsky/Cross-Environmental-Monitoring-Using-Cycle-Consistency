@@ -1,0 +1,7 @@
+channelId,name,alias,active,typeId,pollutantId,units,description
+1,Rain,,True,1,,mm,
+2,TD,,True,32,,degC,
+3,RH,,True,27,,%,
+4,TG,,True,33,,degC,
+5,TDmax,,True,41,,degC,
+6,TDmin,,True,42,,degC,

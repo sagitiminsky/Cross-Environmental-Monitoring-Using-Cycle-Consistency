@@ -1,0 +1,5 @@
+stationId: 13
+stationName: TAVOR KADOORIE
+location: {'latitude': 32.7, 'longitude': 35.4}
+timebase: 10
+regionId: 8

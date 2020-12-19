@@ -1,0 +1,5 @@
+stationId: 202
+stationName: KEFAR BLUM
+location: {'latitude': 33.173, 'longitude': 35.613}
+timebase: 10
+regionId: 9

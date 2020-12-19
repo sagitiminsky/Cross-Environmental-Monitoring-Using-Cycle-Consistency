@@ -1,0 +1,5 @@
+stationId: 54
+stationName: BET DAGAN
+location: {'latitude': 32.009, 'longitude': 34.814}
+timebase: 10
+regionId: 13

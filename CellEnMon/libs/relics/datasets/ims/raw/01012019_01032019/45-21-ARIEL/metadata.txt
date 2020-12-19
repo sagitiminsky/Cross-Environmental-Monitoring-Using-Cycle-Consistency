@@ -1,0 +1,5 @@
+stationId: 21
+stationName: ARIEL
+location: {'latitude': 32.106, 'longitude': 35.212}
+timebase: 10
+regionId: 7

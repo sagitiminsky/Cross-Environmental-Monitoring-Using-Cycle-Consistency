@@ -1,0 +1,5 @@
+stationId: 73
+stationName: ELON
+location: {'latitude': 33.066, 'longitude': 35.217}
+timebase: 10
+regionId: 8

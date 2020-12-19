@@ -1,0 +1,4 @@
+channelId,name,alias,active,typeId,pollutantId,units,description
+9,Rain,,True,1,,mm,
+12,TD,,True,32,,degC,
+13,RH,,True,27,,%,

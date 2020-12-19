@@ -1,0 +1,5 @@
+stationId: 64
+stationName: ELAT
+location: {'latitude': 29.553, 'longitude': 34.954}
+timebase: 10
+regionId: 10

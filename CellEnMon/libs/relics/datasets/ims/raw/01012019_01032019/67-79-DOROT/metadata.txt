@@ -1,0 +1,5 @@
+stationId: 79
+stationName: DOROT
+location: {'latitude': 31.5, 'longitude': 34.633}
+timebase: 10
+regionId: 14
