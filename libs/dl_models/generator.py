@@ -6,9 +6,6 @@ from libs.dl_models.model_manager import Model_Manager
 from libs.dl_models.extractor import Extractor
 
 
-
-
-
 class Generator(Extractor):
     def __init__(self, version):
 
