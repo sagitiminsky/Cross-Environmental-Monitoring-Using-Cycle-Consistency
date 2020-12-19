@@ -40,7 +40,7 @@ class Extractor:
               "Y dim: {} - has {} gauges, {} samples each, {} days"
             .format(
             self.dme_data_tiled.shape, self.m, self.k_m/2, config.coverage,
-            self.ims_ims_tiled.shape, self.n, self.k_n/3, config.coverage)
+            self.ims_data_tiled.shape, self.n, self.k_n/3, config.coverage)
         )
 
     def tile_sum(self,tile,row,column,type):
@@ -73,7 +73,7 @@ class Extractor:
             ims_matrix = np.empty((1, 6 * 24 * config.coverage))
             ims_order=np.empty(1)
             for index, station_folder in enumerate(os.listdir(config.ims_root_files)):
-                print("extractor: now processing gauge: {}".format(station_folder))
+                print("preprocessing: now processing gauge: {}".format(station_folder))
                 try:
                     df = pd.read_csv(config.ims_root_files + '/' + station_folder + '/' + 'data.csv')
                     ims_vec = np.empty(1)
@@ -124,7 +124,7 @@ class Extractor:
                 link_name = link.split('_')[0]
                 link_type = config.dme_scrape_config['link_objects']['measurement_type']
 
-                print("extractor: now processing link: {} of type: {}".format(link_name, link_type))
+                print("preprocessing: now processing link: {} of type: {}".format(link_name, link_type))
 
                 df = pd.read_csv(config.dme_root_files + '/' + link)
 
@@ -150,7 +150,7 @@ class Extractor:
                         if dme_vec[1:].size < valid_row_number:
 
                             if time_value > dt.strptime(row_time, "%Y-%m-%d %H:%M:%S"):
-                                print('Something went wrong, extractor time missmatch, skipping {}...'.format(link_name))
+                                print('Something went wrong, preprocessing time missmatch, skipping {}...'.format(link_name))
                                 skip=True
                                 break
 
@@ -196,5 +196,3 @@ class Extractor:
         return dme_matrix,dme_order
 
 
-if __name__ == "__main__":
-    Extractor()
