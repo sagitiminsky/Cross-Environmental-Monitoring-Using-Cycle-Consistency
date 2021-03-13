@@ -175,7 +175,16 @@ dme_scrape_config = {
 
         },
         'measurement_type': 'TN_RFInputPower',
-        'data_precentage': {},
+        'data_precentage': {
+            'select': 'Equals',
+            'value': '100',
+
+            # 'Equals'
+            # 'Greater than'
+            # 'Less than'
+            # 'Not equal'
+            # 'In range'
+        },
         'sampling_period_description': {},
         'sampling_period[sec]': '15',
 
