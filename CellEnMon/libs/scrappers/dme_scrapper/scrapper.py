@@ -32,8 +32,8 @@ class DME_Scrapper_obj:
         self.delay = 10
         self.selector = '//*[@id="btnExportByFilter"]'
         self.xpaths = {
-            'xpath_download': '//*[@id="btnExportByFilter"]',
-            'xpath_metadata_download': '/html/body/div[3]/div/div[7]/div/div/div[1]/span[2]',
+            'xpath_download': '//*[@id="btnExport"]',
+            'xpath_metadata_download': '//*[@id="btnExportMetadata"]',
             'link_id': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[1]',
                 'xpath_select': '',
@@ -56,6 +56,12 @@ class DME_Scrapper_obj:
                 'xpath_tn_rfinputpower': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div/label/span',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
 
+            },
+            'data_precentage':{
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[1]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
             },
             'sampling_period[sec]': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[1]/span[2]',
@@ -153,7 +159,7 @@ class DME_Scrapper_obj:
     def create_merged_df_dict(self, metadata_df):
         d = {}
         for index, metadata_row in metadata_df.iterrows():
-            link_name = metadata_row['Link ID']
+            link_name = metadata_row['link_id']
             if link_name not in d:
                 d[link_name] = {
                     'data': pd.DataFrame(),
@@ -175,6 +181,7 @@ class DME_Scrapper_obj:
         return new_param
 
     def extract_merge_save_csv(self, file_paths):
+        print("starting extraction...")
         merged_df_dict = {}
         for data_path, metadata_path in zip(file_paths['data_paths'], file_paths['metadata_paths']):
             zip_file_object = zipfile.ZipFile(data_path, 'r')
@@ -184,11 +191,8 @@ class DME_Scrapper_obj:
             for zip_file_name, (index, metadata_row) in zip(zip_file_object.namelist(),
                                                             metadata_df.iterrows()):
 
-                split_date = metadata_row['Date '].split(' ')
-                date = split_date[3] + config.months[split_date[2]] + split_date[1]
-                file_name = metadata_row['Link Carrier'] + '_' + metadata_row['Measurement Type'] + '_' + metadata_row[
-                    'Link ID'] + '_' + date + '.txt'
-                link_name = metadata_row['Link ID']
+                file_name = metadata_row['carrier'] + '_' + metadata_row['link_id'] + '.txt'
+                link_name = metadata_row['link_id']
 
                 try:
                     bytes = zip_file_object.open(zip_file_name).read()
@@ -198,9 +202,9 @@ class DME_Scrapper_obj:
                     median = np.median((-1) * add_df['RFInputPower'])
 
                     # preprocessing - turn link frequency from MHz to GHz - because PowerLaw is in GHz
-                    power_law = PowerLaw(frequency=metadata_row['Link Frequency [MHz]'] / 1000,
-                                         polarization=metadata_row['Link Polarization'],
-                                         L=metadata_row['Link Length (KM)'])
+                    power_law = PowerLaw(frequency=metadata_row['frequency'] / 1000, # Link Frequency [MHz]
+                                         polarization=metadata_row['polarization'],
+                                         L=metadata_row['length'])
 
                     # todo: 'RFInputPower' is only good for one type of link
                     add_df['rain'] = power_law.basic_attinuation_to_rain_multiple(
@@ -210,20 +214,23 @@ class DME_Scrapper_obj:
                         print('DEBUG: link id is: {} median is:{}'.format(link_name, median))
 
                     merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
-                    merged_df_dict[link_name]['frequency'] = self.is_different(metadata_row['Link Frequency [MHz]'],
+                    merged_df_dict[link_name]['frequency'] = self.is_different(metadata_row['frequency'],
                                                                                link_name=link_name,
                                                                                link_dict=merged_df_dict[link_name],
                                                                                key='frequency')
-                    merged_df_dict[link_name]['polarization'] = self.is_different(metadata_row['Link Polarization'],
+                    merged_df_dict[link_name]['polarization'] = self.is_different(metadata_row['polarization'],
                                                                                   link_name=link_name,
                                                                                   link_dict=merged_df_dict[link_name],
                                                                                   key='polarization')
-                    merged_df_dict[link_name]['L'] = self.is_different(metadata_row['Link Length (KM)'],
+                    merged_df_dict[link_name]['L'] = self.is_different(metadata_row['length'],
                                                                        link_name=link_name,
                                                                        link_dict=merged_df_dict[link_name],
                                                                        key='L')
                 except KeyError:
                     print('exist in metadata, but does not exist in data:{}'.format(file_name))
+
+        print('extraction done.')
+        print('starting csv save...')
 
         for link_name in merged_df_dict:
 
@@ -238,6 +245,8 @@ class DME_Scrapper_obj:
                 print("file saved to {}".format(link_file_name))
             except ValueError:
                 print('frequecy missing for this file: {}'.format(link_name))
+
+        print('csv done.')
 
     def preprocess_df(self, df):
         # order by time
@@ -262,7 +271,7 @@ class DME_Scrapper_obj:
         if mux == 'date':
             pass
 
-        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux == 'link_frequency[mhz]':
+        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux == 'link_frequency[mhz]' or mux == 'data_precentage':
             Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
                 select['select'])
             filter.send_keys(select_value)
@@ -285,28 +294,15 @@ class DME_Scrapper_obj:
                     filter.send_keys(day_iter['str_rep'])
                     self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-                    # wait to metadata to appear
-
-                    # wait for data to be loaded
-                    for i in range(5):
-                        try:
-                            ActionChains(self.browser).context_click(self.browser.find_element_by_xpath(
-                                '//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
-                            WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
-                                (By.XPATH, '//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]')))
-
-                        except TimeoutException:
-                            if i == 2:
-                                raise TimeoutException('Loading took too much time!')
-                            else:
-                                print('Loading i:{} took too much time!'.format(i))
-
                     # download metadata
-                    self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
                     self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
+                    WebDriverWait(self.browser, self.delay).until(EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
+
+                    time.sleep(1)
 
                     # download data
                     self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+                    WebDriverWait(self.browser, self.delay).until(EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
 
                     # next day
                     day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
@@ -372,13 +368,16 @@ class DME_Scrapper_obj:
         # Link frequency[MHz]
         self.ranged_filter('link_frequency[mhz]')
 
+        # data_precentage
+        self.ranged_filter('data_precentage')
+
         # date
         self.ranged_filter('date')
 
-        time.sleep(30)
+        time.sleep(5)
 
-        data_paths = [self.root_download + f for f in os.listdir(self.root_download) if 'cldb' in f]
-        metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if 'export' in f]
+        data_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.zip' in f and 'cldb' in f]
+        metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.csv' in f and 'cldb' in f]
 
         data_paths.sort(key=os.path.getmtime)
         metadata_paths.sort(key=os.path.getmtime)
@@ -400,17 +399,6 @@ class DME_Scrapper_obj:
 
         browser.find_element_by_xpath(remember_me_xpth).click()
         browser.find_element_by_xpath(submit_button).click()
-
-    def wait_to_element_load(self, xpath):
-        try:
-            # wait for data to be loaded
-            WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located((By.XPATH, xpath)))
-
-        except TimeoutException:
-            print('Loading took too much time!')
-
-        finally:
-            self.browser.quit()
 
     def delete_prev_data_files_if_poss(self):
         'deletes from local directory'
