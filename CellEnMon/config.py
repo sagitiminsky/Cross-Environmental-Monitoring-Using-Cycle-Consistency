@@ -25,7 +25,7 @@ date = {
         'yyyy': '2018'
     },
     'value_range': {
-        'dd': '02',  # (+1) day for dme & ims
+        'dd': '01',  # (+1) day for dme & ims
         'mm': '01',
         'yyyy': '2019'
     }

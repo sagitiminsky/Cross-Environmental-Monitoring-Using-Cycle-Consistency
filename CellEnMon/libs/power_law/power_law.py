@@ -1,5 +1,5 @@
 import pandas as pd
-import CellEnMon.config as config
+import config as config
 
 
 class PowerLaw:
