@@ -1,5 +1,5 @@
 import pandas as pd
-import config as config
+import CellEnMon.config as config
 
 
 class PowerLaw:
@@ -13,13 +13,12 @@ class PowerLaw:
         self.L = float(L)
 
         if chosen_power_law == 'Basic':
-            self.db_path = config.basic_db_path
             self.a, self.b = self.calculate_basic_power_law_constants(frequency,polarization)
         else:
             raise NotImplementedError('power law was not implemented {}'.format(chosen_power_law))
 
     def calculate_basic_power_law_constants(self, frequency,polarization):
-        df = pd.read_csv(self.db_path)
+        df = pd.read_csv(config.basic_db_path)
         row = df.iloc[[df['frequency[Ghz]'].sub(frequency).abs().idxmin()]]
 
         if len(row) != 0:

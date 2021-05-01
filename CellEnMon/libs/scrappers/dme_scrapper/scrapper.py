@@ -1,5 +1,5 @@
 import time
-import config as config
+import CellEnMon.config as config
 import os
 import shutil
 import io

@@ -1,5 +1,0 @@
-stationId: 33
-stationName: HAZEVA
-location: {'latitude': 30.51, 'longitude': 35.14}
-timebase: 10
-regionId: 10

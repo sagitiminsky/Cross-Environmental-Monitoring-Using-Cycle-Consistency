@@ -1,5 +1,0 @@
-stationId: 25
-stationName: NETIV HALAMED HE
-location: {'latitude': 31.683, 'longitude': 34.983}
-timebase: 10
-regionId: 7

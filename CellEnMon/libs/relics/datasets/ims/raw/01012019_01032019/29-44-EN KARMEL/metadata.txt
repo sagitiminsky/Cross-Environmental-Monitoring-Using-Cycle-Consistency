@@ -1,5 +1,0 @@
-stationId: 44
-stationName: EN KARMEL
-location: {'latitude': 32.682, 'longitude': 34.96}
-timebase: 10
-regionId: 15

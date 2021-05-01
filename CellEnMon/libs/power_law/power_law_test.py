@@ -1,6 +1,6 @@
 import unittest
 from libs.power_law.power_law import PowerLaw
-import config
+import CellEnMon.config as config
 import pandas as pd
 
 

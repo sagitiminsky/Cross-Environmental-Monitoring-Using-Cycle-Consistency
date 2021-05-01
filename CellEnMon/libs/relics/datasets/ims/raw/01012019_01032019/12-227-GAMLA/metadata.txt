@@ -1,5 +1,0 @@
-stationId: 227
-stationName: GAMLA
-location: {'latitude': 32.907, 'longitude': 35.748}
-timebase: 10
-regionId: 8

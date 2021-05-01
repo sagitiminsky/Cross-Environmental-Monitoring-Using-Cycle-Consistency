@@ -1,7 +1,7 @@
 import json
 import requests
 import pandas as pd
-import config
+import CellEnMon.config as config
 import os
 from datetime import datetime as dt
 

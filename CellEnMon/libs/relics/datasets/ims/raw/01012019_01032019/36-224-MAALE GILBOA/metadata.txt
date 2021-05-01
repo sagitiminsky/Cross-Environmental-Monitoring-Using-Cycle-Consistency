@@ -1,5 +1,0 @@
-stationId: 224
-stationName: MAALE GILBOA
-location: {'latitude': 32.481, 'longitude': 35.415}
-timebase: 10
-regionId: 7

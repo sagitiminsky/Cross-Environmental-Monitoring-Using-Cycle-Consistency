@@ -1,5 +1,0 @@
-stationId: 46
-stationName: HADERA PORT
-location: {'latitude': 32.474, 'longitude': 34.883}
-timebase: 10
-regionId: 15

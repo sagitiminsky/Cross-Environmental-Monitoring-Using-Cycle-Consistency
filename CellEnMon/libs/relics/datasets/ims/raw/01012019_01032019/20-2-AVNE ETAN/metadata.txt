@@ -1,5 +1,0 @@
-stationId: 2
-stationName: AVNE ETAN
-location: {'latitude': 32.817, 'longitude': 35.763}
-timebase: 10
-regionId: 8

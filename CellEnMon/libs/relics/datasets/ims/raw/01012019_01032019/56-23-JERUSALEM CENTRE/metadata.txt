@@ -1,5 +1,0 @@
-stationId: 23
-stationName: JERUSALEM CENTRE
-location: {'latitude': 31.781, 'longitude': 35.222}
-timebase: 10
-regionId: 7

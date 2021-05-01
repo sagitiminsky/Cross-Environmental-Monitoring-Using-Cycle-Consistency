@@ -1,5 +1,0 @@
-stationId: 343
-stationName: SHAVE ZIYYON
-location: {'latitude': 32.98, 'longitude': 35.09}
-timebase: 10
-regionId: 15

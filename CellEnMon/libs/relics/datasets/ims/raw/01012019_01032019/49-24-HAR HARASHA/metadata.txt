@@ -1,5 +1,0 @@
-stationId: 24
-stationName: HAR HARASHA
-location: {'latitude': 31.933, 'longitude': 35.15}
-timebase: 10
-regionId: 7

@@ -1,5 +1,0 @@
-stationId: 207
-stationName: PARAN
-location: {'latitude': 30.367, 'longitude': 35.148}
-timebase: 10
-regionId: 10

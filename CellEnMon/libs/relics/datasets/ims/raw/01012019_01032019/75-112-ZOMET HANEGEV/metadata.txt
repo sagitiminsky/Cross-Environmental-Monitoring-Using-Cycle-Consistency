@@ -1,5 +1,0 @@
-stationId: 112
-stationName: ZOMET HANEGEV
-location: {'latitude': 31.066, 'longitude': 34.849}
-timebase: 10
-regionId: 12

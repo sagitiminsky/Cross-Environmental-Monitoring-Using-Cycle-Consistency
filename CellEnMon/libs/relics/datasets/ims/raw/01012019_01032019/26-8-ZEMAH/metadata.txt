@@ -1,5 +1,0 @@
-stationId: 8
-stationName: ZEMAH
-location: {'latitude': 32.704, 'longitude': 35.584}
-timebase: 10
-regionId: 9

@@ -1,5 +1,0 @@
-stationId: 106
-stationName: ROSH HANIQRA
-location: {'latitude': 33.081, 'longitude': 35.107}
-timebase: 10
-regionId: 15

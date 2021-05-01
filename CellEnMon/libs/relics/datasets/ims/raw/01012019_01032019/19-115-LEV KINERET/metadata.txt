@@ -1,5 +1,0 @@
-stationId: 115
-stationName: LEV KINERET
-location: {'latitude': 32.816, 'longitude': 35.599}
-timebase: 10
-regionId: 9

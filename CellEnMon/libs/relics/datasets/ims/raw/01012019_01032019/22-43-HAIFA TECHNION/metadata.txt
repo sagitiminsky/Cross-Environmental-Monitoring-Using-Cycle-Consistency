@@ -1,5 +1,0 @@
-stationId: 43
-stationName: HAIFA TECHNION
-location: {'latitude': 32.766, 'longitude': 35.016}
-timebase: 10
-regionId: 11

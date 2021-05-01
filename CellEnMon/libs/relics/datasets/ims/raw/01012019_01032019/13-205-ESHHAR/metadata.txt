@@ -1,5 +1,0 @@
-stationId: 205
-stationName: ESHHAR
-location: {'latitude': 32.883, 'longitude': 35.299}
-timebase: 10
-regionId: 8

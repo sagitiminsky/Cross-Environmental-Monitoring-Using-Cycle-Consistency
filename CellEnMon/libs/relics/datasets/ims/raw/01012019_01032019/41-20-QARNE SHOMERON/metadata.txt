@@ -1,5 +1,0 @@
-stationId: 20
-stationName: QARNE SHOMERON
-location: {'latitude': 32.166, 'longitude': 35.099}
-timebase: 10
-regionId: 7
