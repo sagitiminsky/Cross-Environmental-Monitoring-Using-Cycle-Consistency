@@ -1,5 +1,0 @@
-stationId: 65
-stationName: SEDOM
-location: {'latitude': 31.032, 'longitude': 35.391}
-timebase: 10
-regionId: 10

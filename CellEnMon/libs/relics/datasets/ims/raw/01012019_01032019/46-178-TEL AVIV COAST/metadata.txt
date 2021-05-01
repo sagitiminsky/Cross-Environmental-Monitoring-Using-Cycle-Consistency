@@ -1,5 +1,0 @@
-stationId: 178
-stationName: TEL AVIV COAST
-location: {'latitude': 32.059, 'longitude': 34.759}
-timebase: 10
-regionId: 13

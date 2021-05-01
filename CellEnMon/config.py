@@ -20,19 +20,19 @@ def add_days_to_date(date, delta_days=0):
 
 date = {
     'value': {
-        'dd': '31',  # (+1) day for dme & ims
-        'mm': '12',
-        'yyyy': '2018'
+        'dd': '01',
+        'mm': '01',
+        'yyyy': '2019'
     },
     'value_range': {
-        'dd': '01',  # (+1) day for dme & ims
+        'dd': '02',
         'mm': '01',
         'yyyy': '2019'
     }
 }
 
-date_str_rep=add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']+'_'+add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']
-date_datetime_rep=add_days_to_date(date['value'],delta_days=1)['datetime_rep']
+date_str_rep=add_days_to_date(date['value'])['str_rep_with_replace']+'_'+add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']
+date_datetime_rep=add_days_to_date(date['value'])['datetime_rep']
 
 months = {
     'Jan':'01',
@@ -53,8 +53,8 @@ months = {
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"libs/relics/datasets/ims/raw/{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY'
-ims_root_values = 'libs/relics/datasets/ims/processed'
+ims_root_files = f"CellEnMon/libs/relics/datasets/ims/raw/{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}" # MM/DD/YYYY'
+ims_root_values = 'CellEnMon/libs/relics/datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
     '241', '348', '202', '10', '106', '73', '353', '343', '62',
@@ -135,8 +135,8 @@ ims_mapping = [
     '36',
     '64']
 ims_scrape_config = {
-    '_from': f"{add_days_to_date(date['value'], delta_days=1)['str_rep']}",  # MM/DD/YYYY
-    '_to': f"{add_days_to_date(date['value_range'], delta_days=2)['str_rep']}",  # MM/DD/YYYY , delta_days=2
+    '_from': f"{add_days_to_date(date['value'])['str_rep']}",  # MM/DD/YYYY
+    '_to': f"{add_days_to_date(date['value_range'])['str_rep']}",  # MM/DD/YYYY , delta_days=2
 
     'left_bound': 1 - 1,
     'right_bound': len(ims_mapping)
@@ -146,8 +146,8 @@ ims_scrape_config = {
 ######### DME SCRAPPER #########
 ################################
 
-dme_root_files = f"libs/relics/datasets/dme/raw/{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}/" # MM/DD/YYYY
-dme_root_values = 'libs/relics/datasets/dme/processed'
+dme_root_files = f"CellEnMon/libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}" # MM/DD/YYYY
+dme_root_values = 'CellEnMon/libs/relics/datasets/dme/processed'
 dme_scrape_config = {
     'username': 'SagiT',
     'password': 'W@st2020',
@@ -289,7 +289,7 @@ coverage = (dt.strptime(value_range, "%m/%d/%y") - dt.strptime(value, "%m/%d/%y"
 ###############################################
 ########## EVALUATE a,b,L POWER-LAW ###########
 ###############################################
-basic_db_path = 'libs/power_law/frequency_dependent_coefficients_for_estimating_specific.csv'
+basic_db_path = 'CellEnMon/libs/power_law/frequency_dependent_coefficients_for_estimating_specific.csv'
 
 ########################################################################################################################
 ###########################################    LEARNING   ##############################################################
@@ -300,7 +300,7 @@ basic_db_path = 'libs/power_law/frequency_dependent_coefficients_for_estimating_
 ########## EXTRACTOR ###########
 ################################
 ims_pre_load_data = True
-dme_pre_load_data = True
+dme_pre_load_data = False
 
 
 ################################

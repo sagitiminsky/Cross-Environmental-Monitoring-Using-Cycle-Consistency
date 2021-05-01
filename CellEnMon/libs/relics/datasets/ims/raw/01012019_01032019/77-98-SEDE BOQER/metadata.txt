@@ -1,5 +1,0 @@
-stationId: 98
-stationName: SEDE BOQER
-location: {'latitude': 30.871, 'longitude': 34.796}
-timebase: 10
-regionId: 12

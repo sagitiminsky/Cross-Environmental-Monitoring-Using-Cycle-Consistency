@@ -1,5 +1,0 @@
-stationId: 241
-stationName: KEFAR GILADI
-location: {'latitude': 33.241, 'longitude': 35.57}
-timebase: 10
-regionId: 8

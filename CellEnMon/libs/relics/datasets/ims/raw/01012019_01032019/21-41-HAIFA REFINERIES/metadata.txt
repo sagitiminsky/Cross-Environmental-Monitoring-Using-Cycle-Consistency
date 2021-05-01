@@ -1,5 +1,0 @@
-stationId: 41
-stationName: HAIFA REFINERIES
-location: {'latitude': 32.799, 'longitude': 35.049}
-timebase: 10
-regionId: 15

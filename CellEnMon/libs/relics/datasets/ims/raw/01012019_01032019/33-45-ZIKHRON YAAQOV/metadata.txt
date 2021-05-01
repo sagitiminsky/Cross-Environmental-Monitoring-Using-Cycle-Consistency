@@ -1,5 +1,0 @@
-stationId: 45
-stationName: ZIKHRON YAAQOV
-location: {'latitude': 32.566, 'longitude': 34.95}
-timebase: 10
-regionId: 11

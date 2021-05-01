@@ -1,5 +1,0 @@
-stationId: 58
-stationName: BESOR FARM
-location: {'latitude': 31.273, 'longitude': 34.389}
-timebase: 10
-regionId: 14

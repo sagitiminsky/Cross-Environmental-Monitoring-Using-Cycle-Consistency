@@ -1,5 +1,0 @@
-stationId: 124
-stationName: ASHDOD PORT
-location: {'latitude': 31.835, 'longitude': 34.638}
-timebase: 10
-regionId: 14

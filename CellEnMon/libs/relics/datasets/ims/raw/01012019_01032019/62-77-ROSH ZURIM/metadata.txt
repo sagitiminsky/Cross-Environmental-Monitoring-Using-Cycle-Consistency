@@ -1,5 +1,0 @@
-stationId: 77
-stationName: ROSH ZURIM
-location: {'latitude': 31.665, 'longitude': 35.124}
-timebase: 10
-regionId: 7

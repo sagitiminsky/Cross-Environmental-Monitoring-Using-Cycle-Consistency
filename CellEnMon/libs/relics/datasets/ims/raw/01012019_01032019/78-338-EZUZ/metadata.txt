@@ -1,5 +1,0 @@
-stationId: 338
-stationName: EZUZ
-location: {'latitude': 30.791, 'longitude': 34.472}
-timebase: 10
-regionId: 12

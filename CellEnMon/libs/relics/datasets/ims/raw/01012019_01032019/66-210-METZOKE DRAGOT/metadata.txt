@@ -1,5 +1,0 @@
-stationId: 210
-stationName: METZOKE DRAGOT
-location: {'latitude': 31.583, 'longitude': 35.383}
-timebase: 10
-regionId: 10

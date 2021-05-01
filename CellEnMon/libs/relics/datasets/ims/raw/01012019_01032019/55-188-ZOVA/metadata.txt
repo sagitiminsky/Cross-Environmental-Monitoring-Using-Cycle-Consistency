@@ -1,5 +1,0 @@
-stationId: 188
-stationName: ZOVA
-location: {'latitude': 31.47, 'longitude': 35.07}
-timebase: 10
-regionId: 7

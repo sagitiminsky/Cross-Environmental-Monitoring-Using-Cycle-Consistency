@@ -3,9 +3,6 @@
 /wandb/
 /venv/
 *.pyc
-/libs/relics/datasets/dme
-/libs/relics/datasets/ims
 
 /CellEnMon/venv/
-/CellEnMon/libs/relics/datasets/dme2ims/
-/CellEnMon/libs/relics/datasets/
+/CellEnMon/libs/relics/

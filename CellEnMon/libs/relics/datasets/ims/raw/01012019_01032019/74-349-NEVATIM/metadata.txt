@@ -1,5 +1,0 @@
-stationId: 349
-stationName: NEVATIM
-location: {'latitude': 31.205, 'longitude': 34.922}
-timebase: 10
-regionId: 12

@@ -10,11 +10,8 @@ from datetime import timedelta as dt_delta
 
 class Extractor:
     def __init__(self):
-        self.ims_data,self.ims_order = self.load_ims_data()
+        self.ims_data,self.ims_order = self.load_ims_data() # 1 day is 144=24*6 samples
         self.dme_data,self.dme_order = self.load_dme_data()
-
-        #set the widndow for which the median will be calculated
-        self.window=200
 
         # norm. - https://datascience.stackexchange.com/questions/5885/how-to-scale-an-array-of-signed-integers-to-range-from-0-to-1
         self.ims_data = (self.ims_data - self.ims_data.min()) / (self.ims_data.max() - self.ims_data.min())
@@ -140,42 +137,6 @@ class Extractor:
                     dme_matrix = np.vstack((dme_matrix, list(df['rain'])))
                     dme_order = np.hstack((dme_order, link_name))
 
-                else:  # fill with nan for missing data
-
-                    dme_vec = np.empty(1)
-                    skip=False
-                    for row_value, row_time, row_interval in zip(list(df['rain']), list(df.Time), list(df.Interval)):
-
-                        # fill with rain data
-                        if dme_vec[1:].size < valid_row_number:
-
-                            if time_value > dt.strptime(row_time, "%Y-%m-%d %H:%M:%S"):
-                                print('Something went wrong, preprocessing time missmatch, skipping {}...'.format(link_name))
-                                skip=True
-                                break
-
-
-                            # fill with nan
-                            while time_value < dt.strptime(row_time, "%Y-%m-%d %H:%M:%S"):
-                                dme_vec = np.hstack((dme_vec, np.nan))
-                                time_value = time_value + dt_delta(minutes=15)
-
-                            # fill with actual dme data
-                            if row_value != np.nan:
-                                dme_vec = np.hstack((dme_vec, row_value))
-                                time_value = time_value + dt_delta(minutes=15)
-
-                            else:
-                                dme_vec = np.hstack((dme_vec, np.nan))
-                                time_value = time_value + dt_delta(minutes=15)
-
-                    while dme_vec[1:].size < valid_row_number and not skip:
-                        dme_vec = np.hstack((dme_vec, np.nan))
-
-                    if not skip:
-                        dme_matrix = np.vstack((dme_matrix, dme_vec[1:].T))
-                        dme_order=np.hstack((dme_order,link_name))
-
             dme_matrix = dme_matrix[1:]
             dme_order=dme_order[1:]
 
@@ -196,3 +157,5 @@ class Extractor:
         return dme_matrix,dme_order
 
 
+if __name__=="__main__":
+    Extractor()
