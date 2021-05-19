@@ -294,15 +294,19 @@ class DME_Scrapper_obj:
                     filter.send_keys(day_iter['str_rep'])
                     self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-                    # download metadata
-                    self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
-                    WebDriverWait(self.browser, self.delay).until(EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
-
                     time.sleep(1)
 
                     # download data
                     self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
                     WebDriverWait(self.browser, self.delay).until(EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
+
+                    time.sleep(1)
+
+                    # download metadata
+                    self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
+                    WebDriverWait(self.browser, self.delay).until(EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
+
+
 
                     # next day
                     day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
