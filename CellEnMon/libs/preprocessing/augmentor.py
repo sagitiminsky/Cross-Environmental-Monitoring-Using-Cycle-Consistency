@@ -8,7 +8,7 @@ import numpy as np
 class Augmentor(Extractor):
     def __init__(self):
         super().__init__()
-        self.augmentation(self.dme_data_tiled, self.ims_data_tiled)
+        self.augmentation(self.dme_data, self.ims_data)
 
     def augmentation(self, A, B):
         for augmentation in config.augmentations:

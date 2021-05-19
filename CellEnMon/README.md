@@ -1,3 +1,6 @@
+PYTHONPATH should be: Research
+
+
 **run scrapers:**
 go to: libs/scrappers
 

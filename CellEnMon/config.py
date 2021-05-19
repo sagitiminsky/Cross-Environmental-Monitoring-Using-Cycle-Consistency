@@ -15,6 +15,9 @@ def add_days_to_date(date, delta_days=0):
         'datetime_rep': res,
         'str_rep': f"{str(res.month).zfill(2)}/{str(res.day).zfill(2)}/{res.year}",
         'str_rep_with_replace': f"{str(res.month).zfill(2)}{str(res.day).zfill(2)}{res.year}",
+        'day_str_rep': f"{str(res.day).zfill(2)}",
+        'month_str_rep': f"{str(res.month).zfill(2)}",
+        'year_str_rep': f"{res.year}"
     }
 
 
@@ -31,7 +34,7 @@ date = {
     }
 }
 
-date_str_rep=add_days_to_date(date['value'])['str_rep_with_replace']+'_'+add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']
+date_str_rep=add_days_to_date(date['value'])['str_rep_with_replace']+'_'+add_days_to_date(date['value_range'])['str_rep_with_replace']
 date_datetime_rep=add_days_to_date(date['value'])['datetime_rep']
 
 months = {
@@ -53,7 +56,7 @@ months = {
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"CellEnMon/libs/relics/datasets/ims/raw/{add_days_to_date(date['value'],delta_days=1)['str_rep_with_replace']}_{add_days_to_date(date['value_range'],delta_days=1)['str_rep_with_replace']}" # MM/DD/YYYY'
+ims_root_files = f"CellEnMon/libs/relics/datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}" # MM/DD/YYYY'
 ims_root_values = 'CellEnMon/libs/relics/datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
@@ -146,7 +149,7 @@ ims_scrape_config = {
 ######### DME SCRAPPER #########
 ################################
 
-dme_root_files = f"CellEnMon/libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}" # MM/DD/YYYY
+dme_root_files = f"CellEnMon/libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/" # MM/DD/YYYY
 dme_root_values = 'CellEnMon/libs/relics/datasets/dme/processed'
 dme_scrape_config = {
     'username': 'SagiT',
@@ -299,8 +302,14 @@ basic_db_path = 'CellEnMon/libs/power_law/frequency_dependent_coefficients_for_e
 ################################
 ########## EXTRACTOR ###########
 ################################
+
+#IMS
 ims_pre_load_data = True
-dme_pre_load_data = False
+ims_metadata=['latitude','longitude']
+
+#DME
+dme_pre_load_data = True
+dme_metadata=['latitude','longitude']
 
 
 ################################
