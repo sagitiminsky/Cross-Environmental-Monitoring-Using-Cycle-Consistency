@@ -65,12 +65,11 @@ class Extractor:
         self.m, self.k_m = self.dme_data.shape
         self.n, self.k_n = self.ims_data.shape
 
-        print("Links dim: {} - has {} links, {} samples each, {} days \n"
-              "Gueges dim: {} - has {} gauges, {} samples each, {} days"
-            .format(
-            self.dme_data.shape, self.k_m, self.m, config.coverage,
-            self.ims_data.shape, self.k_n, self.n, config.coverage)
-        )
+    def __len__(self):
+        return (f"Links dim: {self.dme_data.shape} - has {self.k_m} links, {self.m} samples each, {config.coverage} days \n \
+              Gueges dim: {self.ims_data.shape} - has {self.k_n} gauges, {self.n} samples each, {config.coverage} days")
+
+
 
 
     def normalizer(self,begin,end,type):
