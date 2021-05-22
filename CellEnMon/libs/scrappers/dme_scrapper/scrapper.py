@@ -165,7 +165,12 @@ class DME_Scrapper_obj:
                     'data': pd.DataFrame(),
                     'frequency': '',
                     'polarization': '',
-                    'L': ''
+                    'length': '',
+                    'txsite_longitude': '',
+                    'txsite_latitude': '',
+                    'rxsite_longitude': '',
+                    'rxsite_latitude': ''
+
                 }
 
         if not d:
@@ -215,15 +220,17 @@ class DME_Scrapper_obj:
 
                     merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
 
-                    for metadata_feature in config.metadata_features:
+                    for metadata_feature in config.dme_metadata:
                         merged_df_dict[link_name][metadata_feature] = self.is_different(metadata_row[metadata_feature],
-                                                                                   link_name=link_name,
-                                                                                   link_dict=merged_df_dict[link_name],
-                                                                                   key=metadata_feature)
+                                                                                        link_name=link_name,
+                                                                                        link_dict=merged_df_dict[
+                                                                                            link_name],
+                                                                                        key=metadata_feature)
 
 
                 except KeyError:
-                    print('exist in metadata, but does not exist in data:{}'.format(file_name))
+                    print('exist in metadata, but does not exist in data:{}, feature:{}'.format(file_name,
+                                                                                                metadata_feature))
 
         print('extraction done.')
         print('starting csv save...')
@@ -231,15 +238,7 @@ class DME_Scrapper_obj:
         for link_name in merged_df_dict:
 
             try:
-                link_file_name = f"{config.dme_root_files + link_name}_\
-                frequency[GHz]:_{str(float(merged_df_dict[link_name]['frequency']) / 1000)}_\
-                polarization:_{merged_df_dict[link_name]['polarization']}_\
-                L[Km]:_{str(merged_df_dict[link_name]['L'])}\
-                txsite_longitude:_{str(merged_df_dict[link_name]['txsite_longitude'])}_\
-                txsite_latitude:_{str(merged_df_dict[link_name]['txsite_latitude'])}_\
-                rxsite_longitude:_{str(merged_df_dict[link_name]['rxsite_longitude'])}_\
-                rxsite_latitude:_{str(merged_df_dict[link_name]['rxsite_latitude'])}\
-                .csv"
+                link_file_name = f"{config.dme_root_files + link_name}_frequency[GHz]:_{str(float(merged_df_dict[link_name]['frequency']) / 1000)}_polarization:_{merged_df_dict[link_name]['polarization']}_length[Km]:_{str(merged_df_dict[link_name]['length'])}_txsite-longitude:_{str(merged_df_dict[link_name]['txsite_longitude'])}_txsite-latitude:_{str(merged_df_dict[link_name]['txsite_latitude'])}_rxsite-longitude:_{str(merged_df_dict[link_name]['rxsite_longitude'])}_rxsite-latitude:_{str(merged_df_dict[link_name]['rxsite_latitude'])}_.csv"
 
                 self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
 
@@ -248,193 +247,182 @@ class DME_Scrapper_obj:
             except ValueError:
                 print('frequecy missing for this file: {}'.format(link_name))
 
+    print('csv done.')
 
-print('csv done.')
+    def preprocess_df(self, df):
+        # order by time
+        df = df.sort_values(by='Time')
+        return df
 
+    def get_link_config(self, link_name):
+        return {'link_name': link_name}
 
-def preprocess_df(self, df):
-    # order by time
-    df = df.sort_values(by='Time')
-    return df
+    def background_task(self, prev_number_of_files, delta):
+        if len(os.listdir(self.root_download)) - prev_number_of_files == delta:
+            return
 
-
-def get_link_config(self, link_name):
-    return {'link_name': link_name}
-
-
-def background_task(self, prev_number_of_files, delta):
-    if len(os.listdir(self.root_download)) - prev_number_of_files == delta:
-        return
-
-
-def ranged_filter(self, mux):
-    link_obj = config.dme_scrape_config['link_objects']
-    select = link_obj[mux]
-    select_value = select['value']
-    element_xpath = self.xpaths[mux]
-    self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-    filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
-
-    if mux == 'date':
-        pass
-
-    elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux == 'link_frequency[mhz]' or mux == 'data_precentage':
-        Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
-            select['select'])
-        filter.send_keys(select_value)
-    else:
-        raise ValueError("mux type is undefined {}".format(mux))
-
-    if select['select'] == 'In range':
-        select_value_range = select['value_range']
+    def ranged_filter(self, mux):
+        link_obj = config.dme_scrape_config['link_objects']
+        select = link_obj[mux]
+        select_value = select['value']
+        element_xpath = self.xpaths[mux]
+        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
 
         if mux == 'date':
+            pass
 
-            # download
-            print('starting download...')
-
-            day_iter = self.start_datetime
-            counter = 0
-            while day_iter['datetime_rep'] <= self.end_datetime['datetime_rep']:
-                print('download day #{}/{}, date:{}'.format(counter + 1, self.time_frame, day_iter['str_rep']))
-                self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
-                filter.send_keys(day_iter['str_rep'])
-                self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
-
-                time.sleep(1)
-
-                # download data
-                self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
-                WebDriverWait(self.browser, self.delay).until(
-                    EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
-
-                time.sleep(1)
-
-                # download metadata
-                self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
-                WebDriverWait(self.browser, self.delay).until(
-                    EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
-
-                # next day
-                day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
-                counter = counter + 1
-
-        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
+        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux == 'link_frequency[mhz]' or mux == 'data_precentage':
             Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
                 select['select'])
-            filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
-            filter.send_keys(select_value_range)
+            filter.send_keys(select_value)
         else:
             raise ValueError("mux type is undefined {}".format(mux))
 
-    self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+        if select['select'] == 'In range':
+            select_value_range = select['value_range']
 
+            if mux == 'date':
 
-def check_boxes(self):
-    link_obj = config.dme_scrape_config['link_objects']
-    element_xpath = self.xpaths['measurement_type']
-    self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-    self.browser.find_element_by_xpath(element_xpath['xpath_select_all']).click()
+                # download
+                print('starting download...')
 
-    search_box = self.browser.find_element_by_xpath(element_xpath['search_box'])
+                day_iter = self.start_datetime
+                counter = 0
+                while day_iter['datetime_rep'] <= self.end_datetime['datetime_rep']:
+                    print('download day #{}/{}, date:{}'.format(counter + 1, self.time_frame, day_iter['str_rep']))
+                    self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
+                    filter.send_keys(day_iter['str_rep'])
+                    self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-    if 'TN_RFInputPower' in link_obj['measurement_type']:
-        search_box.send_keys('TN_RFInputPower')
+                    time.sleep(1)
 
-    self.browser.find_element_by_xpath(element_xpath['xpath_select_all']).click()
+                    # download data
+                    self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+                    WebDriverWait(self.browser, self.delay).until(
+                        EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
 
+                    time.sleep(1)
 
-def input_box(self, input_type):
-    element_xpath = self.xpaths[input_type]
-    self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-    filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
-    filter.send_keys(config.dme_scrape_config['link_objects'][input_type])
-    self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+                    # download metadata
+                    self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
+                    WebDriverWait(self.browser, self.delay).until(
+                        EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
 
+                    # next day
+                    day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
+                    counter = counter + 1
 
-def download_zip_files(self, link_name=None):
-    # link id
-    if link_name:
-        element_xpath = self.xpaths['link_id']
-        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
-        filter.send_keys(link_name)
+            elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
+                Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
+                    select['select'])
+                filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
+                filter.send_keys(select_value_range)
+            else:
+                raise ValueError("mux type is undefined {}".format(mux))
+
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-    # measurement type
-    self.check_boxes()
+    def check_boxes(self):
+        link_obj = config.dme_scrape_config['link_objects']
+        element_xpath = self.xpaths['measurement_type']
+        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+        self.browser.find_element_by_xpath(element_xpath['xpath_select_all']).click()
 
-    # # tx site longitude
-    # self.ranged_filter('tx_site_longitude')
-    #
-    # # tx site latitude
-    # self.ranged_filter('tx_site_latitude')
-    #
-    # # rx site longitude
-    # self.ranged_filter('rx_site_longitude')
-    #
-    # # rx site latitude
-    # self.ranged_filter('rx_site_latitude')
+        search_box = self.browser.find_element_by_xpath(element_xpath['search_box'])
 
-    # sampling period description
-    self.input_box('sampling_period[sec]')
+        if 'TN_RFInputPower' in link_obj['measurement_type']:
+            search_box.send_keys('TN_RFInputPower')
 
-    # Link frequency[MHz]
-    self.ranged_filter('link_frequency[mhz]')
+        self.browser.find_element_by_xpath(element_xpath['xpath_select_all']).click()
 
-    # data_precentage
-    self.ranged_filter('data_precentage')
+    def input_box(self, input_type):
+        element_xpath = self.xpaths[input_type]
+        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
+        filter.send_keys(config.dme_scrape_config['link_objects'][input_type])
+        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-    # date
-    self.ranged_filter('date')
+    def download_zip_files(self, link_name=None):
+        # link id
+        if link_name:
+            element_xpath = self.xpaths['link_id']
+            self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+            filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
+            filter.send_keys(link_name)
+            self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-    time.sleep(5)
+        # measurement type
+        self.check_boxes()
 
-    data_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.zip' in f and 'cldb' in f]
-    metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.csv' in f and 'cldb' in f]
+        # # tx site longitude
+        # self.ranged_filter('tx_site_longitude')
+        #
+        # # tx site latitude
+        # self.ranged_filter('tx_site_latitude')
+        #
+        # # rx site longitude
+        # self.ranged_filter('rx_site_longitude')
+        #
+        # # rx site latitude
+        # self.ranged_filter('rx_site_latitude')
 
-    data_paths.sort(key=os.path.getmtime)
-    metadata_paths.sort(key=os.path.getmtime)
+        # sampling period description
+        self.input_box('sampling_period[sec]')
 
-    return {
-        'data_paths': data_paths,
-        'metadata_paths': metadata_paths
-    }
+        # Link frequency[MHz]
+        self.ranged_filter('link_frequency[mhz]')
 
+        # data_precentage
+        self.ranged_filter('data_precentage')
 
-def log_in(self, browser):
-    remember_me_xpth = '/html/body/div/form/div[4]/label/input'
-    submit_button = '/html/body/div/form/div[3]/button'
+        # date
+        self.ranged_filter('date')
 
-    username = browser.find_element_by_name("username")
-    password = browser.find_element_by_name("password")
+        time.sleep(5)
 
-    username.send_keys(config.dme_scrape_config['username'])
-    password.send_keys(config.dme_scrape_config['password'])
+        data_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.zip' in f and 'cldb' in f]
+        metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.csv' in f and 'cldb' in f]
 
-    browser.find_element_by_xpath(remember_me_xpth).click()
-    browser.find_element_by_xpath(submit_button).click()
+        data_paths.sort(key=os.path.getmtime)
+        metadata_paths.sort(key=os.path.getmtime)
 
+        return {
+            'data_paths': data_paths,
+            'metadata_paths': metadata_paths
+        }
 
-def delete_prev_data_files_if_poss(self):
-    'deletes from local directory'
-    for file in os.listdir(self.root_data_files):
-        try:
-            os.remove(self.root_data_files + file)
-        except FileNotFoundError:
-            pass
+    def log_in(self, browser):
+        remember_me_xpth = '/html/body/div/form/div[4]/label/input'
+        submit_button = '/html/body/div/form/div[3]/button'
 
+        username = browser.find_element_by_name("username")
+        password = browser.find_element_by_name("password")
 
-def delete_prev_from_downloads_if_poss(self):
-    'Deletes from Downloads'
-    for file in os.listdir(self.root_download):
-        if 'cldb' in file or 'export' in file:
+        username.send_keys(config.dme_scrape_config['username'])
+        password.send_keys(config.dme_scrape_config['password'])
+
+        browser.find_element_by_xpath(remember_me_xpth).click()
+        browser.find_element_by_xpath(submit_button).click()
+
+    def delete_prev_data_files_if_poss(self):
+        'deletes from local directory'
+        for file in os.listdir(self.root_data_files):
             try:
-                os.remove(self.root_download + file)
-            except PermissionError:
-                shutil.rmtree(self.root_download + file)
-            except Exception:
-                raise Exception('unable to remove file : {}'.format(self.root_download + file))
+                os.remove(self.root_data_files + file)
+            except FileNotFoundError:
+                pass
+
+    def delete_prev_from_downloads_if_poss(self):
+        'Deletes from Downloads'
+        for file in os.listdir(self.root_download):
+            if 'cldb' in file or 'export' in file:
+                try:
+                    os.remove(self.root_download + file)
+                except PermissionError:
+                    shutil.rmtree(self.root_download + file)
+                except Exception:
+                    raise Exception('unable to remove file : {}'.format(self.root_download + file))
 
 
 DME_Scrapper_obj().scrape()

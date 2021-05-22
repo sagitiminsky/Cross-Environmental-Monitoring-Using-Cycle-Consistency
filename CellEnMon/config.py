@@ -152,8 +152,6 @@ ims_scrape_config = {
 
 dme_root_files = f"CellEnMon/libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
 dme_root_values = 'CellEnMon/libs/relics/datasets/dme/processed'
-metadata_features = ['frequency', 'polarization', 'L', 'txsite_longitude', 'txsite_latitude', 'rxsite_longitude',
-                     'rxsite_latitude']
 dme_scrape_config = {
     'username': 'SagiT',
     'password': 'W@st2020',
@@ -311,9 +309,9 @@ ims_pre_load_data = True
 ims_metadata = ['latitude', 'longitude']
 
 # DME
-dme_pre_load_data = True
-dme_metadata = ['latitude', 'longitude']
-
+dme_pre_load_data = False
+dme_metadata=['frequency', 'polarization', 'length', 'txsite_longitude', 'txsite_latitude', 'rxsite_longitude',
+                     'rxsite_latitude']
 ################################
 ########## AUGMENTOR ###########
 ################################
