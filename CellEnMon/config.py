@@ -305,19 +305,11 @@ basic_db_path = 'CellEnMon/libs/power_law/frequency_dependent_coefficients_for_e
 ################################
 
 # IMS
-ims_pre_load_data = True
+ims_pre_load_data = False
 ims_metadata = ['latitude', 'longitude']
 
 # DME
 dme_pre_load_data = False
 dme_metadata=['frequency', 'polarization', 'length', 'txsite_longitude', 'txsite_latitude', 'rxsite_longitude',
                      'rxsite_latitude']
-################################
-########## AUGMENTOR ###########
-################################
-"""
-0 -  no augmentation
-1 - mix up
-2 - cut mux
-"""
-augmentations = [0]
+
