@@ -21,14 +21,32 @@ class Extractor:
         self.ims_data = self.ims_data.astype(np.float)
         self.dme_data = self.dme_data.astype(np.float)
 
-        # location
-        self.ims_location_min, self.ims_location_max = self.ims_data[:, :2].min(), self.ims_data[:, :2].max()
-        self.dme_location_min, self.dme_location_max = self.dme_data[:, :2].min(), self.dme_data[:, :2].max()
+        ################
+        ### location ###
+        ################
+        self.normalizer(0,2)
+        #ims
+        self.ims_location_min,self.ims_location_max=self.normalizer(0,2,"ims")
 
-        self.ims_data[:, :2] = (self.ims_data[:, :2] - self.ims_location_min) / (
-                    self.ims_location_max - self.ims_location_min)
-        self.dme_data[:, :2] = (self.dme_data[:, :2] - self.dme_location_min) / (
-                self.dme_location_max - self.dme_location_min)
+        #dme
+        self.dme_location_min, self.dme_location_max = self.normalizer(3,7,"dme")
+
+        ##################
+        ### frequency ####
+        ##################
+        self.dme_frequency_min,self.dme_frequency_max = self.normalizer(0,1,"dme")
+
+
+        ####################
+        ### polarization ###
+        ####################
+        self.dme_polarization_min, self.dme_polarization_max = self.normalizer(1,2,"dme")
+
+        ####################
+        ####### length #####
+        ####################
+        self.dme_length_min, self.dme_length_max = self.normalizer(2,3,"dme")
+
 
         # data
         self.ims_data_min, self.ims_data_max = self.ims_data[:, 2:].min(), self.ims_data[:, 2:].max()
@@ -54,6 +72,20 @@ class Extractor:
             self.ims_data.shape, self.k_n, self.n, config.coverage)
         )
 
+
+    def normalizer(self,begin,end,type):
+        if type=='ims':
+            min, max = self.ims_data[:, begin:end].min(), self.ims_data[:, begin:end].max()
+            self.ims_data[:, begin:end] = (self.ims_data[:, begin:end] - min) / (max - min)
+        elif type=='dme':
+            min, max = self.dme_data[:, begin:end].min(), self.dme_data[:, begin:end].max()
+            self.dme_data[:, begin:end] = (self.dme_data[:, begin:end] - min) / (max - min)
+        else:
+            raise("This type is not supported: {}".format(type))
+
+        return min, max
+
+
     def tile_sum(self, tile, row, column, type):
         if np.isnan(tile).any():
             if type == 'dme':
@@ -77,7 +109,7 @@ class Extractor:
 
         return arr[i]
 
-    def get_metadata(self, station_folder):
+    def get_ims_metadata(self, station_folder):
         f = open(config.ims_root_files + '/' + station_folder + '/' + 'metadata.txt', "r")
         metadata = {}
         try:
@@ -102,7 +134,7 @@ class Extractor:
                 print("now processing gauge: {}".format(station_folder))
                 try:
                     df = pd.read_csv(config.ims_root_files + '/' + station_folder + '/' + 'data.csv')
-                    ims_vec = self.get_metadata(station_folder)
+                    ims_vec = self.get_ims_metadata(station_folder)
                     if (ims_vec, df) is not (None, None):
                         for row in list(df.channels):
                             ims_vec = np.append(ims_vec,
@@ -139,12 +171,23 @@ class Extractor:
 
         return ims_matrix, ims_order
 
+    def get_dme_metadata(self,link):
+        d= dict(zip(config.dme_metadata, link.split('_')[2::2]))
+        if d['polarization']=='Vertical':
+            d['polarization']=1
+        elif d['polarization']=='Horizontal':
+            d['Horizontal']=0
+        else:
+            raise ("Link polarization is not supported: {}".format(d['polarization']))
+
+        return d
+
     def load_dme_data(self):
         if not config.dme_pre_load_data:
 
             # 15[min] x 4 is an hour
             valid_row_number = 4 * 24 * config.coverage
-            dme_matrix = np.empty((1, valid_row_number))
+            dme_matrix = np.empty((1, valid_row_number + len(config.dme_metadata)))
             dme_order = np.empty(1)
 
             for link in os.listdir(config.dme_root_files):
@@ -168,7 +211,7 @@ class Extractor:
                                                                                                        valid_row_number))
 
                 elif len(list(df['RFInputPower'])) == valid_row_number:
-                    dme_matrix = np.vstack((dme_matrix, list(df['RFInputPower'])))
+                    dme_matrix = np.vstack((dme_matrix, list(self.get_dme_metadata(link).values()) + list(df['RFInputPower'])))
                     dme_order = np.hstack((dme_order, link_name))
 
             dme_matrix = dme_matrix[1:]
