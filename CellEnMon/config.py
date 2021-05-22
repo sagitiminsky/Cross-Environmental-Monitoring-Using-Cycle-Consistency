@@ -2,8 +2,8 @@
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 
+download_path = '/Users/sagitiminsky/Downloads/'
 
-download_path='/Users/sagitiminsky/Downloads/'
 
 def parse_date(d):
     return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
@@ -34,29 +34,30 @@ date = {
     }
 }
 
-date_str_rep=add_days_to_date(date['value'])['str_rep_with_replace']+'_'+add_days_to_date(date['value_range'])['str_rep_with_replace']
-date_datetime_rep=add_days_to_date(date['value'])['datetime_rep']
+date_str_rep = add_days_to_date(date['value'])['str_rep_with_replace'] + '_' + add_days_to_date(date['value_range'])[
+    'str_rep_with_replace']
+date_datetime_rep = add_days_to_date(date['value'])['datetime_rep']
 
 months = {
-    'Jan':'01',
-    'Feb':'02',
-    'Mar':'03',
-    'Apr':'04',
-    'May':'05',
-    'Jun':'06',
-    'Jul':'07',
-    'Aug':'08',
-    'Sep':'09',
-    'Oct':'10',
-    'Nov':'11',
-    'Dec':'12'
+    'Jan': '01',
+    'Feb': '02',
+    'Mar': '03',
+    'Apr': '04',
+    'May': '05',
+    'Jun': '06',
+    'Jul': '07',
+    'Aug': '08',
+    'Sep': '09',
+    'Oct': '10',
+    'Nov': '11',
+    'Dec': '12'
 }
 
 #######################################
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"CellEnMon/libs/relics/datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}" # MM/DD/YYYY'
+ims_root_files = f"CellEnMon/libs/relics/datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}"  # MM/DD/YYYY'
 ims_root_values = 'CellEnMon/libs/relics/datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
@@ -149,8 +150,10 @@ ims_scrape_config = {
 ######### DME SCRAPPER #########
 ################################
 
-dme_root_files = f"CellEnMon/libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/" # MM/DD/YYYY
+dme_root_files = f"CellEnMon/libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
 dme_root_values = 'CellEnMon/libs/relics/datasets/dme/processed'
+metadata_features = ['frequency', 'polarization', 'L', 'txsite_longitude', 'txsite_latitude', 'rxsite_longitude',
+                     'rxsite_latitude']
 dme_scrape_config = {
     'username': 'SagiT',
     'password': 'W@st2020',
@@ -303,14 +306,13 @@ basic_db_path = 'CellEnMon/libs/power_law/frequency_dependent_coefficients_for_e
 ########## EXTRACTOR ###########
 ################################
 
-#IMS
+# IMS
 ims_pre_load_data = True
-ims_metadata=['latitude','longitude']
+ims_metadata = ['latitude', 'longitude']
 
-#DME
+# DME
 dme_pre_load_data = True
-dme_metadata=['latitude','longitude']
-
+dme_metadata = ['latitude', 'longitude']
 
 ################################
 ########## AUGMENTOR ###########
@@ -320,5 +322,4 @@ dme_metadata=['latitude','longitude']
 1 - mix up
 2 - cut mux
 """
-augmentations=[0]
-
+augmentations = [0]
