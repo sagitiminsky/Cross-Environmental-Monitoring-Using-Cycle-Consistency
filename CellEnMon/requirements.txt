@@ -14,7 +14,6 @@ keras2onnx==1.6.1
 pandas
 selenium
 sklearn
-util
 pyproj
 
 
