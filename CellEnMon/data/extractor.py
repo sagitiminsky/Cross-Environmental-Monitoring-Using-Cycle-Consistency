@@ -64,9 +64,12 @@ class Extractor:
         self.m, self.k_m = self.dme_data.shape
         self.n, self.k_n = self.ims_data.shape
 
-    def __len__(self):
-        return (f"Links dim: {self.dme_data.shape} - has {self.k_m} links, {self.m} samples each, {config.coverage} days \n \
-              Gueges dim: {self.ims_data.shape} - has {self.k_n} gauges, {self.n} samples each, {config.coverage} days")
+    def stats(self):
+        message=f"Links dim: {self.dme_data.shape} - has {self.k_m} links, {self.m} samples each, {config.coverage} days \n" \
+                f"Gueges dim: {self.ims_data.shape} - has {self.k_n} gauges, {self.n} samples each, {config.coverage} days"
+
+
+        return message
 
 
 
@@ -74,10 +77,10 @@ class Extractor:
     def normalizer(self,begin,end,type):
         if type=='ims':
             min, max = self.ims_data[:, begin:end].min(), self.ims_data[:, begin:end].max()
-            self.ims_data[:, begin:end] = (self.ims_data[:, begin:end] - min) / (max - min)
+            self.ims_data[:, begin:end] = 0 if max-min==0 else (self.ims_data[:, begin:end] - min) / (max - min)
         elif type=='dme':
             min, max = self.dme_data[:, begin:end].min(), self.dme_data[:, begin:end].max()
-            self.dme_data[:, begin:end] = (self.dme_data[:, begin:end] - min) / (max - min)
+            self.dme_data[:, begin:end] = 0 if max-min==0 else (self.dme_data[:, begin:end] - min) / (max - min)
         else:
             raise("This type is not supported: {}".format(type))
 
@@ -233,4 +236,5 @@ class Extractor:
 
 
 if __name__ == "__main__":
-    Extractor()
+    dataset=Extractor()
+    print(dataset.status())

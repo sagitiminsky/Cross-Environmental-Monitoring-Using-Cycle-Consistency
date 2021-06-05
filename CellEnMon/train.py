@@ -17,7 +17,7 @@ if __name__ == '__main__':
     wandb.init(project=opt.name)
     dataset = Extractor()  # create a dataset given opt.dataset_mode and other options
 
-    print(len(dataset))  # print number of samples for CMLs and Gauges
+    print(dataset.stats())  # print number of samples for CMLs and Gauges
 
     opt['intput_dim'] = dataset.m
     opt['output_dim'] = dataset.n
