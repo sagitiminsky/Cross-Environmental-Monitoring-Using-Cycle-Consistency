@@ -19,8 +19,6 @@ if __name__ == '__main__':
 
     print(dataset.stats())  # print number of samples for CMLs and Gauges
 
-    opt['intput_dim'] = dataset.m
-    opt['output_dim'] = dataset.n
     model = models.create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations

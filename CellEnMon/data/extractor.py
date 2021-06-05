@@ -61,12 +61,12 @@ class Extractor:
         self.dme_data = self.dme_data.T
 
         # set dim.
-        self.m, self.k_m = self.dme_data.shape
-        self.n, self.k_n = self.ims_data.shape
+        self._1_d, self._1_n = self.dme_data.shape
+        self._2_d, self._2_n = self.ims_data.shape
 
     def stats(self):
-        message=f"Links dim: {self.dme_data.shape} - has {self.k_m} links, {self.m} samples each, {config.coverage} days \n" \
-                f"Gueges dim: {self.ims_data.shape} - has {self.k_n} gauges, {self.n} samples each, {config.coverage} days"
+        message=f"Links dim: {self.dme_data.shape} - each link is {self._1_d} dimential, and there are {self._1_n} links , covering {config.coverage} days \n" \
+                f"Gueges dim: {self.ims_data.shape} - each gague has {self._2_d} dimentional, and there are  {self._2_n} gagues, covering {config.coverage} days"
 
 
         return message
@@ -85,23 +85,6 @@ class Extractor:
             raise("This type is not supported: {}".format(type))
 
         return min, max
-
-
-    def tile_sum(self, tile, row, column, type):
-        if np.isnan(tile).any():
-            if type == 'dme':
-                data_type = self.dme_data
-                m = self.k_m
-            elif type == 'ims':
-                data_type = self.ims_data
-                m = self.k_n
-            else:
-                raise ValueError('Unrecognized data type {}'.format(type))
-
-            return np.nanmedian(data_type[row][np.clip(column - self.window, 0, m):np.clip(column + self.window, 0, m)])
-
-        else:
-            return np.sum(tile)
 
     def get_entry(self, arr, type):
         i = 0
@@ -237,4 +220,4 @@ class Extractor:
 
 if __name__ == "__main__":
     dataset=Extractor()
-    print(dataset.status())
+    print(dataset.stats())
