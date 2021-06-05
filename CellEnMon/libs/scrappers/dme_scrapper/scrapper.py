@@ -18,7 +18,7 @@ import pandas as pd
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 import numpy as np
-from libs.power_law.power_law import PowerLaw
+from CellEnMon.libs.power_law.power_law import PowerLaw
 
 
 class DME_Scrapper_obj:
