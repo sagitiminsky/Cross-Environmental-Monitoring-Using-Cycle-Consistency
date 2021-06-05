@@ -59,16 +59,16 @@ months = {
 ############## RADAR SCRAPPER ###########
 #########################################
 
-radar_root_files = f"CellEnMon/libs/relics/datasets/radar/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
-radar_root_values = 'CellEnMon/libs/relics/datasets/radar/processed'
+radar_root_files = f"libs/relics/datasets/radar/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
+radar_root_values = 'libs/relics/datasets/radar/processed'
 
 
 #######################################
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"CellEnMon/libs/relics/datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}"  # MM/DD/YYYY'
-ims_root_values = 'CellEnMon/libs/relics/datasets/ims/processed'
+ims_root_files = f"libs/relics/datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}"  # MM/DD/YYYY'
+ims_root_values = 'libs/relics/datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
     '241', '348', '202', '10', '106', '73', '353', '343', '62',
@@ -160,8 +160,8 @@ ims_scrape_config = {
 ######### DME SCRAPPER #########
 ################################
 
-dme_root_files = f"CellEnMon/libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
-dme_root_values = 'CellEnMon/libs/relics/datasets/dme/processed'
+dme_root_files = f"libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
+dme_root_values = 'libs/relics/datasets/dme/processed'
 dme_scrape_config = {
     'username': 'SagiT',
     'password': 'W@st2020',
@@ -303,7 +303,7 @@ coverage = (dt.strptime(value_range, "%m/%d/%y") - dt.strptime(value, "%m/%d/%y"
 ###############################################
 ########## EVALUATE a,b,L POWER-LAW ###########
 ###############################################
-basic_db_path = 'CellEnMon/libs/power_law/frequency_dependent_coefficients_for_estimating_specific.csv'
+basic_db_path = 'libs/power_law/frequency_dependent_coefficients_for_estimating_specific.csv'
 
 ########################################################################################################################
 ###########################################    LEARNING   ##############################################################
