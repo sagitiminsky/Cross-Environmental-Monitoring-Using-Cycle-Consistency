@@ -24,7 +24,6 @@ class Extractor:
         ################
         ### location ###
         ################
-        self.normalizer(0,2)
         #ims
         self.ims_location_min,self.ims_location_max=self.normalizer(0,2,"ims")
 
