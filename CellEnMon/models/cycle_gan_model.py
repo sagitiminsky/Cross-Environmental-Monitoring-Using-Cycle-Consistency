@@ -38,13 +38,11 @@ class CycleGANModel(BaseModel):
 
         return parser
 
-    def __init__(self, opt, m, n):
+    def __init__(self, opt):
         """Initialize the CycleGAN class.
 
         Parameters:
             opt (Option class)  -- stores all the experiment flags; needs to be a subclass of BaseOptions
-            m                   -- number of channels for dme
-            n                   -- number of channels for ims
         """
         BaseModel.__init__(self, opt)
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
@@ -66,9 +64,9 @@ class CycleGANModel(BaseModel):
         # define networks (both Generators and discriminators)
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.netG_A = define_G(opt.input_dim, opt.output_dim, opt.ngf, opt.netG, opt.norm,
+        self.netG_A = define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
-        self.netG_B = define_G(opt.output_dim, opt.input_dim, opt.ngf, opt.netG, opt.norm,
+        self.netG_B = define_G(opt.output_nc, opt.input_nc, opt.ngf, opt.netG, opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define discriminators
