@@ -1,8 +1,8 @@
 import torch
 import itertools
 from .base_model import BaseModel
-from CellEnMon.util.image_pool import SignalPool
-from . import networks
+from util.image_pool import SignalPool
+from .networks import define_G,define_D,GANLoss
 
 
 class CycleGANModel(BaseModel):
@@ -66,15 +66,15 @@ class CycleGANModel(BaseModel):
         # define networks (both Generators and discriminators)
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.netG_A = networks.define_G(opt.input_dim, opt.output_dim, opt.ngf, opt.netG, opt.norm,
+        self.netG_A = define_G(opt.input_dim, opt.output_dim, opt.ngf, opt.netG, opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
-        self.netG_B = networks.define_G(opt.output_dim, opt.input_dim, opt.ngf, opt.netG, opt.norm,
+        self.netG_B = define_G(opt.output_dim, opt.input_dim, opt.ngf, opt.netG, opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define discriminators
-            self.netD_A = networks.define_D(opt.output_nc, opt.ndf, opt.netD,
+            self.netD_A = define_D(opt.output_nc, opt.ndf, opt.netD,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
-            self.netD_B = networks.define_D(opt.input_nc, opt.ndf, opt.netD,
+            self.netD_B = define_D(opt.input_nc, opt.ndf, opt.netD,
                                             opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:
@@ -83,7 +83,7 @@ class CycleGANModel(BaseModel):
             self.fake_A_pool = SignalPool(opt.pool_size)  # create signal buffer to store previously generated signals
             self.fake_B_pool = SignalPool(opt.pool_size)  # create signal buffer to store previously generated signals
             # define loss functions
-            self.criterionGAN = networks.GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
+            self.criterionGAN = GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
             self.criterionCycle = torch.nn.L1Loss()
             self.criterionIdt = torch.nn.L1Loss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
