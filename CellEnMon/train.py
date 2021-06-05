@@ -6,20 +6,20 @@ Example:
 """
 import time
 from options.train_options import TrainOptions
-from CellEnMon.data import extractor
-from models import create_model
+from data.extractor import Extractor
+import models
 import wandb
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()  # get training options
     wandb.init(project=opt.name)
-    dataset = extractor.Extractor()  # create a dataset given opt.dataset_mode and other options
+    dataset = Extractor()  # create a dataset given opt.dataset_mode and other options
 
     print(len(dataset))  # print number of samples for CMLs and Gauges
 
     opt['intput_dim'] = dataset.m
     opt['output_dim'] = dataset.n
-    model = create_model(opt)  # create a model given opt.model and other options
+    model = models.create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
 
