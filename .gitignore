@@ -5,4 +5,19 @@
 *.pyc
 
 /CellEnMon/venv/
-/CellEnMon/libs/relics/
+/CellEnMon/libs/relics/radar
+/CellEnMon/libs/relics/*/raw
+
+
+/venv
+/libs/scrappers/PLOT_IMAGES 2/TEST_DATA/
+/libs/scrappers/PLOT_IMAGES 2/MAT_files/
+/libs/scrappers/PLOT_IMAGES 2/IMAGEOUT/
+/libs/scrappers/radar_scrapper/TEST_DATA/PAdaily201804270600.asc.gz
+/libs/scrappers/radar_scrapper/TEST_DATA/RMdaily201804270600.asc.gz
+/libs/scrappers/radar_scrapper/TEST_DATA/RRdaily201804270600.asc.gz
+/libs/scrappers/radar_scrapper/IMAGEOUT/
+/libs/scrappers/radar_scrapper/MAT_files/
+/libs/relics/datasets/radar/
+/CellEnMon/libs/relics/datasets/ims/raw/
+/CellEnMon/libs/relics/datasets/dme/raw/
