@@ -165,7 +165,7 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
     return init_net(net, init_type, init_gain, gpu_ids)
 
 
-def define_G(input_dim, output_dim, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a generator
 
     Parameters:
@@ -196,7 +196,7 @@ def define_G(input_dim, output_dim, ngf, netG, norm='batch', use_dropout=False, 
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netG == 'tmp':
-        net = tmpGenerator(input_dim, output_dim, sign_size=32, cha_input=16, cha_hidden=32,
+        net = tmpGenerator(input_nc, output_nc, sign_size=32, cha_input=16, cha_hidden=32,
                  K=2, dropout_input=0.2, dropout_hidden=0.2, dropout_output=0.2)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
@@ -209,7 +209,7 @@ class tmpGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_dim, output_dim, sign_size=32, cha_input=16, cha_hidden=32,
+    def __init__(self, input_nc, output_nc, sign_size=32, cha_input=16, cha_hidden=32,
                  K=2, dropout_input=0.2, dropout_hidden=0.2, dropout_output=0.2):
         """Construct a Resnet-based generator
 
@@ -242,9 +242,9 @@ class tmpGenerator(nn.Module):
         self.dropout_hidden = dropout_hidden
         self.dropout_output = dropout_output
 
-        self.batch_norm1 = nn.BatchNorm1d(input_dim)
+        self.batch_norm1 = nn.BatchNorm1d(input_nc)
         self.dropout1 = nn.Dropout(dropout_input)
-        dense1 = nn.Linear(input_dim, hidden_size, bias=False)
+        dense1 = nn.Linear(input_nc, hidden_size, bias=False)
         self.dense1 = nn.utils.weight_norm(dense1)
 
         # 1st conv layer
@@ -303,7 +303,7 @@ class tmpGenerator(nn.Module):
 
         self.batch_norm2 = nn.BatchNorm1d(output_size)
         self.dropout2 = nn.Dropout(dropout_output)
-        dense2 = nn.Linear(output_size, output_dim, bias=False)
+        dense2 = nn.Linear(output_size, output_nc, bias=False)
         self.dense2 = nn.utils.weight_norm(dense2)
 
         self.loss = nn.BCEWithLogitsLoss()
