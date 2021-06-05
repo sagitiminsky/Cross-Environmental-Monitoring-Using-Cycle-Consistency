@@ -14,9 +14,9 @@ class Extractor:
         self.dme_data, self.dme_order = self.load_dme_data()  # 1 day is 96 = 24*4 samples
         self.ims_data, self.ims_order = self.load_ims_data()  # 1 day is 144 = 24*6 samples
 
-        ############
+        ####################################################################################################################################
         ### norm. - https://datascience.stackexchange.com/questions/5885/how-to-scale-an-array-of-signed-integers-to-range-from-0-to-1
-        ############
+        ####################################################################################################################################
 
         self.ims_data = self.ims_data.astype(np.float)
         self.dme_data = self.dme_data.astype(np.float)

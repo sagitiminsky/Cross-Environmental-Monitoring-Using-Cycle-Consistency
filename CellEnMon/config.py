@@ -54,6 +54,15 @@ months = {
     'Dec': '12'
 }
 
+
+#########################################
+############## RADAR SCRAPPER ###########
+#########################################
+
+radar_root_files = f"CellEnMon/libs/relics/datasets/radar/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
+radar_root_values = 'CellEnMon/libs/relics/datasets/radar/processed'
+
+
 #######################################
 ############## IMS SCRAPPER ###########
 #######################################
@@ -310,7 +319,7 @@ ims_pre_load_data = False
 ims_metadata = ['latitude', 'longitude']
 
 # DME
-dme_pre_load_data = False
+dme_pre_load_data = True
 dme_metadata=['frequency', 'polarization', 'length', 'txsite_longitude', 'txsite_latitude', 'rxsite_longitude',
                      'rxsite_latitude']
 
