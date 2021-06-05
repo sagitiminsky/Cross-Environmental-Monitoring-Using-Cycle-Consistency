@@ -1,4 +1,4 @@
-import CellEnMon.config as config
+import config as config
 import pickle
 import numpy as np
 import pandas as pd
@@ -70,6 +70,8 @@ class Extractor:
 
 
         return message
+
+
 
 
 
