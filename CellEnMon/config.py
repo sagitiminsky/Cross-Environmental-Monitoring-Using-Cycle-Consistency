@@ -315,7 +315,7 @@ basic_db_path = 'libs/power_law/frequency_dependent_coefficients_for_estimating_
 ################################
 
 # IMS
-ims_pre_load_data = False
+ims_pre_load_data = True
 ims_metadata = ['latitude', 'longitude']
 
 # DME
