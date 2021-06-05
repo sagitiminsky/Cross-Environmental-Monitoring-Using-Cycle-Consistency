@@ -1,23 +1,15 @@
-"""
-Example:
-    Train a CycleGAN model:
-        python train.py --name CellEnMon_CycleGan --model cycle_gan
-
-
-
-"""
 import time
 from options.train_options import TrainOptions
-from data.extractor import Extractor
+import data
 import models
 import wandb
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()  # get training options
     wandb.init(project=opt.name)
-    dataset = Extractor()  # create a dataset given opt.dataset_mode and other options
-
-    print(dataset.stats())  # print number of samples for CMLs and Gauges
+    dataset = data.create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    dataset_size = len(dataset)  # get the number of images in the dataset.
+    print('The number of training images = %d' % dataset_size)
 
     model = models.create_model(opt)  # create a model given opt.model and other options
     model.setup(opt)  # regular setup: load and print networks; create schedulers

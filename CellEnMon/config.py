@@ -59,16 +59,16 @@ months = {
 ############## RADAR SCRAPPER ###########
 #########################################
 
-radar_root_files = f"libs/relics/datasets/radar/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
-radar_root_values = 'libs/relics/datasets/radar/processed'
+radar_root_files = f"datasets/radar/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
+radar_root_values = 'datasets/radar/processed'
 
 
 #######################################
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"libs/relics/datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}"  # MM/DD/YYYY'
-ims_root_values = 'libs/relics/datasets/ims/processed'
+ims_root_files = f"datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}"  # MM/DD/YYYY'
+ims_root_values = 'datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
     '241', '348', '202', '10', '106', '73', '353', '343', '62',
@@ -160,8 +160,8 @@ ims_scrape_config = {
 ######### DME SCRAPPER #########
 ################################
 
-dme_root_files = f"libs/relics/datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
-dme_root_values = 'libs/relics/datasets/dme/processed'
+dme_root_files = f"datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
+dme_root_values = 'datasets/dme/processed'
 dme_scrape_config = {
     'username': 'SagiT',
     'password': 'W@st2020',

@@ -19,6 +19,6 @@
 /libs/scrappers/radar_scrapper/IMAGEOUT/
 /libs/scrappers/radar_scrapper/MAT_files/
 /libs/relics/datasets/radar/
-/CellEnMon/libs/relics/datasets/ims/raw/
-/CellEnMon/libs/relics/datasets/dme/raw/
+/CellEnMon/datasets/ims/raw/
+/CellEnMon/datasets/dme/raw/
 /CycleGAN/
