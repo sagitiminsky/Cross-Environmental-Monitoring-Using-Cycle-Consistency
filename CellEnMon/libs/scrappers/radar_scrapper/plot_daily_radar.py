@@ -34,8 +34,7 @@ import matplotlib.ticker as ticker
 import matplotlib.font_manager as font_manager
 
 # import mapping library
-from mpl_toolkits.basemap import Basemap
-
+from mpl_toolkits.basemap import Basemap, addcyclic
 
 # parallel computing library
 import multiprocessing 
@@ -266,7 +265,7 @@ def plotImage(dat,fout,acc1,acc2,acc3):
 	plt.close()
 
 
-	#plt.show()
+	plt.show()
 
 	return 0
 	############################################
@@ -377,8 +376,6 @@ if __name__ == "__main__":
 	datelist.append(datin)
 	
 	procdata(0)
-
-
 
 
 	end = time.time() # stop running time stopper
