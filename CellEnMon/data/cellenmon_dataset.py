@@ -76,7 +76,7 @@ class CellenmonDataset(BaseDataset):
         else:   # randomize the index for domain B to avoid fixed pairs.
             index_B = random.randint(0, self.B_size - 1)
 
-        data_B = self.B_paths[index_B] # needs to be a tensor
+        data_B = self.dataset.ims_data[index % self.B_size] # needs to be a tensor
 
         return {'data_A': data_A[7:], 'data_B': data_B[2:], 'metadata_A': data_A[:7] , 'metadata_B': data_B[:2]}
 
