@@ -78,7 +78,7 @@ class CellenmonDataset(BaseDataset):
 
         data_B = self.dataset.ims_data[index % self.B_size] # needs to be a tensor
 
-        return {'data_A': data_A[7:], 'data_B': data_B[2:], 'metadata_A': data_A[:7] , 'metadata_B': data_B[:2]}
+        return {'A': data_A[7:], 'B': data_B[2:], 'metadata_A': data_A[:7] , 'metadata_B': data_B[:2]}
 
     def __len__(self):
         """Return the total number of images."""
