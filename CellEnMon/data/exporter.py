@@ -11,8 +11,8 @@ from datetime import timedelta as dt_delta
 
 class Extractor:
     def __init__(self):
-        self.dme_data, self.dme_order = self.load_dme_data()  # 1 day is 96 = 24*4 samples
-        self.ims_data, self.ims_order = self.load_ims_data()  # 1 day is 144 = 24*6 samples
+        self.dme_data, self.dme_order = self.load_dme_data()  # 1 day is 96 = 24*4 data samples + 7 metadata samples
+        self.ims_data, self.ims_order = self.load_ims_data()  # 1 day is 144 = 24*6 data samples + 2 metadata samples
 
         ####################################################################################################################################
         ### norm. - https://datascience.stackexchange.com/questions/5885/how-to-scale-an-array-of-signed-integers-to-range-from-0-to-1
