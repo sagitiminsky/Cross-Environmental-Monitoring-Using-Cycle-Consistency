@@ -84,7 +84,7 @@ class CellenmonDataset(BaseDataset):
         #and 2 metadata values for ims
         return {
             'A': torch.Tensor(data_A[7:]),
-            'B': torch.Tensor(data_B[2:]),
+            'B': torch.Tensor(data_B[2:194]), #TODO: need to fix this so that both vectors will be of the same size
             'metadata_A': data_A[:7],
             'metadata_B': data_B[:2]
         }
