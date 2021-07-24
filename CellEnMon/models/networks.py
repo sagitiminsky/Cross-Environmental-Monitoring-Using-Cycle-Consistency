@@ -582,9 +582,18 @@ class UnetSkipConnectionBlock(nn.Module):
 
 
 class NLayerSequentialDiscriminator(nn.Module):
-    def __init__(self):
+    def __init__(self,input_nc):
         super(NLayerSequentialDiscriminator, self).__init__()
-        model = []
+        model = [
+            nn.Linear(input_nc, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 12),
+            nn.ReLU(),
+            nn.Linear(12, 1),
+            nn.Sigmoid()
+        ]
 
         self.model = nn.Sequential(*model)
 
