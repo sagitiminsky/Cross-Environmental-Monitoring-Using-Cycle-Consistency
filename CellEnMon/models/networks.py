@@ -324,7 +324,7 @@ class NLayerSequentialGenerator(nn.Module):
     def __init__(self, input_nc, output_nc):
         super(NLayerSequentialGenerator, self).__init__()
 
-        model = [
+        encoder = [
             nn.Linear(input_nc, 128),
             nn.ReLU(),
             nn.Linear(128, 64),
@@ -332,6 +332,9 @@ class NLayerSequentialGenerator(nn.Module):
             nn.Linear(64, 12),
             nn.ReLU(),
             nn.Linear(12, 3),
+        ]
+
+        decoder = [
             nn.Linear(3, 12),
             nn.ReLU(),
             nn.Linear(12, 64),
@@ -344,11 +347,12 @@ class NLayerSequentialGenerator(nn.Module):
             nn.Sigmoid()
         ]
 
-        self.model = nn.Sequential(*model)
+        self.encoder = nn.Sequential(*encoder)
+        self.decoder = nn.Sequential(*decoder)
 
     def forward(self, input):
         """Standard forward"""
-        return self.model(input)
+        return self.decoder(self.encoder(input))
 
 
 class ResnetGenerator(nn.Module):
@@ -582,7 +586,7 @@ class UnetSkipConnectionBlock(nn.Module):
 
 
 class NLayerSequentialDiscriminator(nn.Module):
-    def __init__(self,input_nc):
+    def __init__(self, input_nc):
         super(NLayerSequentialDiscriminator, self).__init__()
         model = [
             nn.Linear(input_nc, 128),
@@ -600,6 +604,7 @@ class NLayerSequentialDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         return self.model(input)
+
 
 class NLayerDiscriminator(nn.Module):
     """Defines a PatchGAN discriminator"""
