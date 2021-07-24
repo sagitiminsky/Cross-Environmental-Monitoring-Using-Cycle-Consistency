@@ -321,7 +321,7 @@ def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', const
 
 
 class NLayerGenerator(nn.Module):
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6):
+    def __init__(self):
         super(NLayerGenerator, self).__init__()
         model = [
             nn.Linear(192, 128),
@@ -336,7 +336,9 @@ class NLayerGenerator(nn.Module):
         self.model = nn.Sequential(*model)
 
     def forward(self, input):
-        """Standard forward."""
+        """Standard forward"""
+
+        print("input:{}".format(input))
         return self.model(input)
 
 
@@ -573,7 +575,7 @@ class UnetSkipConnectionBlock(nn.Module):
 class NLayerDiscriminator(nn.Module):
     """Defines a PatchGAN discriminator"""
 
-    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d):
+    def __init__(self):
         """Construct a PatchGAN discriminator
 
         Parameters:
