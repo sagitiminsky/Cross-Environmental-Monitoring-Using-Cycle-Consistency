@@ -322,17 +322,14 @@ class NLayerGenerator(nn.Module):
     def __init__(self, input_nc, output_nc):
         super(NLayerGenerator, self).__init__()
 
-        self.encoder = [
+        model = [
             nn.Linear(input_nc, 128),
             nn.ReLU(),
             nn.Linear(128, 64),
             nn.ReLU(),
             nn.Linear(64, 12),
             nn.ReLU(),
-            nn.Linear(12, 3)
-        ]
-
-        self.decoder = [
+            nn.Linear(12, 3),
             nn.Linear(3, 12),
             nn.ReLU(),
             nn.Linear(12, 64),
@@ -345,12 +342,12 @@ class NLayerGenerator(nn.Module):
             nn.Sigmoid()
         ]
 
+        self.model = nn.Sequential(*model)
+
 
 def forward(self, input):
     """Standard forward"""
-    encoded = self.encoder(input)
-    decoded = self.decoder(encoded)
-    return decoded
+    return self.model(input)
 
 
 class ResnetGenerator(nn.Module):
