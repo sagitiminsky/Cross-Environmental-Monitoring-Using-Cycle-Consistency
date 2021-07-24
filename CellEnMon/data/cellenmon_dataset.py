@@ -14,6 +14,7 @@ You need to implement the following functions:
 from data.base_dataset import BaseDataset, get_transform
 from .exporter import Extractor
 import random
+import torch
 # from data.image_folder import make_dataset
 # from PIL import Image
 
@@ -78,9 +79,12 @@ class CellenmonDataset(BaseDataset):
 
         data_B = self.dataset.ims_data[index % self.B_size] # needs to be a tensor
 
+
+        #remember that there are 7 metadata values for dme
+        #and 2 metadata values for ims
         return {
-            'A': data_A[7:],
-            'B': data_B[2:],
+            'A': torch.Tenstor(data_A[7:]),
+            'B': torch.Tenstor(data_B[2:]),
             'metadata_A': data_A[:7],
             'metadata_B': data_B[:2]
         }
