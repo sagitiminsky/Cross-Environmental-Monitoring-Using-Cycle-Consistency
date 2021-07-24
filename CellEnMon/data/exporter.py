@@ -56,9 +56,6 @@ class Extractor:
         self.dme_data[:, 2:] = (self.dme_data[:, 2:] - self.dme_data_min) / (
                 self.dme_data_max - self.dme_data_min)
 
-        # Transpose
-        self.ims_data = self.ims_data.T
-        self.dme_data = self.dme_data.T
 
         # set dim.
         self._1_d, self._1_n = self.dme_data.shape
