@@ -55,8 +55,8 @@ class Extractor:
                 self.dme_data_max - self.dme_data_min)
 
         # set dim.
-        self._1_n, self._1_d = self.dme_data.shape
-        self._2_n, self._2_d, = self.ims_data.shape
+        self.dme_number_of_stations, self.dme_number_of_channels = self.dme_data.shape
+        self.ims_number_of_stations, self.ims_number_of_channels, = self.ims_data.shape
 
     def stats(self):
         message = f"Links dim: {self.dme_data.shape} - each link is {self._1_d} dimential, and there are {self._1_n} links , covering {config.coverage} days \n" \

@@ -52,8 +52,8 @@ class CellenmonDataset(BaseDataset):
         super().__init__(opt)
         self.dataset=Extractor()
 
-        self.A_size=self.dataset._1_n
-        self.B_size = self.dataset._2_n
+        self.A_size=self.dataset.dme_number_of_stations
+        self.B_size = self.dataset.ims_number_of_stations
 
 
     def __getitem__(self, index):
