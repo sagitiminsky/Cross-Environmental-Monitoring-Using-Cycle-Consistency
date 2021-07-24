@@ -322,7 +322,7 @@ def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', const
 
 class NLayerGenerator(nn.Module):
     def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6,
-                 padding_type='reflect'):
+                 padding_type='zero'):
         super(NLayerGenerator, self).__init__()
         if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
             use_bias = norm_layer.func == nn.InstanceNorm2d
