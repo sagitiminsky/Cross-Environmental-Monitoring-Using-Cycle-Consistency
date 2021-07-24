@@ -48,7 +48,7 @@ class CellenmonDataset(BaseDataset):
         - define the image transformation.
         """
         # save the option and dataset root
-        BaseDataset.__init__(self, opt)
+        super().__init__(opt)
         self.dataset=Extractor()
 
         self.A_size=self.dataset._1_n
@@ -78,7 +78,12 @@ class CellenmonDataset(BaseDataset):
 
         data_B = self.dataset.ims_data[index % self.B_size] # needs to be a tensor
 
-        return {'A': data_A[7:], 'B': data_B[2:], 'metadata_A': data_A[:7] , 'metadata_B': data_B[:2]}
+        return {
+            'A': data_A[7:],
+            'B': data_B[2:],
+            'metadata_A': data_A[:7],
+            'metadata_B': data_B[:2]
+        }
 
     def __len__(self):
         """Return the total number of images."""
