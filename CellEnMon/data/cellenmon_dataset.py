@@ -76,8 +76,10 @@ class CellenmonDataset(BaseDataset):
             index_B = index % self.B_size
         else:   # randomize the index for domain B to avoid fixed pairs.
             index_B = random.randint(0, self.B_size - 1)
-
-        data_B = self.dataset.ims_data[index_B] # needs to be a tensor
+        try:
+            data_B = self.dataset.ims_data[index_B] # needs to be a tensor
+        except IndexError:
+            a=1
 
 
         #remember that there are 7 metadata values for dme
