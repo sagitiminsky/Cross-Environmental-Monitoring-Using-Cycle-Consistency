@@ -336,7 +336,7 @@ class NLayerGenerator(nn.Module):
     def forward(self, input):
         """Standard forward"""
 
-        print("input:{}".format(input))
+        print("input_shape:{}".format(input.size()))
         return self.model(input)
 
 
