@@ -83,8 +83,8 @@ class CellenmonDataset(BaseDataset):
         #remember that there are 7 metadata values for dme
         #and 2 metadata values for ims
         return {
-            'A': torch.Tesor(data_A[7:]),
-            'B': torch.Tesor(data_B[2:]),
+            'A': torch.Tensor(data_A[7:]),
+            'B': torch.Tensor(data_B[2:]),
             'metadata_A': data_A[:7],
             'metadata_B': data_B[:2]
         }
