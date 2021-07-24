@@ -152,7 +152,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netG == 'basic':
-        net = NLayerGenerator(input_nc, output_nc)
+        net = NLayerSequentialGenerator(input_nc, output_nc)
     elif netG == 'resnet_9blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
     elif netG == 'resnet_6blocks':
@@ -201,6 +201,8 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
 
     if netD == 'basic':  # default PatchGAN classifier
         net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer)
+    elif netD == 'n_layers':  # more options
+        net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':  # classify if each pixel is real or fake
         net = PixelDiscriminator(input_nc, ndf, norm_layer=norm_layer)
     else:
@@ -318,9 +320,9 @@ def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', const
         return 0.0, None
 
 
-class NLayerGenerator(nn.Module):
+class NLayerSequentialGenerator(nn.Module):
     def __init__(self, input_nc, output_nc):
-        super(NLayerGenerator, self).__init__()
+        super(NLayerSequentialGenerator, self).__init__()
 
         model = [
             nn.Linear(input_nc, 128),
@@ -343,7 +345,6 @@ class NLayerGenerator(nn.Module):
         ]
 
         self.model = nn.Sequential(*model)
-
 
     def forward(self, input):
         """Standard forward"""
@@ -579,6 +580,17 @@ class UnetSkipConnectionBlock(nn.Module):
         else:  # add skip connections
             return torch.cat([x, self.model(x)], 1)
 
+
+class NLayerSequentialDiscriminator(nn.Module):
+    def __init__(self):
+        super(NLayerSequentialDiscriminator, self).__init__()
+        model = []
+
+        self.model = nn.Sequential(*model)
+
+    def forward(self, input):
+        """Standard forward."""
+        return self.model(input)
 
 class NLayerDiscriminator(nn.Module):
     """Defines a PatchGAN discriminator"""
