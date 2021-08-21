@@ -81,14 +81,24 @@ class CellenmonDataset(BaseDataset):
 
 
 
-        #remember that there are 7 metadata values for dme
-        #and 2 metadata values for ims
-        return {
-            'A': torch.Tensor(data_A[7:]),
-            'B': torch.Tensor(data_B[2:194]), #TODO: need to fix this so that both vectors will be of the same size
+        dme_metadata_length=7
+        ims_metadata_length=2
+        """
+        dme: a day contains 96 samples
+        ims: a day contains 144 samples
+        
+        so that len(A)==len(B)==48
+        """
+        d= {
+            'A': torch.Tensor(data_A[dme_metadata_length::2]),
+            'B': torch.Tensor(data_B[ims_metadata_length::3]),
             'metadata_A': data_A[:7],
             'metadata_B': data_B[:2]
         }
+
+        assert len(d['A'])==len(d['B'])
+
+        return d
 
     def __len__(self):
         """Return the total number of images."""
