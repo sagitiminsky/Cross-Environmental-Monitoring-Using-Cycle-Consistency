@@ -325,12 +325,15 @@ class NLayerSequentialGenerator(nn.Module):
     def __init__(self, input_nc=48, output_nc=48):
         super(NLayerSequentialGenerator, self).__init__()
 
-        model = [
+        encoder = [
             nn.Linear(input_nc * config.coverage, 24),
             nn.ReLU(),
             nn.Linear(24, 12),
             nn.ReLU(),
             nn.Linear(12, 3),
+        ]
+
+        decoder = [
             nn.Linear(3, 12),
             nn.ReLU(),
             nn.Linear(12, 24),
@@ -338,11 +341,12 @@ class NLayerSequentialGenerator(nn.Module):
             nn.Linear(24, output_nc * config.coverage),
             nn.Sigmoid()
         ]
-        self.model = nn.Sequential(*model)
+        self.encoder = nn.Sequential(*encoder)
+        self.decoder = nn.Sequential(*decoder)
 
     def forward(self, input):
         """Standard forward"""
-        return self.model(input)
+        return self.decoder(self.encoder(input))
 
 
 class ResnetGenerator(nn.Module):
