@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
+import config
 
 
 ###############################################################################
@@ -321,15 +322,13 @@ def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', const
 
 
 class NLayerSequentialGenerator(nn.Module):
-    def __init__(self, input_nc, output_nc):
+    def __init__(self, input_nc=48, output_nc=48):
         super(NLayerSequentialGenerator, self).__init__()
 
         encoder = [
-            nn.Linear(input_nc, 128),
+            nn.Linear(input_nc * config.coverage, 24),
             nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 12),
+            nn.Linear(24, 12),
             nn.ReLU(),
             nn.Linear(12, 3),
         ]
@@ -337,16 +336,11 @@ class NLayerSequentialGenerator(nn.Module):
         decoder = [
             nn.Linear(3, 12),
             nn.ReLU(),
-            nn.Linear(12, 64),
+            nn.Linear(12, 24),
             nn.ReLU(),
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            nn.Linear(128, 192),
-            nn.ReLU(),
-            nn.Linear(192, output_nc),
+            nn.Linear(24, output_nc * config.coverage),
             nn.Sigmoid()
         ]
-
         self.encoder = nn.Sequential(*encoder)
         self.decoder = nn.Sequential(*decoder)
 
@@ -589,11 +583,7 @@ class NLayerSequentialDiscriminator(nn.Module):
     def __init__(self, input_nc):
         super(NLayerSequentialDiscriminator, self).__init__()
         model = [
-            nn.Linear(input_nc, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 12),
+            nn.Linear(input_nc * config.coverage, 12),
             nn.ReLU(),
             nn.Linear(12, 1),
             nn.Sigmoid()
