@@ -26,12 +26,12 @@ date = {
     'value': {
         'dd': '01',
         'mm': '01',
-        'yyyy': '2019'
+        'yyyy': '2013'
     },
     'value_range': {
-        'dd': '02',
+        'dd': '01',
         'mm': '01',
-        'yyyy': '2019'
+        'yyyy': '2015'
     }
 }
 
@@ -71,7 +71,15 @@ ims_root_files = f"datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_wi
 ims_root_values = 'datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
-    '241', '348', '202', '10', '106', '73', '353', '343', '62',
+    '241',
+    '348',
+    '202',
+    '10',
+    '106',
+    '73',
+    '353',
+    '343',
+    '62',
     '269',
     '123',
     '227',
@@ -147,7 +155,9 @@ ims_mapping = [
     '207',
     '232',
     '36',
-    '64']
+    '64'
+]
+
 ims_scrape_config = {
     '_from': f"{add_days_to_date(date['value'])['str_rep']}",  # MM/DD/YYYY
     '_to': f"{add_days_to_date(date['value_range'])['str_rep']}",  # MM/DD/YYYY , delta_days=2
@@ -200,9 +210,17 @@ dme_scrape_config = {
             # 'In range'
         },
         'sampling_period_description': {},
-        'sampling_period[sec]': '15',
+        'sampling_period[min]': '15',
 
-        'link_id': [],  # ['B394-D431'],
+        'link_id': [
+                    'd409-5079','c409-5077','b219-5060','c219-5079','d219-5079',                                   #Arad
+                    '803b-6879','a459-6879','a690-6880','b690-6881','a273-6881','b459-6880',                #Naot Smadar
+                    'c247-7049',                                                                                  #Yavne
+                    'a473-5512','b119-5512',                                                                      #Paran
+                    'e032-5090','a247-5090','b247-5377',                                                         #Ashdod
+                    'a394-7332', 'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333', 'ts03-7331',             #Bar Shava
+                    'g086-5091','h086-7193'                                                                    #Ashkelon
+                    ],
 
         'link_carrier': {},
         'link_frequency[mhz]': {
@@ -224,7 +242,7 @@ dme_scrape_config = {
         'tx_site_id': {},
         'tx_site_secondary_id': {},
         'tx_site_longitude': {
-            'select': 'In range',
+            'select': None,
 
             # 'Equals'
             # 'Greater than'
@@ -232,11 +250,11 @@ dme_scrape_config = {
             # 'Not equal'
             # 'In range'
 
-            'value': '34.088504434511606',
-            'value_range': '35.630255532834326'
+            # 'value': '34.088504434511606',
+            # 'value_range': '35.630255532834326'
         },
         'tx_site_latitude': {
-            'select': 'In range',
+            'select': None,
 
             # 'Equals'
             # 'Greater than'
@@ -244,14 +262,14 @@ dme_scrape_config = {
             # 'Not equal'
             # 'In range'
 
-            'value': '29.416005191321844',
-            'value_range': '31.430796575396656'
+            # 'value': '29.416005191321844',
+            # 'value_range': '31.430796575396656'
         },
         'tx_site_tower_hight[m]': {},
         'rx_site_id': {},
         'rx_site_secondary_id': {},
         'rx_site_longitude': {
-            'select': 'In range',
+            'select': None,
 
             # 'Equals'
             # 'Greater than'
@@ -259,11 +277,11 @@ dme_scrape_config = {
             # 'Not equal'
             # 'In range'
 
-            'value': '34.088504434511606',
-            'value_range': '35.630255532834326'
+            # 'value': '34.088504434511606',
+            # 'value_range': '35.630255532834326'
         },
         'rx_site_latitude': {
-            'select': 'In range',
+            'select': None,
 
             # 'Equals'
             # 'Greater than'
@@ -271,8 +289,8 @@ dme_scrape_config = {
             # 'Not equal'
             # 'In range'
 
-            'value': '29.416005191321844',
-            'value_range': '31.430796575396656'
+            # 'value': '29.416005191321844',
+            # 'value_range': '31.430796575396656'
         },
         'rx_site_tower_height[m]': {},
 
