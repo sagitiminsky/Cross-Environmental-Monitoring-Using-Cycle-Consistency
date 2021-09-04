@@ -63,7 +63,7 @@ class DME_Scrapper_obj:
                 'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
                 'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
             },
-            'sampling_period[sec]': {
+            'sampling_period[min]': {
                 'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[1]/span[2]',
                 'input_box': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
                 'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
@@ -297,17 +297,20 @@ class DME_Scrapper_obj:
 
                     time.sleep(1)
 
-                    # download data
-                    self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
-                    WebDriverWait(self.browser, self.delay).until(
-                        EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
+                    try:
+                        # download data
+                        self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+                        WebDriverWait(self.browser, self.delay).until(
+                            EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
 
-                    time.sleep(1)
+                        time.sleep(1)
 
-                    # download metadata
-                    self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
-                    WebDriverWait(self.browser, self.delay).until(
-                        EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
+                        # download metadata
+                        self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
+                        WebDriverWait(self.browser, self.delay).until(
+                            EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
+                    except TimeoutException: # rows do not exist
+                        pass
 
                     # next day
                     day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
@@ -353,7 +356,7 @@ class DME_Scrapper_obj:
             self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
         # measurement type
-        self.check_boxes()
+        #self.check_boxes()
 
         # # tx site longitude
         # self.ranged_filter('tx_site_longitude')
@@ -368,7 +371,7 @@ class DME_Scrapper_obj:
         # self.ranged_filter('rx_site_latitude')
 
         # sampling period description
-        self.input_box('sampling_period[sec]')
+        self.input_box('sampling_period[min]')
 
         # Link frequency[MHz]
         self.ranged_filter('link_frequency[mhz]')
