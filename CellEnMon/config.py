@@ -3,7 +3,7 @@
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 
-download_path = '/Users/sagitiminsky/Downloads/'
+download_path = '/home/sagit/Downloads/'
 
 
 def parse_date(d):
@@ -198,7 +198,7 @@ dme_scrape_config = {
             }
 
         },
-        'measurement_type': 'TN_RFInputPower',
+        'measurement_type': [], #['TN_RFInputPower'],
         'data_precentage': {
             'select': 'Equals',
             'value': '100',
