@@ -1,9 +1,10 @@
-###
+####
 # export PYTHONPATH=$PYTHON_PATH:/Users/sagit/Desktop/CellEnMon-Research
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 
-download_path = '/home/sagit/Downloads/'
+MAC=False
+download_path = '/Users/sagitiminsky/Downloads/' if MAC==True else '/home/sagit/Downloads/'
 
 
 def parse_date(d):
