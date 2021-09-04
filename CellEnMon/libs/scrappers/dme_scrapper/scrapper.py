@@ -130,7 +130,7 @@ class DME_Scrapper_obj:
         self.time_frame = (self.end_datetime['datetime_rep'] - self.start_datetime['datetime_rep']).days + 1
 
         # accept alert
-        time.sleep(3)
+        time.sleep(1)
         # alert = self.browser.switch_to_alert()
         # alert.dismiss()
 
@@ -152,9 +152,9 @@ class DME_Scrapper_obj:
     def scrape(self):
         if config.dme_scrape_config['link_objects']['link_id']:
             for link_name in config.dme_scrape_config['link_objects']['link_id']:
-                self.extract_merge_save_csv(self.download_zip_files(link_name))
+                self.extract_merge_save_csv(self.download_zip_files_wrapper(link_name))
         else:
-            self.extract_merge_save_csv(self.download_zip_files())
+            self.extract_merge_save_csv(self.download_zip_files_wrapper())
 
     def create_merged_df_dict(self, metadata_df):
         d = {}
@@ -261,7 +261,27 @@ class DME_Scrapper_obj:
         if len(os.listdir(self.root_download)) - prev_number_of_files == delta:
             return
 
-    def ranged_filter(self, mux):
+    def download_data(self,start_day,end_day=None):
+        try:
+            # download data
+            self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+            WebDriverWait(self.browser, self.delay).until(
+                EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
+
+            time.sleep(1)
+
+            # download metadata
+            self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
+            WebDriverWait(self.browser, self.delay).until(
+                EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
+        except TimeoutException:  # rows do not exist
+            if not end_day:
+                print('The following day: {} failed'.format(start_day))
+                pass
+            else:
+                raise TimeoutException("The following range: {} - {} failed ".format(start_day,end_day))
+
+    def ranged_filter(self, mux, download_option='parallel'):
         link_obj = config.dme_scrape_config['link_objects']
         select = link_obj[mux]
         select_value = select['value']
@@ -269,8 +289,8 @@ class DME_Scrapper_obj:
         self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
         filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
 
-        if mux == 'date':
-            pass
+        if 'date' in mux:
+            pass #this will be defined later on, because we need set everything and only then download according to "download_option"
 
         elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux == 'link_frequency[mhz]' or mux == 'data_precentage':
             Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
@@ -286,35 +306,44 @@ class DME_Scrapper_obj:
 
                 # download
                 print('starting download...')
+                if download_option=='seq':
+                    day_iter = self.start_datetime
+                    counter = 0
+                    while day_iter['datetime_rep'] <= self.end_datetime['datetime_rep']:
+                        print('download day #{}/{}, date:{}'.format(counter + 1, self.time_frame, day_iter['str_rep']))
+                        self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
+                        filter.send_keys(day_iter['str_rep'])
+                        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-                day_iter = self.start_datetime
-                counter = 0
-                while day_iter['datetime_rep'] <= self.end_datetime['datetime_rep']:
-                    print('download day #{}/{}, date:{}'.format(counter + 1, self.time_frame, day_iter['str_rep']))
+                        self.download_data(start_day=day_iter['datetime_rep'])
+
+                        # next day
+                        day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
+                        counter = counter + 1
+
+                elif download_option=='parallel':
+                    start_day=self.start_datetime['str_rep']
+                    end_day=self.end_datetime['str_rep']
+
+
+                    #select range filter type
+                    Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
+                        select['select'])
+
+                    #input dates
                     self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
-                    filter.send_keys(day_iter['str_rep'])
+                    filter.send_keys(start_day)
+                    filter=self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
+                    filter.click()
+                    filter.send_keys(end_day)
+
                     self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-                    time.sleep(1)
+                    self.download_data(start_day=start_day,end_day=end_day)
 
-                    try:
-                        # download data
-                        self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
-                        WebDriverWait(self.browser, self.delay).until(
-                            EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
 
-                        time.sleep(1)
-
-                        # download metadata
-                        self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
-                        WebDriverWait(self.browser, self.delay).until(
-                            EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
-                    except TimeoutException: # rows do not exist
-                        pass
-
-                    # next day
-                    day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
-                    counter = counter + 1
+                else:
+                    raise Exception(f"download_option:{download_option} is not supported")
 
             elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
                 Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
@@ -346,7 +375,8 @@ class DME_Scrapper_obj:
         filter.send_keys(config.dme_scrape_config['link_objects'][input_type])
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-    def download_zip_files(self, link_name=None):
+    def download_zip_files_wrapper(self, link_name=None):
+
         # link id
         if link_name:
             element_xpath = self.xpaths['link_id']
@@ -380,7 +410,7 @@ class DME_Scrapper_obj:
         self.ranged_filter('data_precentage')
 
         # date
-        self.ranged_filter('date')
+        self.ranged_filter('date',download_option='parallel')
 
         time.sleep(5)
 
