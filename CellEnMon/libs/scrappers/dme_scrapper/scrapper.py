@@ -29,84 +29,9 @@ class DME_Scrapper_obj:
         self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.chrome_options.add_argument("--disable-popup-blocking")
-        self.delay = 10
+        self.delay = 60
         self.selector = '//*[@id="btnExportByFilter"]'
-        self.xpaths = {
-            'xpath_download': '//*[@id="btnExport"]',
-            'xpath_metadata_download': '//*[@id="btnExportMetadata"]',
-            'link_id': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[1]',
-                'xpath_select': '',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-            },
-            'date': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[1]',
-                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/div/input',
-                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/div/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-            },
-            'measurement_type': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[1]',
-                'xpath_select_all': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[1]/label/span',
-                'search_box': '//*[@id="ag-mini-filter"]/input',
-                'xpath_hc_radio_sink': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[1]/label',
-                'xpath_hc_radio_source': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[2]/label',
-                'xpath_tn_rfinputpower': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div/label/span',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-
-            },
-            'data_precentage': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[1]',
-                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-            },
-            'sampling_period[min]': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[1]/span[2]',
-                'input_box': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-
-            },
-            'rx_site_longitude': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[1]/span[2]',
-                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
-                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-            },
-            'rx_site_latitude': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[1]/span[2]',
-                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
-                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-            },
-            'tx_site_longitude': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[1]/span[2]',
-                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
-                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input'
-            },
-            'tx_site_latitude': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[1]/span[2]',
-                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
-                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-            },
-            'link_frequency[mhz]': {
-                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[1]/span[2]',
-                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
-                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
-                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
-                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
-            }
-
-        }
+        self.xpaths = config.xpaths
         self.root_download = config.download_path
         self.root_data_files = config.dme_root_files
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
@@ -123,10 +48,8 @@ class DME_Scrapper_obj:
         self.log_in(self.browser)
 
         # time frame
-        self.start_datetime = self.convert_to_datetime_and_add_delta_days(
-            config.dme_scrape_config['link_objects']['date']['value'])
-        self.end_datetime = self.convert_to_datetime_and_add_delta_days(
-            config.dme_scrape_config['link_objects']['date']['value_range'])
+        self.start_datetime = self.convert_to_datetime_and_add_delta_days(config.date['value'])
+        self.end_datetime = self.convert_to_datetime_and_add_delta_days(config.date['value_range'])
         self.time_frame = (self.end_datetime['datetime_rep'] - self.start_datetime['datetime_rep']).days + 1
 
         # accept alert
@@ -151,8 +74,8 @@ class DME_Scrapper_obj:
 
     def scrape(self):
         if config.dme_scrape_config['link_objects']['link_id']:
-            for link_name in config.dme_scrape_config['link_objects']['link_id']:
-                self.extract_merge_save_csv(self.download_zip_files_wrapper(link_name))
+            link_names = config.dme_scrape_config['link_objects']['link_id']
+            self.extract_merge_save_csv(self.download_zip_files_wrapper(link_names))
         else:
             self.extract_merge_save_csv(self.download_zip_files_wrapper())
 
@@ -204,16 +127,16 @@ class DME_Scrapper_obj:
                     add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
 
                     # zero-level
-                    median = np.median((-1) * add_df['RFInputPower'])
+                    # median = np.median((-1) * add_df['RFInputPower'])
 
-                    # preprocessing - turn link frequency from MHz to GHz - because PowerLaw is in GHz
-                    power_law = PowerLaw(frequency=metadata_row['frequency'] / 1000,  # Link Frequency [MHz]
-                                         polarization=metadata_row['polarization'],
-                                         L=metadata_row['length'])
+                    # #preprocessing - turn link frequency from MHz to GHz - because PowerLaw is in GHz
+                    # power_law = PowerLaw(frequency=metadata_row['frequency'] / 1000,  # Link Frequency [MHz]
+                    #                      polarization=metadata_row['polarization'],
+                    #                      L=metadata_row['length'])
 
-                    # todo: 'RFInputPower' is only good for one type of link
-                    add_df['rain'] = power_law.basic_attinuation_to_rain_multiple(
-                        (-1) * add_df['RFInputPower'] - median)
+                    # # todo: 'RFInputPower' is only good for one type of link
+                    # add_df['rain'] = power_law.basic_attinuation_to_rain_multiple(
+                    #     (-1) * add_df['RFInputPower'] - median)
 
                     if 'DEBUG' in os.environ:
                         print('DEBUG: link id is: {} median is:{}'.format(link_name, median))
@@ -261,99 +184,49 @@ class DME_Scrapper_obj:
         if len(os.listdir(self.root_download)) - prev_number_of_files == delta:
             return
 
-    def download_data(self,start_day,end_day=None):
+    def download_data(self, start_day, end_day=None):
         try:
-            # download data
-            self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
-            WebDriverWait(self.browser, self.delay).until(
-                EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
-
-            time.sleep(1)
 
             # download metadata
             self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
             WebDriverWait(self.browser, self.delay).until(
                 EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
+
+            time.sleep(1)
+
+            # download data
+            self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
+            WebDriverWait(self.browser, self.delay).until(
+                EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
+
         except TimeoutException:  # rows do not exist
             if not end_day:
                 print('The following day: {} failed'.format(start_day))
                 pass
             else:
-                raise TimeoutException("The following range: {} - {} failed ".format(start_day,end_day))
+                raise TimeoutException("The following range: {} - {} failed ".format(start_day, end_day))
 
-    def ranged_filter(self, mux, download_option='parallel'):
+
+    def ranged_filter(self, mux):
         link_obj = config.dme_scrape_config['link_objects']
         select = link_obj[mux]
         select_value = select['value']
         element_xpath = self.xpaths[mux]
         self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
 
-        if 'date' in mux:
-            pass #this will be defined later on, because we need set everything and only then download according to "download_option"
+        Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
+            select['select'])
 
-        elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude' or mux == 'link_frequency[mhz]' or mux == 'data_precentage':
-            Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
-                select['select'])
-            filter.send_keys(select_value)
-        else:
-            raise ValueError("mux type is undefined {}".format(mux))
+        self.browser.find_element_by_xpath(element_xpath['xpath_filter']).send_keys(select_value)
+
 
         if select['select'] == 'In range':
-            select_value_range = select['value_range']
-
-            if mux == 'date':
-
-                # download
-                print('starting download...')
-                if download_option=='seq':
-                    day_iter = self.start_datetime
-                    counter = 0
-                    while day_iter['datetime_rep'] <= self.end_datetime['datetime_rep']:
-                        print('download day #{}/{}, date:{}'.format(counter + 1, self.time_frame, day_iter['str_rep']))
-                        self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
-                        filter.send_keys(day_iter['str_rep'])
-                        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
-
-                        self.download_data(start_day=day_iter['datetime_rep'])
-
-                        # next day
-                        day_iter = self.convert_to_datetime_and_add_delta_days(day_iter['dict_rep'], delta_days=1)
-                        counter = counter + 1
-
-                elif download_option=='parallel':
-                    start_day=self.start_datetime['str_rep']
-                    end_day=self.end_datetime['str_rep']
+            filter=self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
+            filter.click()
+            filter.send_keys(select['value_range'])
 
 
-                    #select range filter type
-                    Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
-                        select['select'])
 
-                    #input dates
-                    self.browser.find_element_by_xpath(element_xpath['xpath_filter']).click()
-                    filter.send_keys(start_day)
-                    filter=self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
-                    filter.click()
-                    filter.send_keys(end_day)
-
-                    self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
-
-                    self.download_data(start_day=start_day,end_day=end_day)
-
-
-                else:
-                    raise Exception(f"download_option:{download_option} is not supported")
-
-            elif mux == 'tx_site_longitude' or mux == 'tx_site_latitude' or mux == 'rx_site_longitude' or mux == 'rx_site_latitude':
-                Select(self.browser.find_element_by_xpath(element_xpath['xpath_select'])).select_by_visible_text(
-                    select['select'])
-                filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
-                filter.send_keys(select_value_range)
-            else:
-                raise ValueError("mux type is undefined {}".format(mux))
-
-        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
     def check_boxes(self):
         link_obj = config.dme_scrape_config['link_objects']
@@ -375,18 +248,16 @@ class DME_Scrapper_obj:
         filter.send_keys(config.dme_scrape_config['link_objects'][input_type])
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-    def download_zip_files_wrapper(self, link_name=None):
+    def download_zip_files_wrapper(self, link_names=None):
 
-        # link id
-        if link_name:
-            element_xpath = self.xpaths['link_id']
-            self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
-            filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
-            filter.send_keys(link_name)
-            self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+        data_paths = []
+        metadata_paths = []
+
+        start_day = self.start_datetime['str_rep']
+        end_day = self.end_datetime['str_rep']
 
         # measurement type
-        #self.check_boxes()
+        # self.check_boxes()
 
         # # tx site longitude
         # self.ranged_filter('tx_site_longitude')
@@ -410,12 +281,28 @@ class DME_Scrapper_obj:
         self.ranged_filter('data_precentage')
 
         # date
-        self.ranged_filter('date',download_option='parallel')
+        self.ranged_filter('date')
 
-        time.sleep(5)
+        # links id
+        element_xpath = self.xpaths['link_id']
+        self.browser.find_element_by_xpath(element_xpath['xpath_open']).click()
+        filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter'])
 
-        data_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.zip' in f and 'cldb' in f]
-        metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.csv' in f and 'cldb' in f]
+        if link_names:
+            for link_name in link_names:
+                print("current link is:{}".format(link_name))
+
+                # link id
+                self.browser.find_element_by_xpath(element_xpath['xpath_reset']).click()
+                filter.send_keys(link_name)
+                self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+
+                print('starting download range {}-{}...'.format(start_day, end_day))
+                self.download_data(start_day=start_day, end_day=end_day)
+
+            data_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.zip' in f and 'cldb' in f]
+            metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if
+                              '.csv' in f and 'cldb' in f]
 
         data_paths.sort(key=os.path.getmtime)
         metadata_paths.sort(key=os.path.getmtime)

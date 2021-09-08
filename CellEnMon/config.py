@@ -3,7 +3,7 @@
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 
-MAC=False
+MAC=True
 download_path = '/Users/sagitiminsky/Downloads/' if MAC==True else '/home/sagit/Downloads/'
 
 
@@ -19,7 +19,8 @@ def add_days_to_date(date, delta_days=0):
         'str_rep_with_replace': f"{str(res.month).zfill(2)}{str(res.day).zfill(2)}{res.year}",
         'day_str_rep': f"{str(res.day).zfill(2)}",
         'month_str_rep': f"{str(res.month).zfill(2)}",
-        'year_str_rep': f"{res.year}"
+        'year_str_rep': f"{res.year}",
+        'str_rep_ddmmyyyy': f"{str(res.day).zfill(2)}{str(res.month).zfill(2)}{res.year}"
     }
 
 
@@ -39,6 +40,8 @@ date = {
 date_str_rep = add_days_to_date(date['value'])['str_rep_with_replace'] + '_' + add_days_to_date(date['value_range'])[
     'str_rep_with_replace']
 date_datetime_rep = add_days_to_date(date['value'])['datetime_rep']
+start_date_str_rep=add_days_to_date(date['value'])['str_rep_ddmmyyyy']
+end_date_str_rep=add_days_to_date(date['value_range'])['str_rep_ddmmyyyy']
 
 months = {
     'Jan': '01',
@@ -171,6 +174,85 @@ ims_scrape_config = {
 ######### DME SCRAPPER #########
 ################################
 
+xpaths={
+            'xpath_download': '//*[@id="btnExport"]',
+            'xpath_metadata_download': '//*[@id="btnExportMetadata"]',
+            'link_id': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[1]',
+                'xpath_select': '',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[3]/div/div[2]/div/div/div[2]/button[3]',
+                'xpath_reset': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[3]/div/div[2]/div/div/div[2]/button[2]'
+
+            },
+            'date': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[1]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/div/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/div/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[1]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+            'measurement_type': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[1]',
+                'xpath_select_all': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[1]/label/span',
+                'search_box': '//*[@id="ag-mini-filter"]/input',
+                'xpath_hc_radio_sink': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[1]/label',
+                'xpath_hc_radio_source': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div[2]/label',
+                'xpath_tn_rfinputpower': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[1]/div[2]/div[2]/div/div/div/label/span',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[2]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+
+            },
+            'data_precentage': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[1]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[3]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+            'sampling_period[min]': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[1]/span[2]',
+                'input_box': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[4]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+
+            },
+            'rx_site_longitude': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[20]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+            'rx_site_latitude': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[21]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+            'tx_site_longitude': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[15]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input'
+            },
+            'tx_site_latitude': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[16]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            },
+            'link_frequency[mhz]': {
+                'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[1]/span[2]',
+                'xpath_select': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/select[1]',
+                'xpath_filter': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[1]/input',
+                'xpath_filter_range': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[1]/div[1]/div[2]/input',
+                'xpath_apply': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[8]/div/div[3]/div/div[2]/div/div/div[2]/button[3]'
+            }
+
+}
+
 dme_root_files = f"datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
 dme_root_values = 'datasets/dme/processed'
 dme_scrape_config = {
@@ -187,17 +269,8 @@ dme_scrape_config = {
             # 'Not equal'
             # 'In range'
 
-            'value': {
-                'dd': f'{date["value"]["dd"]}',
-                'mm': f'{date["value"]["mm"]}',
-                'yyyy': f'{date["value"]["yyyy"]}'
-            },
-            'value_range': {
-                'dd': f'{date["value_range"]["dd"]}',
-                'mm': f'{date["value_range"]["mm"]}',
-                'yyyy': f'{date["value_range"]["yyyy"]}'
-            }
-
+            'value': start_date_str_rep,
+            'value_range': end_date_str_rep
         },
         'measurement_type': [], #['TN_RFInputPower'],
         'data_precentage': {
@@ -214,13 +287,13 @@ dme_scrape_config = {
         'sampling_period[min]': '15',
 
         'link_id': [
-                    'd409-5079','c409-5077','b219-5060','c219-5079','d219-5079',                                   #Arad
-                    '803b-6879','a459-6879','a690-6880','b690-6881','a273-6881','b459-6880',                #Naot Smadar
-                    'c247-7049',                                                                                  #Yavne
-                    'a473-5512','b119-5512',                                                                      #Paran
-                    'e032-5090','a247-5090','b247-5377',                                                         #Ashdod
-                    'a394-7332', 'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333', 'ts03-7331',             #Bar Shava
-                    'g086-5091','h086-7193'                                                                    #Ashkelon
+                    'd409-5079','c409-5077','b219-5060','c219-5079',                                               #Arad - no data: d219-5079
+                    '803b-6879','a459-6879','a690-6880','b690-6881','a273-6881','b459-6880',                #Naot Smadar - no data:
+                    'c247-7049',                                                                                  #Yavne - no data:
+                    'a473-5512','b119-5512',                                                                      #Paran - no data:
+                    'e032-5090','a247-5090','b247-5377',                                                         #Ashdod - no data:
+                    'a394-7332', 'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333',             #Bar Shava - no data: ts03-7331
+                    'g086-5091','h086-7193'                                                                    #Ashkelon - no data:
                     ],
 
         'link_carrier': {},
@@ -310,8 +383,8 @@ def parse_date(d):
     return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
 
 
-value = parse_date(dme_scrape_config['link_objects']['date']['value']).strip()
-value_range = parse_date(dme_scrape_config['link_objects']['date']['value_range']).strip()
+value = parse_date(date['value']).strip()
+value_range = parse_date(date['value_range']).strip()
 date_select = dme_scrape_config['link_objects']['date']['select']
 
 if not value or date_select == 'In range' and dt.strptime(value, "%m/%d/%y") > dt.strptime(value_range, "%m/%d/%y"):
