@@ -254,6 +254,7 @@ xpaths={
 }
 
 dme_root_files = f"datasets/dme/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}/"  # MM/DD/YYYY
+paths_root='./CellEnMon/libs/scrappers/dme_scrapper/paths'
 dme_root_values = 'datasets/dme/processed'
 dme_scrape_config = {
     'username': 'SagiT',
@@ -287,13 +288,13 @@ dme_scrape_config = {
         'sampling_period[min]': '15',
 
         'link_id': [
-                    'd409-5079','c409-5077','b219-5060','c219-5079',                                               #Arad - no data: d219-5079
-                    '803b-6879','a459-6879','a690-6880','b690-6881','a273-6881','b459-6880',                #Naot Smadar - no data:
-                    'c247-7049',                                                                                  #Yavne - no data:
-                    'a473-5512','b119-5512',                                                                      #Paran - no data:
-                    'e032-5090','a247-5090','b247-5377',                                                         #Ashdod - no data:
-                    'a394-7332', 'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333',             #Bar Shava - no data: ts03-7331
-                    'g086-5091','h086-7193'                                                                    #Ashkelon - no data:
+                    'd409-5079','c409-5077','b219-5060','c219-5079',                                                    #Arad - no data: d219-5079
+                    '803b-6879','a459-6879','a690-6880','b690-6881','a273-6881','b459-6880',                            #Naot Smadar - no data:
+                    'c247-7049',                                                                                        #Yavne - no data:
+                    'a473-5512','b119-5512',                                                                            #Paran - no data:
+                    'e032-5090','a247-5090','b247-5377',                                                                #Ashdod - no data:
+                    'a394-7332', 'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333',                                    #Bar Shava - no data: ts03-7331
+                    'g086-5091'                                                                                         #Ashkelon - no data: h086-7193
                     ],
 
         'link_carrier': {},
