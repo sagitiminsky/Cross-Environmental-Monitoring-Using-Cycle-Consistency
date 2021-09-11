@@ -69,7 +69,7 @@ radar_root_values = 'datasets/radar/processed'
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"datasets/ims/raw/{add_days_to_date(date['value'])['str_rep_with_replace']}_{add_days_to_date(date['value_range'])['str_rep_with_replace']}"  # MM/DD/YYYY'
+ims_root_files = f"datasets/ims/raw/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
 ims_root_values = 'datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
