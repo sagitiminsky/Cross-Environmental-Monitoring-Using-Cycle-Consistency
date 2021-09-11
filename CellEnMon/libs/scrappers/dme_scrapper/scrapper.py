@@ -20,6 +20,9 @@ from datetime import timedelta as dt_delta
 import numpy as np
 from CellEnMon.libs.power_law.power_law import PowerLaw
 
+# SELECTOR=['DOWNLOAD','EXTRACT']
+SELECTOR = ['EXTRACT']
+
 
 class DME_Scrapper_obj:
 
@@ -34,20 +37,22 @@ class DME_Scrapper_obj:
         self.xpaths = config.xpaths
         self.root_download = config.download_path
         self.root_data_files = config.dme_root_files
-        self.paths=config.paths_root
-        self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
+        self.paths = config.paths_root
 
         if not os.path.isdir(self.root_data_files):
             os.makedirs(self.root_data_files)
 
-        # clear old
-        self.delete_prev_from_downloads_if_poss()
-        self.delete_prev_data_files_if_poss(self.root_data_files)
-        self.delete_prev_data_files_if_poss(self.paths)
+        if 'DOWNLOAD' in SELECTOR:
+            self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
 
-        # log in
-        self.browser.get(config.dme_scrape_config['url'])
-        self.log_in(self.browser)
+            # clear old
+            self.delete_prev_from_downloads_if_poss()
+            self.delete_prev_data_files_if_poss(self.root_data_files)
+            self.delete_prev_data_files_if_poss(self.paths)
+
+            # log in
+            self.browser.get(config.dme_scrape_config['url'])
+            self.log_in(self.browser)
 
         # time frame
         self.start_datetime = self.convert_to_datetime_and_add_delta_days(config.date['value'])
@@ -75,24 +80,27 @@ class DME_Scrapper_obj:
         }
 
     def scrape(self):
-        self.download_zip_files_wrapper()
-        self.extract_merge_save_csv()
+
+        if 'DOWNLOAD' in SELECTOR:
+            self.download_zip_files_wrapper()
+
+        if 'EXTRACT' in SELECTOR:
+            self.extract_merge_save_csv()
 
     def create_merged_df_dict(self, metadata_df):
         d = {}
         for index, metadata_row in metadata_df.iterrows():
-            link_name = metadata_row['link_id']
+            link_name = metadata_row['Link ID']
             if link_name not in d:
                 d[link_name] = {
                     'data': pd.DataFrame(),
-                    'frequency': '',
-                    'polarization': '',
-                    'length': '',
-                    'txsite_longitude': '',
-                    'txsite_latitude': '',
-                    'rxsite_longitude': '',
-                    'rxsite_latitude': ''
-
+                    config.dme_metadata['frequency']: '',
+                    config.dme_metadata['polarization']: '',
+                    config.dme_metadata['length']: '',
+                    config.dme_metadata['tx_longitude']: '',
+                    config.dme_metadata['tx_latitude']: '',
+                    config.dme_metadata['rx_longitude']: '',
+                    config.dme_metadata['rx_latitude']: ''
                 }
 
         if not d:
@@ -109,11 +117,23 @@ class DME_Scrapper_obj:
 
     def extract_merge_save_csv(self):
         with open(f'{self.paths}/data_paths.txt') as f1, open(f'{self.paths}/metadata_paths.txt') as f2:
-            file_paths={
+            file_paths = {
                 'data_paths': f1.readlines(),
                 'metadata_paths': f2.readlines()
             }
+
+        carrier = config.dme_metadata['carrier']
+        id = config.dme_metadata['id']
+        frequency = config.dme_metadata['frequency']
+        polarization = config.dme_metadata['polarization']
+        length = config.dme_metadata['length']
+        tx_longitude=config.dme_metadata['tx_longitude']
+        tx_latitude = config.dme_metadata['tx_latitude']
+        rx_longitude = config.dme_metadata['rx_longitude']
+        rx_latitude = config.dme_metadata['rx_latitude']
+
         print("starting extraction...")
+
         merged_df_dict = {}
         for data_path, metadata_path in zip(file_paths['data_paths'], file_paths['metadata_paths']):
             zip_file_object = zipfile.ZipFile(data_path, 'r')
@@ -123,58 +143,38 @@ class DME_Scrapper_obj:
             for zip_file_name, (index, metadata_row) in zip(zip_file_object.namelist(),
                                                             metadata_df.iterrows()):
 
-                file_name = metadata_row['carrier'] + '_' + metadata_row['link_id'] + '.txt'
-                link_name = metadata_row['link_id']
-
-                try:
-                    bytes = zip_file_object.open(zip_file_name).read()
-                    add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
-
-                    # zero-level
-                    # median = np.median((-1) * add_df['RFInputPower'])
-
-                    # #preprocessing - turn link frequency from MHz to GHz - because PowerLaw is in GHz
-                    # power_law = PowerLaw(frequency=metadata_row['frequency'] / 1000,  # Link Frequency [MHz]
-                    #                      polarization=metadata_row['polarization'],
-                    #                      L=metadata_row['length'])
-
-                    # # todo: 'RFInputPower' is only good for one type of link
-                    # add_df['rain'] = power_law.basic_attinuation_to_rain_multiple(
-                    #     (-1) * add_df['RFInputPower'] - median)
-
-                    if 'DEBUG' in os.environ:
-                        print('DEBUG: link id is: {} median is:{}'.format(link_name, median))
-
-                    merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
-
-                    for metadata_feature in config.dme_metadata:
-                        merged_df_dict[link_name][metadata_feature] = self.is_different(metadata_row[metadata_feature],
-                                                                                        link_name=link_name,
-                                                                                        link_dict=merged_df_dict[
-                                                                                            link_name],
-                                                                                        key=metadata_feature)
+                file_name = f"{metadata_row[carrier]}_{metadata_row[id]}.txt"
+                link_name = metadata_row[id]
 
 
-                except KeyError:
-                    print('exist in metadata, but does not exist in data:{}, feature:{}'.format(file_name,
-                                                                                                metadata_feature))
+                bytes = zip_file_object.open(zip_file_name).read()
+                add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
+
+                # zero-level
+                # median = np.median((-1) * add_df['RFInputPower'])
+
+                # #preprocessing - turn link frequency from MHz to GHz - because PowerLaw is in GHz
+                # power_law = PowerLaw(frequency=metadata_row['frequency'] / 1000,  # Link Frequency [MHz]
+                #                      polarization=metadata_row['polarization'],
+                #                      L=metadata_row['length'])
+
+                # # todo: 'RFInputPower' is only good for one type of link
+                # add_df['rain'] = power_law.basic_attinuation_to_rain_multiple(
+                #     (-1) * add_df['RFInputPower'] - median)
+
+                merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
+
+                for metadata_feature in config.dme_metadata.values():
+                    merged_df_dict[link_name][metadata_feature] = metadata_row[metadata_feature]
 
         print('extraction done.')
         print('starting csv save...')
 
         for link_name in merged_df_dict:
+            link_file_name = f"{config.dme_root_files + link_name}_{frequency}:_{str(merged_df_dict[link_name][frequency])}_{polarization}:_{merged_df_dict[link_name][polarization]}_{length}:_{str(merged_df_dict[link_name][length])}_{tx_longitude}:_{str(merged_df_dict[link_name][tx_longitude])}_{tx_latitude}:_{str(merged_df_dict[link_name][tx_latitude])}_{rx_longitude}:_{str(merged_df_dict[link_name][rx_longitude])}_{rx_latitude}:_{str(merged_df_dict[link_name][rx_latitude])}_.csv"
+            self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
+            print("file saved to {}".format(link_file_name))
 
-            try:
-                link_file_name = f"{config.dme_root_files + link_name}_frequency[GHz]:_{str(float(merged_df_dict[link_name]['frequency']) / 1000)}_polarization:_{merged_df_dict[link_name]['polarization']}_length[Km]:_{str(merged_df_dict[link_name]['length'])}_txsite-longitude:_{str(merged_df_dict[link_name]['txsite_longitude'])}_txsite-latitude:_{str(merged_df_dict[link_name]['txsite_latitude'])}_rxsite-longitude:_{str(merged_df_dict[link_name]['rxsite_longitude'])}_rxsite-latitude:_{str(merged_df_dict[link_name]['rxsite_latitude'])}_.csv"
-
-                self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
-
-                print("file saved to {}".format(link_file_name))
-
-            except ValueError:
-                print('frequecy missing for this file: {}'.format(link_name))
-
-    print('csv done.')
 
     def preprocess_df(self, df):
         # order by time
@@ -210,7 +210,6 @@ class DME_Scrapper_obj:
             else:
                 raise TimeoutException("The following range: {} - {} failed ".format(start_day, end_day))
 
-
     def ranged_filter(self, mux):
         link_obj = config.dme_scrape_config['link_objects']
         select = link_obj[mux]
@@ -223,17 +222,13 @@ class DME_Scrapper_obj:
 
         self.browser.find_element_by_xpath(element_xpath['xpath_filter']).send_keys(select_value)
 
-
         if select['select'] == 'In range':
-            filter=self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
+            filter = self.browser.find_element_by_xpath(element_xpath['xpath_filter_range'])
             filter.click()
             filter.send_keys(select['value_range'])
 
         # Each filter needs to be applied
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
-
-
-
 
     def check_boxes(self):
         link_obj = config.dme_scrape_config['link_objects']
@@ -257,7 +252,7 @@ class DME_Scrapper_obj:
 
     def download_zip_files_wrapper(self):
 
-        link_names=config.dme_scrape_config['link_objects']['link_id']
+        link_names = config.dme_scrape_config['link_objects']['link_id']
         data_paths = []
         metadata_paths = []
 
@@ -308,27 +303,25 @@ class DME_Scrapper_obj:
                 print('starting download range {}-{}...'.format(start_day, end_day))
                 self.download_data(start_day=start_day, end_day=end_day)
 
-        else: #No need to look for link_id
+        else:  # No need to look for link_id
             print('starting download range {}-{}...'.format(start_day, end_day))
             self.download_data(start_day=start_day, end_day=end_day)
 
-
-        data_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.zip' in f and 'cldb' in f]
-        metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if
+        data_paths = [f"{self.root_download}/{f}" for f in os.listdir(self.root_download) if
+                      '.zip' in f and 'cldb' in f]
+        metadata_paths = [f"{self.root_download}/{f}" for f in os.listdir(self.root_download) if
                           '.csv' in f and 'cldb' in f]
 
         data_paths.sort(key=os.path.getmtime)
         metadata_paths.sort(key=os.path.getmtime)
 
-
-        with open(f'{self.paths}/data_paths.txt','w') as f:
+        with open(f'{self.paths}/data_paths.txt', 'w') as f:
             for item in data_paths:
-                f.write("{}\n".format(item))
+                f.write("{}/{}\n".format(self.root_download, item))
 
-        with open(f'{self.paths}/metadata_paths.txt','w') as f:
+        with open(f'{self.paths}/metadata_paths.txt', 'w') as f:
             for item in metadata_paths:
-                f.write("{}\n".format(item))
-
+                f.write("{}/{}\n".format(self.root_download, item))
 
     def log_in(self, browser):
         remember_me_xpth = '/html/body/div/form/div[4]/label/input'
@@ -343,7 +336,7 @@ class DME_Scrapper_obj:
         browser.find_element_by_xpath(remember_me_xpth).click()
         browser.find_element_by_xpath(submit_button).click()
 
-    def delete_prev_data_files_if_poss(self,path):
+    def delete_prev_data_files_if_poss(self, path):
         'deletes from local directory'
         for file in os.listdir(path):
             try:
@@ -356,11 +349,11 @@ class DME_Scrapper_obj:
         for file in os.listdir(self.root_download):
             if 'cldb' in file or 'export' in file:
                 try:
-                    os.remove(self.root_download + file)
+                    os.remove(f"{self.root_download}/{file}")
                 except PermissionError:
-                    shutil.rmtree(self.root_download + file)
+                    shutil.rmtree(f"{self.root_download}/{file}")
                 except Exception:
-                    raise Exception('unable to remove file : {}'.format(self.root_download + file))
+                    raise Exception('unable to remove file : {}'.format(f"{self.root_download}/{file}"))
 
 
 DME_Scrapper_obj().scrape()
