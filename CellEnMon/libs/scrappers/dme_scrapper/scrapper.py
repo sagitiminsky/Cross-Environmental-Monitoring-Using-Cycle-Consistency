@@ -34,6 +34,7 @@ class DME_Scrapper_obj:
         self.xpaths = config.xpaths
         self.root_download = config.download_path
         self.root_data_files = config.dme_root_files
+        self.paths=config.paths_root
         self.browser = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=self.chrome_options)
 
         if not os.path.isdir(self.root_data_files):
@@ -41,7 +42,8 @@ class DME_Scrapper_obj:
 
         # clear old
         self.delete_prev_from_downloads_if_poss()
-        self.delete_prev_data_files_if_poss()
+        self.delete_prev_data_files_if_poss(self.root_data_files)
+        self.delete_prev_data_files_if_poss(self.paths)
 
         # log in
         self.browser.get(config.dme_scrape_config['url'])
@@ -73,11 +75,8 @@ class DME_Scrapper_obj:
         }
 
     def scrape(self):
-        if config.dme_scrape_config['link_objects']['link_id']:
-            link_names = config.dme_scrape_config['link_objects']['link_id']
-            self.extract_merge_save_csv(self.download_zip_files_wrapper(link_names))
-        else:
-            self.extract_merge_save_csv(self.download_zip_files_wrapper())
+        self.download_zip_files_wrapper()
+        self.extract_merge_save_csv()
 
     def create_merged_df_dict(self, metadata_df):
         d = {}
@@ -108,7 +107,12 @@ class DME_Scrapper_obj:
                                                                                          new_param))
         return new_param
 
-    def extract_merge_save_csv(self, file_paths):
+    def extract_merge_save_csv(self):
+        with open(f'{self.paths}/data_paths.txt') as f1, open(f'{self.paths}/metadata_paths.txt') as f2:
+            file_paths={
+                'data_paths': f1.readlines(),
+                'metadata_paths': f2.readlines()
+            }
         print("starting extraction...")
         merged_df_dict = {}
         for data_path, metadata_path in zip(file_paths['data_paths'], file_paths['metadata_paths']):
@@ -225,6 +229,9 @@ class DME_Scrapper_obj:
             filter.click()
             filter.send_keys(select['value_range'])
 
+        # Each filter needs to be applied
+        self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
+
 
 
 
@@ -248,8 +255,9 @@ class DME_Scrapper_obj:
         filter.send_keys(config.dme_scrape_config['link_objects'][input_type])
         self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
-    def download_zip_files_wrapper(self, link_names=None):
+    def download_zip_files_wrapper(self):
 
+        link_names=config.dme_scrape_config['link_objects']['link_id']
         data_paths = []
         metadata_paths = []
 
@@ -300,17 +308,27 @@ class DME_Scrapper_obj:
                 print('starting download range {}-{}...'.format(start_day, end_day))
                 self.download_data(start_day=start_day, end_day=end_day)
 
-            data_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.zip' in f and 'cldb' in f]
-            metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if
-                              '.csv' in f and 'cldb' in f]
+        else: #No need to look for link_id
+            print('starting download range {}-{}...'.format(start_day, end_day))
+            self.download_data(start_day=start_day, end_day=end_day)
+
+
+        data_paths = [self.root_download + f for f in os.listdir(self.root_download) if '.zip' in f and 'cldb' in f]
+        metadata_paths = [self.root_download + f for f in os.listdir(self.root_download) if
+                          '.csv' in f and 'cldb' in f]
 
         data_paths.sort(key=os.path.getmtime)
         metadata_paths.sort(key=os.path.getmtime)
 
-        return {
-            'data_paths': data_paths,
-            'metadata_paths': metadata_paths
-        }
+
+        with open(f'{self.paths}/data_paths.txt','w') as f:
+            for item in data_paths:
+                f.write("{}\n".format(item))
+
+        with open(f'{self.paths}/metadata_paths.txt','w') as f:
+            for item in metadata_paths:
+                f.write("{}\n".format(item))
+
 
     def log_in(self, browser):
         remember_me_xpth = '/html/body/div/form/div[4]/label/input'
@@ -325,11 +343,11 @@ class DME_Scrapper_obj:
         browser.find_element_by_xpath(remember_me_xpth).click()
         browser.find_element_by_xpath(submit_button).click()
 
-    def delete_prev_data_files_if_poss(self):
+    def delete_prev_data_files_if_poss(self,path):
         'deletes from local directory'
-        for file in os.listdir(self.root_data_files):
+        for file in os.listdir(path):
             try:
-                os.remove(self.root_data_files + file)
+                os.remove(path + file)
             except FileNotFoundError:
                 pass
 
