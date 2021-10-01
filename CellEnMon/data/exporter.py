@@ -171,7 +171,7 @@ class Extractor:
 
                 print("preprocessing: now processing link: {} of type: {}".format(link_name, link_type))
 
-                df = pd.read_csv(config.dme_root_files + '/' + link)
+                df = pd.read_csv(f"{config.dme_root_files}/{link}")
 
                 df = df[df.Interval == 15]
 

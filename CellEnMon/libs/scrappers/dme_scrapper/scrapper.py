@@ -22,7 +22,7 @@ from CellEnMon.libs.power_law.power_law import PowerLaw
 from google.cloud import storage
 
 # SELECTOR=['DOWNLOAD','EXTRACT','UPLOAD']
-SELECTOR = ['DOWNLOAD', 'EXTRACT', 'UPLOAD_RAW']
+SELECTOR = ['EXTRACT', 'UPLOAD']
 
 
 ## Setting credentials using the downloaded JSON file
@@ -100,26 +100,18 @@ class DME_Scrapper_obj:
 
 
 
-    def create_merged_df_dict(self, metadata_df):
-        d = {}
-        for index, metadata_row in metadata_df.iterrows():
-            link_name = metadata_row['Link ID']
-            if link_name not in d:
-                d[link_name] = {
-                    'data': pd.DataFrame(),
-                    config.dme_metadata['frequency']: '',
-                    config.dme_metadata['polarization']: '',
-                    config.dme_metadata['length']: '',
-                    config.dme_metadata['tx_longitude']: '',
-                    config.dme_metadata['tx_latitude']: '',
-                    config.dme_metadata['rx_longitude']: '',
-                    config.dme_metadata['rx_latitude']: ''
-                }
+    def create_merged_df_dict(self,metadata_df):
+        return {
+                'data': pd.DataFrame(),
+                config.dme_metadata['frequency']: '',
+                config.dme_metadata['polarization']: '',
+                config.dme_metadata['length']: '',
+                config.dme_metadata['tx_longitude']: '',
+                config.dme_metadata['tx_latitude']: '',
+                config.dme_metadata['rx_longitude']: '',
+                config.dme_metadata['rx_latitude']: ''
+            }
 
-        if not d:
-            raise Exception("no files in zip")
-
-        return d
 
     def is_different(self, new_param, link_name, link_dict, key):
         if link_dict[key] and new_param != link_dict[key]:
@@ -132,8 +124,12 @@ class DME_Scrapper_obj:
         root=f"datasets/dme/raw/{config.start_date_str_rep}_{config.end_date_str_rep}"
         for file in os.listdir(root):
             blob = self.bucket.blob(f'dme/{config.start_date_str_rep}-{config.end_date_str_rep}/raw/{file}')
-            with open(f"{root}/{file}", 'rb') as f:
-                blob.upload_from_file(f)
+            try:
+                with open(f"{root}/{file}", 'rb') as f:
+                    blob.upload_from_file(f)
+                print(f'Uploaded file:{file} succesfully !')
+            except Exception:
+                print(f'Uploaded file:{file} failed !')
 
 
     def extract_merge_save_csv(self):
@@ -156,16 +152,22 @@ class DME_Scrapper_obj:
         print("starting extraction...")
 
         merged_df_dict = {}
-        for data_path, metadata_path in zip(file_paths['data_paths'], file_paths['metadata_paths']):
-            zip_file_object = zipfile.ZipFile(data_path, 'r')
-            metadata_df = pd.read_csv(metadata_path)
-            merged_df_dict = {**self.create_merged_df_dict(metadata_df=metadata_df), **merged_df_dict}
+        for data_path, metadata_path, link_name in zip(file_paths['data_paths'], file_paths['metadata_paths'], config.dme_scrape_config['link_objects']['link_id']):
+            zip_file_object = zipfile.ZipFile(data_path.strip(), 'r')
+            metadata_df = pd.read_csv(metadata_path.strip())
 
-            for zip_file_name, (index, metadata_row) in zip(zip_file_object.namelist(),
-                                                            metadata_df.iterrows()):
 
-                file_name = f"{metadata_row[carrier]}_{metadata_row[id]}.txt"
-                link_name = metadata_row[id]
+            merged_df_dict[link_name] = {**self.create_merged_df_dict(metadata_df=metadata_df), **merged_df_dict}
+
+
+
+            for zip_file_name in zip_file_object.namelist(): #metadata_df.iterrows()):
+
+
+                #TODO: after the fix this data should come from the metadatafile, which is now empyu
+                #link_name = metadata_row[id]
+
+
 
 
                 bytes = zip_file_object.open(zip_file_name).read()
@@ -179,23 +181,19 @@ class DME_Scrapper_obj:
                 #                      polarization=metadata_row['polarization'],
                 #                      L=metadata_row['length'])
 
-                # # todo: 'RFInputPower' is only good for one type of link
+                # TODO: we should also consider translating to rain amout at the source
                 # add_df['rain'] = power_law.basic_attinuation_to_rain_multiple(
                 #     (-1) * add_df['RFInputPower'] - median)
 
                 merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
 
-                for metadata_feature in config.dme_metadata.values():
-                    merged_df_dict[link_name][metadata_feature] = metadata_row[metadata_feature]
 
-        print('extraction done.')
-        print('starting csv save...')
+            # todo: to be fixed after the fix of omnisol - uncomment next line
+            # link_file_name = f"{config.dme_root_files}/{link_name}_{frequency}:_{str(merged_df_dict[link_name][frequency])}_{polarization}:_{merged_df_dict[link_name][polarization]}_{length}:_{str(merged_df_dict[link_name][length])}_{tx_longitude}:_{str(merged_df_dict[link_name][tx_longitude])}_{tx_latitude}:_{str(merged_df_dict[link_name][tx_latitude])}_{rx_longitude}:_{str(merged_df_dict[link_name][rx_longitude])}_{rx_latitude}:_{str(merged_df_dict[link_name][rx_latitude])}_.csv"
+            link_file_name= f"{config.dme_root_files}/{link_name}"
 
-        for link_name in merged_df_dict:
-            link_file_name = f"{config.dme_root_files + link_name}_{frequency}:_{str(merged_df_dict[link_name][frequency])}_{polarization}:_{merged_df_dict[link_name][polarization]}_{length}:_{str(merged_df_dict[link_name][length])}_{tx_longitude}:_{str(merged_df_dict[link_name][tx_longitude])}_{tx_latitude}:_{str(merged_df_dict[link_name][tx_latitude])}_{rx_longitude}:_{str(merged_df_dict[link_name][rx_longitude])}_{rx_latitude}:_{str(merged_df_dict[link_name][rx_latitude])}_.csv"
             self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
             print("file saved to {}".format(link_file_name))
-
 
     def preprocess_df(self, df):
         # order by time
@@ -328,9 +326,9 @@ class DME_Scrapper_obj:
             print('starting download range {}-{}...'.format(start_day, end_day))
             self.download_data(start_day=start_day, end_day=end_day)
 
-        data_paths = [f"{self.root_download}/{f}" for f in os.listdir(self.root_download) if
+        data_paths = [f"{f}" for f in os.listdir(self.root_download) if
                       '.zip' in f and 'cldb' in f]
-        metadata_paths = [f"{self.root_download}/{f}" for f in os.listdir(self.root_download) if
+        metadata_paths = [f"{f}" for f in os.listdir(self.root_download) if
                           '.csv' in f and 'cldb' in f]
 
         data_paths.sort(key=os.path.getmtime)

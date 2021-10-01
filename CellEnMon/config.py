@@ -251,7 +251,7 @@ xpaths = {
 
 }
 
-dme_root_files = f"datasets/dme/raw/{start_date_str_rep}_{end_date_str_rep}/"  # DD/MM/YYYY
+dme_root_files = f"datasets/dme/raw/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
 dme_paths_root = './libs/scrappers/dme_scrapper/paths'
 dme_root_values = 'datasets/dme/processed'
 dme_scrape_config = {
@@ -291,7 +291,7 @@ dme_scrape_config = {
             'c247-7049',  # Yavne - no data:
             'a473-5512', 'b119-5512',  # Paran - no data:
             'e032-5090', 'a247-5090', 'b247-5377',  # Ashdod - no data:
-            'a394-7332', 'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333',  # Bar Shava - no data: ts03-7331
+            'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333',  # Bar Shava - no data: ts03-7331, a394-7332
             'g086-5091'  # Ashkelon - no data: h086-7193
         ],
 
