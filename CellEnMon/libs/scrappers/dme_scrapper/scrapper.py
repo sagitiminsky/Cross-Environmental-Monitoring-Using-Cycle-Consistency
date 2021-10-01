@@ -19,10 +19,17 @@ from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 import numpy as np
 from CellEnMon.libs.power_law.power_law import PowerLaw
+from google.cloud import storage
 
-# SELECTOR=['DOWNLOAD','EXTRACT']
-SELECTOR = ['EXTRACT']
+# SELECTOR=['DOWNLOAD','EXTRACT','UPLOAD']
+SELECTOR = ['DOWNLOAD', 'EXTRACT', 'UPLOAD_RAW']
 
+
+## Setting credentials using the downloaded JSON file
+path = 'cellenmon-e840a9ba53e8.json'
+if not os.path.isfile(path):
+    raise ("Please provide the gcs key in the root directory")
+client = storage.Client.from_service_account_json(json_credentials_path=path)
 
 class DME_Scrapper_obj:
 
@@ -32,12 +39,13 @@ class DME_Scrapper_obj:
         self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.chrome_options.add_argument("--disable-popup-blocking")
-        self.delay = 60
+        self.delay = 100
         self.selector = '//*[@id="btnExportByFilter"]'
         self.xpaths = config.xpaths
         self.root_download = config.download_path
         self.root_data_files = config.dme_root_files
-        self.paths = config.paths_root
+        self.paths = config.dme_paths_root
+        self.bucket = client.get_bucket('cell_en_mon')
 
         if not os.path.isdir(self.root_data_files):
             os.makedirs(self.root_data_files)
@@ -87,6 +95,11 @@ class DME_Scrapper_obj:
         if 'EXTRACT' in SELECTOR:
             self.extract_merge_save_csv()
 
+        if 'UPLOAD' in SELECTOR:
+            self.upload_files_to_gcs()
+
+
+
     def create_merged_df_dict(self, metadata_df):
         d = {}
         for index, metadata_row in metadata_df.iterrows():
@@ -114,6 +127,14 @@ class DME_Scrapper_obj:
                 'link_name:{} current param: {} of type: {} is different from:{}'.format(link_name, link_dict[key], key,
                                                                                          new_param))
         return new_param
+
+    def upload_files_to_gcs(self):
+        root=f"datasets/dme/raw/{config.start_date_str_rep}_{config.end_date_str_rep}"
+        for file in os.listdir(root):
+            blob = self.bucket.blob(f'dme/{config.start_date_str_rep}-{config.end_date_str_rep}/raw/{file}')
+            with open(f"{root}/{file}", 'rb') as f:
+                blob.upload_from_file(f)
+
 
     def extract_merge_save_csv(self):
         with open(f'{self.paths}/data_paths.txt') as f1, open(f'{self.paths}/metadata_paths.txt') as f2:
@@ -340,9 +361,9 @@ class DME_Scrapper_obj:
         'deletes from local directory'
         for file in os.listdir(path):
             try:
-                os.remove(path + file)
+                os.remove(f"{path}/{file}")
             except FileNotFoundError:
-                pass
+                print(f"throwing FileNotFoundError for:{path}/{file}")
 
     def delete_prev_from_downloads_if_poss(self):
         'Deletes from Downloads'
@@ -356,4 +377,6 @@ class DME_Scrapper_obj:
                     raise Exception('unable to remove file : {}'.format(f"{self.root_download}/{file}"))
 
 
-DME_Scrapper_obj().scrape()
+
+if __name__=="__main__":
+    DME_Scrapper_obj().scrape()

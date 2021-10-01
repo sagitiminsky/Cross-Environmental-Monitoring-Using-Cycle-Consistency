@@ -252,7 +252,7 @@ xpaths = {
 }
 
 dme_root_files = f"datasets/dme/raw/{start_date_str_rep}_{end_date_str_rep}/"  # DD/MM/YYYY
-paths_root = './libs/scrappers/dme_scrapper/paths'
+dme_paths_root = './libs/scrappers/dme_scrapper/paths'
 dme_root_values = 'datasets/dme/processed'
 dme_scrape_config = {
     'username': 'SagiT',
