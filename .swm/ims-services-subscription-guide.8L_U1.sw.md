@@ -117,7 +117,24 @@ Here is ims station mapping
 
 <br/>
 
-Use the following 2 end points for meta\_data and data for each station
+Let's define the authentication token from what we've got from the IMS
+<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
+### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
+```python
+⬜ 8      
+⬜ 9      url = "https://api.ims.gov.il/v1/envista/stations/64/data?from=2019/12/01&to=2020/01/01"
+⬜ 10     
+🟩 11     headers = {
+🟩 12         'Authorization': 'ApiToken ' + config.ims_token
+🟩 13     }
+⬜ 14     
+⬜ 15     
+⬜ 16     ## Setting credentials using the downloaded JSON file
+```
+
+<br/>
+
+The endpoints we are about to use
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
@@ -133,6 +150,23 @@ Use the following 2 end points for meta\_data and data for each station
 
 <br/>
 
+We will validate the indeed we get a 200 response from the api
+<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
+### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
+```python
+⬜ 49                         print(f'Uploaded file:{file} failed with the following exception:{e}!')
+⬜ 50     
+⬜ 51         def download_from_ims(self):
+🟩 52             metadata_response = requests.request("GET", self.station_meta_data, headers=headers)
+🟩 53             data_response = requests.request("GET", self.station_data, headers=headers)
+⬜ 54     
+⬜ 55             if metadata_response.status_code != 200 or data_response.status_code != 200:
+⬜ 56                 print("station id: {} , metadata respose: {} , data response: {}".format(self.station_id,
+```
+
+<br/>
+
+load the metadata and data locally
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
@@ -142,18 +176,33 @@ Use the following 2 end points for meta\_data and data for each station
 🟩 60             else:
 🟩 61                 metadata = json.loads(metadata_response.text.encode('utf8'))
 🟩 62                 data = json.loads(data_response.text.encode('utf8'))
-⬜ 63     
+🟩 63     
 ⬜ 64                 folder = "{}-{}-{}".format(self.index, metadata['stationId'], metadata['name'])
 ⬜ 65                 if not os.path.exists(self.root + '/' + folder):
+⬜ 66                     os.makedirs(self.root + '/' + folder)
 ```
 
 <br/>
 
-
+save metadata and data
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
-🟩 59     
+⬜ 71                         os.remove(self.root + '/' + 'data.csv')
+⬜ 72                     except FileNotFoundError:
+⬜ 73                         pass
+🟩 74     
+🟩 75                 pd.DataFrame(metadata['monitors']).to_csv(self.root + '/' + folder + '/' + "monitors.csv", index=False)
+🟩 76                 pd.DataFrame(data['data']).to_csv(self.root + '/' + folder + '/' + "data.csv", index=False)
+🟩 77                 with open(self.root + '/' + folder + '/' + "metadata.txt", 'w') as file:
+🟩 78                     file.write('stationId: {}\n'.format(metadata['stationId']))
+🟩 79                     file.write('stationName: {}\n'.format(metadata['name']))
+🟩 80                     file.write('location: {}\n'.format(metadata['location']))
+🟩 81                     file.write('timebase: {}\n'.format(metadata['timebase']))
+🟩 82                     file.write('regionId: {}\n'.format(metadata['regionId']))
+⬜ 83     
+⬜ 84     #
+⬜ 85     if __name__ == "__main__":
 ```
 
 <br/>
