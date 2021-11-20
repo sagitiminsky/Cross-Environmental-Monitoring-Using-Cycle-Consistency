@@ -81,7 +81,7 @@ class IMS_Scrapper_obj:
                 file.write('timebase: {}\n'.format(metadata['timebase']))
                 file.write('regionId: {}\n'.format(metadata['regionId']))
 
-
+#
 if __name__ == "__main__":
     for index, station_id in enumerate(config.ims_mapping[config.ims_scrape_config['left_bound']:config.ims_scrape_config['right_bound']]):
 
