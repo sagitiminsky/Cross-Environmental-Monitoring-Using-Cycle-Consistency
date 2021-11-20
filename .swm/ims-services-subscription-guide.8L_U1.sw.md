@@ -5,7 +5,7 @@ file_version: 1.0.2
 app_version: 0.6.6-2
 file_blobs:
   CellEnMon/config.py: 65bffe1061bb4439484b680480f717537efe53f6
-  CellEnMon/libs/scrappers/ims_scrapper/scrapper.py: 5f6945fade79a3a399d3db01ef23b6dea9f02c0d
+  CellEnMon/libs/scrappers/ims_scrapper/scrapper.py: 7b69bed4fc6c6f9157d22d8d34f56634c1ec18c2
 ---
 
 TLDR: send go to [https://ims.gov.il/he/ObservationDataAPI](https://ims.gov.il/he/ObservationDataAPI) you will find the API documenation and you'll be able to fill in the following form [https://ims.gov.il/sites/default/files/docs/terms\_0.pdf](https://ims.gov.il/sites/default/files/docs/terms_0.pdf) and send it back to ims@ims.gov.il.
@@ -121,15 +121,39 @@ Use the following 2 end points for meta\_data and data for each station
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
-⬜ 19             self._from = _from
-⬜ 20             self._to = _to
-⬜ 21             self.root = config.ims_root_files
-🟩 22             self.station_meta_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}"
-🟩 23             self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
-🟩 24     
-⬜ 25         def save_metadata(self):
-⬜ 26             metadata_response = requests.request("GET", self.station_meta_data, headers=headers)
-⬜ 27             data_response = requests.request("GET", self.station_data, headers=headers)
+⬜ 32             self._from = _from
+⬜ 33             self._to = _to
+⬜ 34             self.root = config.ims_root_files
+🟩 35             self.station_meta_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}"
+🟩 36             self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
+⬜ 37             self.bucket = client.get_bucket('cell_en_mon')
+⬜ 38     
+⬜ 39         def upload_files_to_gcs(self):
+```
+
+<br/>
+
+<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
+### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
+```python
+⬜ 57                                                                                          metadata_response.status_code,
+⬜ 58                                                                                          data_response.status_code))
+⬜ 59     
+🟩 60             else:
+🟩 61                 metadata = json.loads(metadata_response.text.encode('utf8'))
+🟩 62                 data = json.loads(data_response.text.encode('utf8'))
+⬜ 63     
+⬜ 64                 folder = "{}-{}-{}".format(self.index, metadata['stationId'], metadata['name'])
+⬜ 65                 if not os.path.exists(self.root + '/' + folder):
+```
+
+<br/>
+
+
+<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
+### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
+```python
+🟩 59     
 ```
 
 <br/>
