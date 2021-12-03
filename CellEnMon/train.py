@@ -7,10 +7,12 @@ import numpy as np
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()  # get training options
+
+    # 🚀 start a run, with a type to label it and a project it can call home
     with wandb.init(project="CellEnMon_CycleGan", job_type="load-data") as run:
         dataset = data.create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
 
-
+        # 🏺 create our Artifact
         raw_data=wandb.Artifact(
             "CellEnMon_CycleGan_Dataset", type="dataset",
             description="raw dataset of ims and dme stations",
@@ -21,10 +23,24 @@ if __name__ == '__main__':
         )
 
         with raw_data.new_file("dataset.npz", mode="wb") as file:
+            # 🐣 Store a new file in the artifact, and write something into its contents.
             np.savez(file,x=dataset.dataset.dme_data, y=dataset.dataset.ims_data)
 
-
+        # ✍️ Save the artifact to W&B.
         run.log_artifact(raw_data)
+
+    preprocessed_steps={
+
+    }
+    with wandb.init(project="CellEnMon_CycleGan", job_type="preprocess-data") as run:
+        processsed_data=wandb.Artifiact(
+            "CellEnMon_CycleGan_Dataset_preprocessed", type="dataset",
+            description="processed CellEnMon_CycleGan_Dataset",
+            metadata=preprocessed_steps
+        )
+
+        # ✔️ declare which artifact we'll be using
+        raw_data_artifact = run.use_artifact('mnist-raw:latest')
 
 
     dataset_size = len(dataset)  # get the number of images in the dataset.
