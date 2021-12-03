@@ -3,11 +3,30 @@ from options.train_options import TrainOptions
 import data
 import models
 import wandb
+import numpy as np
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()  # get training options
-    wandb.init(project=opt.name,  entity='sagitiminsky')
-    dataset = data.create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    with wandb.init(project="CellEnMon_CycleGan", job_type="load-data") as run:
+        dataset = data.create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+
+
+        raw_data=wandb.Artifact(
+            "CellEnMon_CycleGan_Dataset", type="dataset",
+            description="raw dataset of ims and dme stations",
+            metadata={
+                "dme_shape": dataset.A_size,
+                "ims_shape": dataset.B_size
+            }
+        )
+
+        with raw_data.new_file("dataset.npz", mode="wb") as file:
+            np.savez(file,x=dataset.dataset.dme_data, y=dataset.dataset.ims_data)
+
+
+        run.log_artifact(raw_data)
+
+
     dataset_size = len(dataset)  # get the number of images in the dataset.
     print('The number of training images = %d' % dataset_size)
 
