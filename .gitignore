@@ -11,6 +11,7 @@
 
 /venv
 .idea
+CellEnMon/.idea
 /libs/scrappers/PLOT_IMAGES 2/TEST_DATA/
 /libs/scrappers/PLOT_IMAGES 2/MAT_files/
 /libs/scrappers/PLOT_IMAGES 2/IMAGEOUT/
