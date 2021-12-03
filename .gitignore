@@ -19,9 +19,7 @@
 /libs/scrappers/radar_scrapper/TEST_DATA/RRdaily201804270600.asc.gz
 /libs/scrappers/radar_scrapper/IMAGEOUT/
 /libs/scrappers/radar_scrapper/MAT_files/
-/libs/relics/datasets/radar/
-/CellEnMon/datasets/ims/raw/
-/CellEnMon/datasets/dme/raw/
+/libs/relics/datasets
 /CycleGAN/
 
 /CellEnMon/checkpoints
