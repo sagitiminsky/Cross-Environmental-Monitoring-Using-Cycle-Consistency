@@ -1,9 +1,14 @@
 PYTHONPATH should be: Research
 
-wandb: https://wandb.ai/sagitiminsky/CellEnMon_CycleGan
+**wandb:** 
 
-documentation: https://app.swimm.io/workspaces/jllXRmECUZBMawQBnXtN
-please look in the var.tfvars required creds
+https://wandb.ai/sagitiminsky/CellEnMon_CycleGan
 
-Please follow my Medium posts releated to this research:
+**documentation:** - please look in the var.tfvars required creds 
+
+https://app.swimm.io/workspaces/jllXRmECUZBMawQBnXtN 
+
+
+**Medium:**
+
 https://medium.com/me/stories/public
