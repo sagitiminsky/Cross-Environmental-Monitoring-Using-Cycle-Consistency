@@ -20,6 +20,7 @@ pyproj
 #scrapper
 webdriver-manager
 google-cloud-storage==1.41.1
+pathlib
 
 #web-platform
 uvicorn
