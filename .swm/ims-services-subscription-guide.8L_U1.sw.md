@@ -4,7 +4,7 @@ name: IMS Services Subscription Guide
 file_version: 1.0.2
 app_version: 0.6.9-2
 file_blobs:
-  CellEnMon/libs/scrappers/ims_scrapper/scrapper.py: 7fe93e74e854917857f3c2ae5061157b85da2787
+  CellEnMon/libs/scrappers/ims_scrapper/scrapper.py: 83dded5fb7d8d0cb197d7dd3139fbea07684ec09
   CellEnMon/config.py: d1992676523a12462209a14105391f795681f4ed
 ---
 
@@ -58,23 +58,49 @@ This is how we are going to GET from the ims endpoint
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
-⬜ 29     class IMS_Scrapper_obj:
-⬜ 30         def __init__(self, index, station_id, station_name, location, _from, _to):
-⬜ 31             self.index = index
-⬜ 32             self.station_id = station_id
-⬜ 33             self._from = _from
-⬜ 34             self._to = _to
-⬜ 35             self.root = config.ims_root_files
-⬜ 36             self.station_id = station_id
-⬜ 37             self.station_name = station_name
-⬜ 38             self.station_location = location
-🟩 39             self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
-⬜ 40             self.bucket = client.get_bucket('cell_en_mon')
+⬜ 27     class IMS_Scrapper_obj:
+⬜ 28         def __init__(self, index, station_id, station_name, location, _from, _to):
+⬜ 29             self.index = index
+⬜ 30             self.station_id = station_id
+⬜ 31             self._from = _from
+⬜ 32             self._to = _to
+⬜ 33             self.root = config.ims_root_files
+⬜ 34             self.station_id = station_id
+⬜ 35             self.station_name = station_name
+⬜ 36             self.station_location = location
+🟩 37             self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
+⬜ 38             self.bucket = client.get_bucket('cell_en_mon')
 ```
 
 <br/>
 
 If you download the files locally, you will see it in the following path: /CellEnMon/datasets/ims/raw/
+
+<br/>
+
+To control the dates in the ims, you can change the dates in the config file:
+<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
+### 📄 CellEnMon/config.py
+```python
+⬜ 24         }
+⬜ 25     
+⬜ 26     
+🟩 27     date = {
+🟩 28         'value': {
+🟩 29             'dd': '01',
+🟩 30             'mm': '01',
+🟩 31             'yyyy': '2013'
+🟩 32         },
+🟩 33         'value_range': {
+🟩 34             'dd': '02',
+🟩 35             'mm': '01',
+🟩 36             'yyyy': '2013'
+🟩 37         }
+🟩 38     }
+⬜ 39     
+⬜ 40     date_str_rep = add_days_to_date(date['value'])['str_rep_with_replace'] + '_' + add_days_to_date(date['value_range'])[
+⬜ 41         'str_rep_with_replace']
+```
 
 <br/>
 
