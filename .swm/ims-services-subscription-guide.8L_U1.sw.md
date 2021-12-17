@@ -2,135 +2,79 @@
 id: 8L_U1
 name: IMS Services Subscription Guide
 file_version: 1.0.2
-app_version: 0.6.6-2
+app_version: 0.6.9-2
 file_blobs:
-  CellEnMon/config.py: 65bffe1061bb4439484b680480f717537efe53f6
-  CellEnMon/libs/scrappers/ims_scrapper/scrapper.py: 5f6945fade79a3a399d3db01ef23b6dea9f02c0d
+  CellEnMon/libs/scrappers/ims_scrapper/scrapper.py: 7fe93e74e854917857f3c2ae5061157b85da2787
+  CellEnMon/config.py: d1992676523a12462209a14105391f795681f4ed
 ---
 
-TLDR: send go to [https://ims.gov.il/he/ObservationDataAPI](https://ims.gov.il/he/ObservationDataAPI) you will find the API documenation and you'll be able to fill in the following form [https://ims.gov.il/sites/default/files/docs/terms\_0.pdf](https://ims.gov.il/sites/default/files/docs/terms_0.pdf) and send it back to ims@ims.gov.il.
+TLDR: send go to [https://ims.gov.il/he/ObservationDataAPI](https://ims.gov.il/he/ObservationDataAPI) you will find the API documenation and you'll be able to fill in the following form [https://ims.gov.il/sites/default/files/docs/terms\_0.pdf](https://ims.gov.il/sites/default/files/docs/terms_0.pdf) and send it back to [&#105;&#109;&#115;&#64;&#x69;&#109;&#115;&#x2e;&#103;&#x6f;&#118;&#x2e;&#x69;&#x6c;](mailto:ims@ims.gov.il).
 
 After receiving the approval from the ims you will be provided with an API Token, if you want, you can keep that in secret - put that in your gitignore file.
 
-You can use the following script:
+There is a designated requirements file - you don't need torch if you are only intrested in the ims data
+
+`📄 CellEnMon/libs/scrappers/ims_scrapper/requirements.txt`
 
 <br/>
 
-Here is ims station mapping
-<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
-### 📄 CellEnMon/config.py
-```python
-⬜ 72     ims_root_files = f"datasets/ims/raw/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
-⬜ 73     ims_root_values = 'datasets/ims/processed'
-⬜ 74     ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
-🟩 75     ims_mapping = [
-🟩 76         '241',
-🟩 77         '348',
-🟩 78         '202',
-🟩 79         '10',
-🟩 80         '106',
-🟩 81         '73',
-🟩 82         '353',
-🟩 83         '343',
-🟩 84         '62',
-🟩 85         '269',
-🟩 86         '123',
-🟩 87         '227',
-🟩 88         '205',
-🟩 89         '233',
-🟩 90         '6',
-🟩 91         '99',
-🟩 92         '78',
-🟩 93         '46',
-🟩 94         '115',
-🟩 95         '2',
-🟩 96         '41',
-🟩 97         '43',
-🟩 98         '42',
-🟩 99         '186',
-🟩 100        '13',
-🟩 101        '8',
-🟩 102        '11',
-🟩 103        '355',
-🟩 104        '44',
-🟩 105        '264',
-🟩 106        '67',
-🟩 107        '16',
-🟩 108        '45',
-🟩 109        '263',
-🟩 110        '380',
-🟩 111        '224',
-🟩 112        '46',
-🟩 113        '206',
-🟩 114        '366',
-🟩 115        '107',
-🟩 116        '20',
-🟩 117        '90',
-🟩 118        '275',
-🟩 119        '270',
-🟩 120        '21',
-🟩 121        '178',
-🟩 122        '54',
-🟩 123        '30',
-🟩 124        '24',
-🟩 125        '124',
-🟩 126        '259',
-🟩 127        '74',
-🟩 128        '228',
-🟩 129        '121',
-🟩 130        '188',
-🟩 131        '23',
-🟩 132        '218',
-🟩 133        '22',
-🟩 134        '274',
-🟩 135        '75',
-🟩 136        '25',
-🟩 137        '77',
-🟩 138        '82',
-🟩 139        '208',
-🟩 140        '236',
-🟩 141        '210',
-🟩 142        '79',
-🟩 143        '211',
-🟩 144        '350',
-🟩 145        '28',
-🟩 146        '58',
-🟩 147        '59',
-🟩 148        '29',
-🟩 149        '349',
-🟩 150        '112',
-🟩 151        '65',
-🟩 152        '98',
-🟩 153        '338',
-🟩 154        '271',
-🟩 155        '33',
-🟩 156        '379',
-🟩 157        '207',
-🟩 158        '232',
-🟩 159        '36',
-🟩 160        '64'
-🟩 161    ]
-⬜ 162    
-⬜ 163    ims_scrape_config = {
-⬜ 164        '_from': f"{add_days_to_date(date['value'])['str_rep']}",  # MM/DD/YYYY
-```
-
-<br/>
-
-Use the following 2 end points for meta\_data and data for each station
+There are two options to run the script:  
+1\. DOWNLOAD - download from the ims API endpoint  
+2\. UPLOAD - uploads data to a managed bucket in my gcs
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
-⬜ 19             self._from = _from
-⬜ 20             self._to = _to
-⬜ 21             self.root = config.ims_root_files
-🟩 22             self.station_meta_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}"
-🟩 23             self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
-🟩 24     
-⬜ 25         def save_metadata(self):
-⬜ 26             metadata_response = requests.request("GET", self.station_meta_data, headers=headers)
-⬜ 27             data_response = requests.request("GET", self.station_data, headers=headers)
+🟩 26     SELECTOR = ['DOWNLOAD']  # UPLOAD'
 ```
+
+<br/>
+
+you can use the following token to verify that everything works for you
+<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
+### 📄 CellEnMon/config.py
+```python
+🟩 74     ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
+🟩 75     ims_mapping=[
+⬜ 76         {
+⬜ 77             "stationId": 2,
+⬜ 78             "name": "AVNE ETAN",
+⬜ 79             "shortName": "AVNE ETA",
+⬜ 80             "stationsTag": "(None)",
+⬜ 81             "location": {
+⬜ 82                 "latitude": 32.817,
+⬜ 83                 "longitude": 35.763
+⬜ 84             },
+⬜ 85             "timebase": 10,
+⬜ 86             "active": True,
+⬜ 87             "owner": "ims",
+⬜ 88             "regionId": 8,
+⬜ 89             "monitors": [
+⬜ 90                 {
+```
+
+<br/>
+
+This is how we are going to GET from the ims endpoint
+<!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
+### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
+```python
+⬜ 29     class IMS_Scrapper_obj:
+⬜ 30         def __init__(self, index, station_id, station_name, location, _from, _to):
+⬜ 31             self.index = index
+⬜ 32             self.station_id = station_id
+⬜ 33             self._from = _from
+⬜ 34             self._to = _to
+⬜ 35             self.root = config.ims_root_files
+⬜ 36             self.station_id = station_id
+⬜ 37             self.station_name = station_name
+⬜ 38             self.station_location = location
+🟩 39             self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
+⬜ 40             self.bucket = client.get_bucket('cell_en_mon')
+```
+
+<br/>
+
+If you download the files locally, you will see it in the following path: /CellEnMon/datasets/ims/raw/
 
 <br/>
 
