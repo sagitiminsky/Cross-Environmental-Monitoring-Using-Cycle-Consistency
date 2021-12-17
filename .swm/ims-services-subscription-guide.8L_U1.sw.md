@@ -24,7 +24,7 @@ There are two options to run the script:
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
-🟩 26     SELECTOR = ['DOWNLOAD']  # UPLOAD'
+🟩 17     SELECTOR = ['DOWNLOAD']  # UPLOAD'
 ```
 
 <br/>
