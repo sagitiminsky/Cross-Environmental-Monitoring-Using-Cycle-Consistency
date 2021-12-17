@@ -5,7 +5,6 @@ import CellEnMon.config as config
 import os
 from datetime import datetime as dt
 from google.cloud import storage
-from pathlib import Path
 
 url = "https://api.ims.gov.il/v1/envista/stations/64/data?from=2019/12/01&to=2020/01/01"
 
