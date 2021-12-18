@@ -1,5 +1,10 @@
 PYTHONPATH should be: Research
 
+Suggested presets:
++ download pycharm
++ install Ansible Vault plugin
+
+
 **wandb:**
 
 https://wandb.ai/sagitiminsky/CellEnMon_CycleGan
