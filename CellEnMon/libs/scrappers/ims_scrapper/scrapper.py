@@ -14,7 +14,7 @@ headers = {
 
 ## Setting credentials using the downloaded JSON file
 path = 'CellEnMon/cellenmon-e840a9ba53e8.json'
-SELECTOR = ['DOWNLOAD']  # UPLOAD'
+SELECTOR = ['DOWNLOAD']  # DOWNLOAD | UPLOAD
 if not os.path.isfile(path) and 'UPLOAD' not in SELECTOR:
     raise ("Please provide the gcs key in the root directory")
 client = storage.Client.from_service_account_json(json_credentials_path=path)
