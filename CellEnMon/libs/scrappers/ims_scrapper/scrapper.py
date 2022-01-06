@@ -15,13 +15,12 @@ headers = {
 ## Setting credentials using the downloaded JSON file
 path = 'CellEnMon/cellenmon-e840a9ba53e8.json'
 SELECTOR = ['DOWNLOAD']  # DOWNLOAD | UPLOAD
-if not os.path.isfile(path) and 'UPLOAD' not in SELECTOR:
-    raise ("Please provide the gcs key in the root directory")
-client = storage.Client.from_service_account_json(json_credentials_path=path)
 
-## For slow upload speed
-storage.blob._DEFAULT_CHUNKSIZE = 2097152  # 1024 * 1024 B * 2 = 2 MB
-storage.blob._MAX_MULTIPART_SIZE = 2097152  # 2 MB
+if "UPLOAD" in SELECTOR:
+    client = storage.Client.from_service_account_json(json_credentials_path=path)
+    ## For slow upload speed
+    storage.blob._DEFAULT_CHUNKSIZE = 2097152  # 1024 * 1024 B * 2 = 2 MB
+    storage.blob._MAX_MULTIPART_SIZE = 2097152  # 2 MB
 
 
 class IMS_Scrapper_obj:
