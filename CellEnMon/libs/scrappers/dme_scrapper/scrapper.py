@@ -21,7 +21,7 @@ import numpy as np
 from CellEnMon.libs.power_law.power_law import PowerLaw
 from google.cloud import storage
 
-SELECTOR = ['EXTRACT', 'UPLOAD'] # DOWNLOAD | EXTRACT | UPLOAD
+SELECTOR = ['DOWNLOAD'] # DOWNLOAD | EXTRACT | UPLOAD
 
 
 ## Setting credentials using the downloaded JSON file
