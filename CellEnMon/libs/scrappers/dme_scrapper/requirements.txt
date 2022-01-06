@@ -1,0 +1,9 @@
+matplotlib==3.2.1
+bs4==0.0.1
+lxml==4.5.0
+Pillow==7.1.2
+numpy
+pandas
+selenium
+webdriver-manager
+google-cloud-storage==1.41.1
