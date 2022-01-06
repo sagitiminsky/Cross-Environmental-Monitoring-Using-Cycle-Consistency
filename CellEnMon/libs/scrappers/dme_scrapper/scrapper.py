@@ -21,15 +21,13 @@ import numpy as np
 from CellEnMon.libs.power_law.power_law import PowerLaw
 from google.cloud import storage
 
-# SELECTOR=['DOWNLOAD','EXTRACT','UPLOAD']
-SELECTOR = ['EXTRACT', 'UPLOAD']
+SELECTOR = ['EXTRACT', 'UPLOAD'] # DOWNLOAD | EXTRACT | UPLOAD
 
 
 ## Setting credentials using the downloaded JSON file
-path = 'cellenmon-e840a9ba53e8.json'
-if not os.path.isfile(path):
-    raise ("Please provide the gcs key in the root directory")
-client = storage.Client.from_service_account_json(json_credentials_path=path)
+if "UPLOAD" in SELECTOR:
+    path = 'cellenmon-e840a9ba53e8.json'
+    client = storage.Client.from_service_account_json(json_credentials_path=path)
 
 class DME_Scrapper_obj:
 
@@ -45,7 +43,8 @@ class DME_Scrapper_obj:
         self.root_download = config.download_path
         self.root_data_files = config.dme_root_files
         self.paths = config.dme_paths_root
-        self.bucket = client.get_bucket('cell_en_mon')
+        if "UPLOAD" in SELECTOR:
+            self.bucket = client.get_bucket('cell_en_mon')
 
         if not os.path.isdir(self.root_data_files):
             os.makedirs(self.root_data_files)
