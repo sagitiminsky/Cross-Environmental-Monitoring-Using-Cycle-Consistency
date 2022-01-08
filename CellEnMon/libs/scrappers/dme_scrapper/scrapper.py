@@ -12,6 +12,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.keys import Keys
 import threading
 import zipfile
 import pandas as pd
@@ -21,12 +22,12 @@ import numpy as np
 from CellEnMon.libs.power_law.power_law import PowerLaw
 from google.cloud import storage
 
-SELECTOR = ['DOWNLOAD'] # DOWNLOAD | EXTRACT | UPLOAD
+SELECTOR = ['EXTRACT', 'UPLOAD'] # DOWNLOAD | EXTRACT | UPLOAD
 
 
 ## Setting credentials using the downloaded JSON file
 if "UPLOAD" in SELECTOR:
-    path = 'cellenmon-e840a9ba53e8.json'
+    path = config.bucket_creds
     client = storage.Client.from_service_account_json(json_credentials_path=path)
 
 class DME_Scrapper_obj:
@@ -37,12 +38,11 @@ class DME_Scrapper_obj:
         self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.chrome_options.add_argument("--disable-popup-blocking")
-        self.delay = 50
+        self.delay = 10
         self.selector = '//*[@id="btnExportByFilter"]'
         self.xpaths = config.xpaths
         self.root_download = config.download_path
         self.root_data_files = config.dme_root_files
-        self.paths = config.dme_paths_root
         if "UPLOAD" in SELECTOR:
             self.bucket = client.get_bucket('cell_en_mon')
 
@@ -55,7 +55,6 @@ class DME_Scrapper_obj:
             # clear old
             self.delete_prev_from_downloads_if_poss()
             self.delete_prev_data_files_if_poss(self.root_data_files)
-            self.delete_prev_data_files_if_poss(self.paths)
 
             # log in
             self.browser.get(config.dme_scrape_config['url'])
@@ -102,13 +101,13 @@ class DME_Scrapper_obj:
     def create_merged_df_dict(self,metadata_df):
         return {
                 'data': pd.DataFrame(),
-                config.dme_metadata['frequency']: '',
-                config.dme_metadata['polarization']: '',
-                config.dme_metadata['length']: '',
-                config.dme_metadata['tx_longitude']: '',
-                config.dme_metadata['tx_latitude']: '',
-                config.dme_metadata['rx_longitude']: '',
-                config.dme_metadata['rx_latitude']: ''
+                # 'frequency': metadata_df[config.dme_metadata['frequency']],
+                # 'polarization': metadata_df[config.dme_metadata['polarization']],
+                # 'length': metadata_df[config.dme_metadata['length']],
+                'tx_longitude': metadata_df[config.dme_metadata['tx_longitude']],
+                'tx_latitude': metadata_df[config.dme_metadata['tx_latitude']],
+                'rx_longitude': metadata_df[config.dme_metadata['rx_longitude']],
+                'rx_latitude': metadata_df[config.dme_metadata['rx_latitude']]
             }
 
 
@@ -120,7 +119,7 @@ class DME_Scrapper_obj:
         return new_param
 
     def upload_files_to_gcs(self):
-        root=f"datasets/dme/{config.start_date_str_rep}-{config.end_date_str_rep}/raw"
+        root=f"{config.dme_root_files}/raw"
         for file in os.listdir(root):
             blob = self.bucket.blob(f'dme/{config.start_date_str_rep}-{config.end_date_str_rep}/raw/{file}')
             try:
@@ -132,7 +131,24 @@ class DME_Scrapper_obj:
 
 
     def extract_merge_save_csv(self):
-        with open(f'{self.paths}/data_paths.txt') as f1, open(f'{self.paths}/metadata_paths.txt') as f2:
+
+        data_paths = [f"{config.download_path}/{f}" for f in os.listdir(self.root_download) if
+                      '.zip' in f and 'cldb' in f]
+        metadata_paths = [f"{config.download_path}/{f}" for f in os.listdir(self.root_download) if
+                          '.csv' in f and 'export' in f]
+
+        data_paths.sort(key=os.path.getmtime)
+        metadata_paths.sort(key=os.path.getmtime)
+        paths="CellEnMon/libs/scrappers/dme_scrapper/paths/"
+        with open(f'{paths}/data_paths.txt', 'w') as f:
+            for item in data_paths:
+                f.write("{}\n".format(item))
+
+        with open(f'{paths}/metadata_paths.txt', 'w') as f:
+            for item in metadata_paths:
+                f.write("{}\n".format(item))
+
+        with open(f'{paths}/data_paths.txt') as f1, open(f'{paths}/metadata_paths.txt') as f2:
             file_paths = {
                 'data_paths': f1.readlines(),
                 'metadata_paths': f2.readlines()
@@ -152,11 +168,16 @@ class DME_Scrapper_obj:
 
         merged_df_dict = {}
         for data_path, metadata_path, link_name in zip(file_paths['data_paths'], file_paths['metadata_paths'], config.dme_scrape_config['link_objects']['link_id']):
+            valid=True
             zip_file_object = zipfile.ZipFile(data_path.strip(), 'r')
             metadata_df = pd.read_csv(metadata_path.strip())
 
-
-            merged_df_dict[link_name] = {**self.create_merged_df_dict(metadata_df=metadata_df), **merged_df_dict}
+            try:
+                merged_df_dict[link_name] = {**self.create_merged_df_dict(metadata_df=metadata_df), **merged_df_dict}
+            except KeyError:
+                print(f"Missing critical information for invalid link:{link_name}")
+                valid=False
+                continue
 
 
 
@@ -187,12 +208,23 @@ class DME_Scrapper_obj:
                 merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
 
 
-            # todo: to be fixed after the fix of omnisol - uncomment next line
-            # link_file_name = f"{config.dme_root_files}/{link_name}_{frequency}:_{str(merged_df_dict[link_name][frequency])}_{polarization}:_{merged_df_dict[link_name][polarization]}_{length}:_{str(merged_df_dict[link_name][length])}_{tx_longitude}:_{str(merged_df_dict[link_name][tx_longitude])}_{tx_latitude}:_{str(merged_df_dict[link_name][tx_latitude])}_{rx_longitude}:_{str(merged_df_dict[link_name][rx_longitude])}_{rx_latitude}:_{str(merged_df_dict[link_name][rx_latitude])}_.csv"
-            link_file_name= f"{config.dme_root_files}/processed/{link_name}"
+            if valid:
+                # link_frequency=merged_df_dict[link_name]['frequency'][0]
+                # link_polarization=merged_df_dict[link_name]['polarization'][0]
+                # link_length=merged_df_dict[link_name]['length'][0]
+                link_tx_longitude=merged_df_dict[link_name]['tx_longitude'][0]
+                link_tx_latitude=merged_df_dict[link_name]['tx_latitude'][0]
+                link_rx_longitude=merged_df_dict[link_name]['rx_longitude'][0]
+                link_rx_latitude=merged_df_dict[link_name]['rx_latitude'][0]
+                tx_name,rx_name=link_name.split("-")
+                metadata=f"{tx_name}-{link_tx_latitude}-{link_tx_longitude}-{rx_name}-{link_rx_latitude}-{link_rx_longitude}"
+                link_file_name= f"{config.dme_root_files}/processed/{metadata}.csv"
 
-            self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
-            print("file saved to {}".format(link_file_name))
+                try:
+                    self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
+                    print("file saved to {}".format(link_file_name))
+                except KeyError:
+                    print(f"faild saving link:{link_name}")
 
     def preprocess_df(self, df):
         # order by time
@@ -209,17 +241,25 @@ class DME_Scrapper_obj:
     def download_data(self, link_name,start_day, end_day=None):
         try:
 
-            # download metadata
-            self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
-            WebDriverWait(self.browser, self.delay).until(
-                EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_metadata_download'])))
-
-            time.sleep(1)
-
             # download data
             self.browser.find_element_by_xpath(self.xpaths['xpath_download']).click()
             WebDriverWait(self.browser, self.delay).until(
                 EC.element_to_be_clickable((By.XPATH, self.xpaths['xpath_download'])))
+
+            time.sleep(1)
+
+            # download metadata
+            ActionChains(self.browser).context_click(
+                self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).send_keys(Keys.END).perform()
+
+            ActionChains(self.browser).context_click(
+                self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
+            self.browser.find_element_by_xpath('//*[ @ id = "dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
+
+            self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
+
+
+
 
         except TimeoutException:  # rows do not exist
             if not end_day:
@@ -325,21 +365,6 @@ class DME_Scrapper_obj:
             print('starting download range {}-{}...'.format(start_day, end_day))
             self.download_data(link_name='Nan',start_day=start_day, end_day=end_day)
 
-        data_paths = [f"{f}" for f in os.listdir(self.root_download) if
-                      '.zip' in f and 'cldb' in f]
-        metadata_paths = [f"{f}" for f in os.listdir(self.root_download) if
-                          '.csv' in f and 'cldb' in f]
-
-        data_paths.sort(key=os.path.getmtime)
-        metadata_paths.sort(key=os.path.getmtime)
-
-        with open(f'{self.paths}/data_paths.txt', 'w') as f:
-            for item in data_paths:
-                f.write("{}/{}\n".format(self.root_download, item))
-
-        with open(f'{self.paths}/metadata_paths.txt', 'w') as f:
-            for item in metadata_paths:
-                f.write("{}/{}\n".format(self.root_download, item))
 
     def log_in(self, browser):
         remember_me_xpth = '/html/body/div/form/div[4]/label/input'
@@ -356,11 +381,14 @@ class DME_Scrapper_obj:
 
     def delete_prev_data_files_if_poss(self, path):
         'deletes from local directory'
-        for file in os.listdir(path):
-            try:
-                os.remove(f"{path}/{file}")
-            except FileNotFoundError:
-                print(f"throwing FileNotFoundError for:{path}/{file}")
+        try:
+            for file in os.listdir(path):
+                try:
+                    os.remove(f"{path}/{file}")
+                except FileNotFoundError:
+                    print(f"throwing FileNotFoundError for:{path}/{file}")
+        except FileNotFoundError:
+            print(f"File not found error:{path}")
 
     def delete_prev_from_downloads_if_poss(self):
         'Deletes from Downloads'

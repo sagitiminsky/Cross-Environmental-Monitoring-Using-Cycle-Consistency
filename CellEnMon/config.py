@@ -6,9 +6,14 @@ import os
 MAC = False
 download_path = '/Users/sagitiminsky/Downloads' if MAC == True else '/home/sagit/Downloads'
 
+bucket_creds="CellEnMon/cellenmon-e840a9ba53e8.json"
 
 def parse_date(d):
     return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
+
+def create_directory_if_does_not_exist(outdir):
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
 
 
 def add_days_to_date(date, delta_days=0):
@@ -16535,7 +16540,7 @@ ims_scrape_config = {
 
 xpaths = {
     'xpath_download': '//*[@id="btnExport"]',
-    'xpath_metadata_download': '//*[@id="btnExportMetadata"]',
+    'xpath_metadata_download': '//*[@id="dailies"]/div/div[7]/div/div/div[1]/span[2]',
     'link_id': {
         'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[1]',
         'xpath_select': '',
@@ -16613,8 +16618,10 @@ xpaths = {
 }
 
 dme_root_files = f"{os.environ['PYTHONPATH']}/CellEnMon/datasets/dme/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
-dme_paths_root = f"{os.environ['PYTHONPATH']}/CellEnMon/libs/scrappers/dme_scrapper/paths"
-dme_root_values = 'datasets/dme/processed'
+dme_root_files_processed= f"{dme_root_files}/processed"
+create_directory_if_does_not_exist(dme_root_files_processed)
+
+
 dme_scrape_config = {
     'username': 'SagiT',
     'password': 'W@st2020',
