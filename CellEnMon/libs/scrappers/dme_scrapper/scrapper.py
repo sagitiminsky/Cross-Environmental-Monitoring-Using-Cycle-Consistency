@@ -218,7 +218,7 @@ class DME_Scrapper_obj:
                 link_rx_latitude=merged_df_dict[link_name]['rx_latitude'][0]
                 tx_name,rx_name=link_name.split("-")
                 metadata=f"{tx_name}-{link_tx_latitude}-{link_tx_longitude}-{rx_name}-{link_rx_latitude}-{link_rx_longitude}"
-                link_file_name= f"{config.dme_root_files}/processed/{metadata}.csv"
+                link_file_name= f"{config.dme_root_files}/raw/{metadata}.csv"
 
                 try:
                     self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
