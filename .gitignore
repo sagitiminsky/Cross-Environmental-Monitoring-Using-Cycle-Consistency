@@ -27,3 +27,5 @@ CellEnMon/.idea
 /CellEnMon/cellenmon-e840a9ba53e8.json
 /CellEnMon/datasets/
 /checkpoints/
+/CellEnMon/libs/scrappers/dme_scrapper/paths/data_paths.txt
+/CellEnMon/libs/scrappers/dme_scrapper/paths/metadata_paths.txt
