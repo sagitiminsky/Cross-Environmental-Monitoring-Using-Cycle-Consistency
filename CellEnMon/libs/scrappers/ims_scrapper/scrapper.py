@@ -14,7 +14,7 @@ headers = {
 
 ## Setting credentials using the downloaded JSON file
 path = 'CellEnMon/cellenmon-e840a9ba53e8.json'
-SELECTOR = ['DOWNLOAD']  # DOWNLOAD | UPLOAD
+SELECTOR = ['DOWNLOAD','UPLOAD']  # DOWNLOAD | UPLOAD
 
 if "UPLOAD" in SELECTOR:
     client = storage.Client.from_service_account_json(json_credentials_path=path)
