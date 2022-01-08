@@ -6,9 +6,14 @@ import os
 MAC = False
 download_path = '/Users/sagitiminsky/Downloads' if MAC == True else '/home/sagit/Downloads'
 
+bucket_creds="CellEnMon/cellenmon-e840a9ba53e8.json"
 
 def parse_date(d):
     return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
+
+def create_directory_if_does_not_exist(outdir):
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
 
 
 def add_days_to_date(date, delta_days=0):
@@ -69,7 +74,7 @@ radar_root_values = 'datasets/radar/processed'
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"CellEnMon/datasets/ims/raw/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
+ims_root_files = f"CellEnMon/datasets/ims/{start_date_str_rep}-{end_date_str_rep}/raw"  # DD/MM/YYYY
 ims_root_values = 'CellEnMon/datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping=[
@@ -16535,7 +16540,7 @@ ims_scrape_config = {
 
 xpaths = {
     'xpath_download': '//*[@id="btnExport"]',
-    'xpath_metadata_download': '//*[@id="btnExportMetadata"]',
+    'xpath_metadata_download': '//*[@id="dailies"]/div/div[7]/div/div/div[1]/span[2]',
     'link_id': {
         'xpath_open': '//*[@id="dailies"]/div/div[2]/div[2]/div[2]/div[2]/div[2]/div[6]/div/div[1]',
         'xpath_select': '',
@@ -16612,9 +16617,11 @@ xpaths = {
 
 }
 
-dme_root_files = f"{os.environ['PYTHONPATH']}/CellEnMon/datasets/dme/raw/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
-dme_paths_root = f"{os.environ['PYTHONPATH']}/CellEnMon/libs/scrappers/dme_scrapper/paths"
-dme_root_values = 'datasets/dme/processed'
+dme_root_files = f"{os.environ['PYTHONPATH']}/CellEnMon/datasets/dme/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
+dme_root_files_processed= f"{dme_root_files}/processed"
+create_directory_if_does_not_exist(dme_root_files_processed)
+
+
 dme_scrape_config = {
     'username': 'SagiT',
     'password': 'W@st2020',
@@ -16647,13 +16654,13 @@ dme_scrape_config = {
         'sampling_period[min]': '15',
 
         'link_id': [
-            'd409-5079', 'c409-5077', 'b219-5060', 'c219-5079',  # Arad - no data: d219-5079
-            '803b-6879', 'a459-6879', 'a690-6880', 'b690-6881', 'a273-6881', 'b459-6880',  # Naot Smadar - no data:
-            'c247-7049',  # Yavne - no data:
-            'a473-5512', 'b119-5512',  # Paran - no data:
-            'e032-5090', 'a247-5090', 'b247-5377',  # Ashdod - no data:
-            'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333',  # Bar Shava - no data: ts03-7331, a394-7332
-            'g086-5091'  # Ashkelon - no data: h086-7193
+            'd219-5079', 'd409-5079', 'c409-5077', 'b219-5060', 'c219-5079',  # Arad
+            '803b-6879', 'a459-6879', 'a690-6880', 'b690-6881', 'a273-6881', 'b459-6880',  # Naot Smadar
+            'c247-7049',  # Yavne
+            'a473-5512', 'b119-5512',  # Paran
+            'e032-5090', 'a247-5090', 'b247-5377',  # Ashdod
+            'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333','ts03-7331', 'a394-7332',  # Bar Shava
+            'h086-7193', 'g086-5091'  # Ashkelon
         ],
 
         'link_carrier': {},
