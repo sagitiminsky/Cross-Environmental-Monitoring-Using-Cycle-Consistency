@@ -37,7 +37,7 @@ class DME_Scrapper_obj:
         self.chrome_options.add_argument('--no-sandbox')
         self.chrome_options.add_argument('--disable-dev-shm-usage')
         self.chrome_options.add_argument("--disable-popup-blocking")
-        self.delay = 100
+        self.delay = 50
         self.selector = '//*[@id="btnExportByFilter"]'
         self.xpaths = config.xpaths
         self.root_download = config.download_path
@@ -120,7 +120,7 @@ class DME_Scrapper_obj:
         return new_param
 
     def upload_files_to_gcs(self):
-        root=f"datasets/dme/raw/{config.start_date_str_rep}_{config.end_date_str_rep}"
+        root=f"datasets/dme/{config.start_date_str_rep}-{config.end_date_str_rep}/raw"
         for file in os.listdir(root):
             blob = self.bucket.blob(f'dme/{config.start_date_str_rep}-{config.end_date_str_rep}/raw/{file}')
             try:
@@ -189,7 +189,7 @@ class DME_Scrapper_obj:
 
             # todo: to be fixed after the fix of omnisol - uncomment next line
             # link_file_name = f"{config.dme_root_files}/{link_name}_{frequency}:_{str(merged_df_dict[link_name][frequency])}_{polarization}:_{merged_df_dict[link_name][polarization]}_{length}:_{str(merged_df_dict[link_name][length])}_{tx_longitude}:_{str(merged_df_dict[link_name][tx_longitude])}_{tx_latitude}:_{str(merged_df_dict[link_name][tx_latitude])}_{rx_longitude}:_{str(merged_df_dict[link_name][rx_longitude])}_{rx_latitude}:_{str(merged_df_dict[link_name][rx_latitude])}_.csv"
-            link_file_name= f"{config.dme_root_files}/{link_name}"
+            link_file_name= f"{config.dme_root_files}/processed/{link_name}"
 
             self.preprocess_df(merged_df_dict[link_name]['data']).to_csv(link_file_name, mode='a', index=False)
             print("file saved to {}".format(link_file_name))
@@ -206,7 +206,7 @@ class DME_Scrapper_obj:
         if len(os.listdir(self.root_download)) - prev_number_of_files == delta:
             return
 
-    def download_data(self, start_day, end_day=None):
+    def download_data(self, link_name,start_day, end_day=None):
         try:
 
             # download metadata
@@ -226,7 +226,7 @@ class DME_Scrapper_obj:
                 print('The following day: {} failed'.format(start_day))
                 pass
             else:
-                raise TimeoutException("The following range: {} - {} failed ".format(start_day, end_day))
+                print(f"The following range: {start_day} - {end_day} failed for link:{link_name}")
 
     def ranged_filter(self, mux):
         link_obj = config.dme_scrape_config['link_objects']
@@ -319,11 +319,11 @@ class DME_Scrapper_obj:
                 self.browser.find_element_by_xpath(element_xpath['xpath_apply']).click()
 
                 print('starting download range {}-{}...'.format(start_day, end_day))
-                self.download_data(start_day=start_day, end_day=end_day)
+                self.download_data(link_name=link_name, start_day=start_day, end_day=end_day )
 
         else:  # No need to look for link_id
             print('starting download range {}-{}...'.format(start_day, end_day))
-            self.download_data(start_day=start_day, end_day=end_day)
+            self.download_data(link_name='Nan',start_day=start_day, end_day=end_day)
 
         data_paths = [f"{f}" for f in os.listdir(self.root_download) if
                       '.zip' in f and 'cldb' in f]

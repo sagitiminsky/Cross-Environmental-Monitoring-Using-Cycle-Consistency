@@ -69,7 +69,7 @@ radar_root_values = 'datasets/radar/processed'
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"CellEnMon/datasets/ims/raw/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
+ims_root_files = f"CellEnMon/datasets/ims/{start_date_str_rep}-{end_date_str_rep}/raw"  # DD/MM/YYYY
 ims_root_values = 'CellEnMon/datasets/ims/processed'
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping=[
@@ -16612,7 +16612,7 @@ xpaths = {
 
 }
 
-dme_root_files = f"{os.environ['PYTHONPATH']}/CellEnMon/datasets/dme/raw/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
+dme_root_files = f"{os.environ['PYTHONPATH']}/CellEnMon/datasets/dme/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
 dme_paths_root = f"{os.environ['PYTHONPATH']}/CellEnMon/libs/scrappers/dme_scrapper/paths"
 dme_root_values = 'datasets/dme/processed'
 dme_scrape_config = {
@@ -16651,7 +16651,7 @@ dme_scrape_config = {
             '803b-6879', 'a459-6879', 'a690-6880', 'b690-6881', 'a273-6881', 'b459-6880',  # Naot Smadar - no data:
             'c247-7049',  # Yavne - no data:
             'a473-5512', 'b119-5512',  # Paran - no data:
-            'e032-5090', 'a247-5090', 'b247-5377',  # Ashdod - no data:
+            'a247-5090', 'b247-5377',  # Ashdod - no data: 'e032-5090',
             'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333',  # Bar Shava - no data: ts03-7331, a394-7332
             'g086-5091'  # Ashkelon - no data: h086-7193
         ],
