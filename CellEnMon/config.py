@@ -6,10 +6,12 @@ import os
 MAC = False
 download_path = '/Users/sagitiminsky/Downloads' if MAC == True else '/home/sagit/Downloads'
 
-bucket_creds="CellEnMon/cellenmon-e840a9ba53e8.json"
+bucket_creds = "CellEnMon/cellenmon-e840a9ba53e8.json"
+
 
 def parse_date(d):
     return d['mm'] + '/' + d['dd'] + '/' + d['yyyy'][-2:]
+
 
 def create_directory_if_does_not_exist(outdir):
     if not os.path.exists(outdir):
@@ -25,7 +27,8 @@ def add_days_to_date(date, delta_days=0):
         'day_str_rep': f"{str(res.day).zfill(2)}",
         'month_str_rep': f"{str(res.month).zfill(2)}",
         'year_str_rep': f"{res.year}",
-        'str_rep_ddmmyyyy': f"{str(res.day).zfill(2)}{str(res.month).zfill(2)}{res.year}"
+        'str_rep_ddmmyyyy': f"{str(res.day).zfill(2)}{str(res.month).zfill(2)}{res.year}",
+        'str_rep_mmddyyyy': f"{str(res.month).zfill(2)}{str(res.day).zfill(2)}{res.year}"
     }
 
 
@@ -36,8 +39,8 @@ date = {
         'yyyy': '2013'
     },
     'value_range': {
-        'dd': '02',
-        'mm': '01',
+        'dd': '01',
+        'mm': '02',
         'yyyy': '2013'
     }
 }
@@ -45,8 +48,11 @@ date = {
 date_str_rep = add_days_to_date(date['value'])['str_rep_with_replace'] + '_' + add_days_to_date(date['value_range'])[
     'str_rep_with_replace']
 date_datetime_rep = add_days_to_date(date['value'])['datetime_rep']
-start_date_str_rep = add_days_to_date(date['value'])['str_rep_ddmmyyyy']
-end_date_str_rep = add_days_to_date(date['value_range'])['str_rep_ddmmyyyy']
+start_date_str_rep_mmddyyyy = add_days_to_date(date['value'])['str_rep_mmddyyyy']
+start_date_str_rep_ddmmyyyy = add_days_to_date(date['value'])['str_rep_ddmmyyyy']
+
+end_date_str_rep_mmddyyyy = add_days_to_date(date['value_range'])['str_rep_mmddyyyy']
+end_date_str_rep_ddmmyyyy = add_days_to_date(date['value_range'])['str_rep_ddmmyyyy']
 
 months = {
     'Jan': '01',
@@ -74,9 +80,9 @@ radar_root_values = 'datasets/radar/processed'
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"CellEnMon/datasets/ims/{start_date_str_rep}-{end_date_str_rep}"  # DD/MM/YYYY
+ims_root_files = f"CellEnMon/datasets/ims/{start_date_str_rep_ddmmyyyy}_{end_date_str_rep_ddmmyyyy}"  # DD/MM/YYYY
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
-ims_mapping=[
+ims_mapping = [
     {
         "stationId": 2,
         "name": "AVNE ETAN",
@@ -16616,9 +16622,13 @@ xpaths = {
 
 }
 
-dme_root_files = f"{os.environ['PYTHONPATH']}/CellEnMon/datasets/dme/{start_date_str_rep}_{end_date_str_rep}"  # DD/MM/YYYY
-dme_root_files_processed= f"{dme_root_files}/processed"
+dme_root_files = f"CellEnMon/datasets/dme/{start_date_str_rep_ddmmyyyy}_{end_date_str_rep_ddmmyyyy}"  # DD/MM/YYYY
+dme_root_files_processed = f"{dme_root_files}/processed"
+dme_root_files_raw = f"{dme_root_files}/raw"
+dme_root_files_paths = f"{dme_root_files}/paths"
 create_directory_if_does_not_exist(dme_root_files_processed)
+create_directory_if_does_not_exist(dme_root_files_raw)
+create_directory_if_does_not_exist(dme_root_files_paths)
 
 
 dme_scrape_config = {
@@ -16635,8 +16645,8 @@ dme_scrape_config = {
             # 'Not equal'
             # 'In range'
 
-            'value': start_date_str_rep,
-            'value_range': end_date_str_rep
+            'value': start_date_str_rep_mmddyyyy,
+            'value_range': end_date_str_rep_mmddyyyy
         },
         'measurement_type': [],  # ['TN_RFInputPower'],
         'data_precentage': {
@@ -16653,12 +16663,12 @@ dme_scrape_config = {
         'sampling_period[min]': '15',
 
         'link_id': [
-            'd219-5079', 'd409-5079', 'c409-5077', 'b219-5060', 'c219-5079',  # Arad
+             'c409-5077', 'b219-5060', 'c219-5079','d409-5079',  # Arad: #d219-5079
             '803b-6879', 'a459-6879', 'a690-6880', 'b690-6881', 'a273-6881', 'b459-6880',  # Naot Smadar
             'c247-7049',  # Yavne
             'a473-5512', 'b119-5512',  # Paran
             'e032-5090', 'a247-5090', 'b247-5377',  # Ashdod
-            'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333','ts03-7331', 'a394-7332',  # Bar Shava
+            'c394-7336', 'ts02-7332', 'ts06-7336', 'b394-7333', 'ts03-7331', 'a394-7332',  # Bar Shava
             'h086-7193', 'g086-5091'  # Ashkelon
         ],
 

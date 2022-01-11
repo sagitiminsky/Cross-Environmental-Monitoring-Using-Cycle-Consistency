@@ -3,7 +3,6 @@ import requests
 import pandas as pd
 import CellEnMon.config as config
 import os
-from datetime import datetime as dt
 from google.cloud import storage
 
 url = "https://api.ims.gov.il/v1/envista/stations/64/data?from=2019/12/01&to=2020/01/01"
@@ -14,7 +13,7 @@ headers = {
 
 ## Setting credentials using the downloaded JSON file
 path = 'CellEnMon/cellenmon-e840a9ba53e8.json'
-SELECTOR = ['DOWNLOAD','UPLOAD']  # DOWNLOAD | UPLOAD
+SELECTOR = ['DOWNLOAD']  # DOWNLOAD | UPLOAD
 
 if "UPLOAD" in SELECTOR:
     client = storage.Client.from_service_account_json(json_credentials_path=path)
@@ -34,12 +33,13 @@ class IMS_Scrapper_obj:
         self.station_name = station_name
         self.station_location = location
         self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
-        self.bucket = client.get_bucket('cell_en_mon')
+        if "UPLOAD" in SELECTOR:
+            self.bucket = client.get_bucket('cell_en_mon')
 
     def upload_files_to_gcs(self):
         for station in os.listdir(self.root):
             blob = self.bucket.blob(
-                f'ims/{config.start_date_str_rep}-{config.end_date_str_rep}/raw/{station}')
+                f'ims/{config.start_date_str_rep_ddmmyyyy}-{config.end_date_str_rep_ddmmyyyy}/raw/{station}')
             try:
                 with open(f"{self.root}/raw/{station}", 'rb') as f:
                     blob.upload_from_file(f)
