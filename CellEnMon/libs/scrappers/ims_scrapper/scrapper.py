@@ -41,7 +41,7 @@ class IMS_Scrapper_obj:
             blob = self.bucket.blob(
                 f'ims/{config.start_date_str_rep}-{config.end_date_str_rep}/raw/{station}')
             try:
-                with open(f"{self.root}/{station}", 'rb') as f:
+                with open(f"{self.root}/raw/{station}", 'rb') as f:
                     blob.upload_from_file(f)
                 print(f'Uploaded file:{station} succesfully !')
             except Exception as e:
@@ -60,9 +60,9 @@ class IMS_Scrapper_obj:
                                                     self.station_location['latitude'],
                                                     self.station_location['longitude'])
             if not os.path.exists(self.root):
-                os.makedirs(self.root)
+                os.makedirs(f'{self.root}/raw')
 
-            pd.DataFrame(data['data']).to_csv(f'{self.root}/{file_name}', index=False)
+            pd.DataFrame(data['data']).to_csv(f'{self.root}/raw/{file_name}', index=False)
 
 
 #
