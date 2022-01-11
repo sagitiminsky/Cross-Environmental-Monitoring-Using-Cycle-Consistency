@@ -49,14 +49,14 @@ class Extractor:
 
     def get_ims_metadata(self, station_name):
         metadata = {}
-        station_name_splited = station_name.split()
+        station_name_splited = station_name.split('-')
         metadata["latitude"] = station_name_splited[3]
         metadata["longitude"] = station_name_splited[4]
         metadata["vector"] = np.array([metadata['latitude'], metadata['longitude']])
         return metadata
 
     def load_ims(self):
-        temp_str = f'{config.ims_root_files}/processed/{config.date_str_rep}'
+        temp_str = f'{config.ims_root_files}/processed'
 
         try:
             with open(f'{temp_str}/values.pkl', 'rb') as f:
@@ -99,7 +99,7 @@ class Extractor:
 
     def get_dme_metadata(self, link_file_name):
         metadata = {}
-        link_file_name_splited = link_file_name.split()
+        link_file_name_splited = link_file_name.split('-')
         metadata["source"] = f'{link_file_name_splited[0]}'
         metadata["sink"] = f'{link_file_name_splited[3]}'
         metadata["link_name"] = f'{metadata["source"]}-{metadata["sink"]}'
@@ -113,7 +113,7 @@ class Extractor:
         return metadata
 
     def load_dme(self):
-        temp_str = f'{config.dme_root_files}/processed/{config.date_str_rep}'
+        temp_str = f'{config.dme_root_files}/processed'
         try:
             with open(f'{temp_str}/values.pkl', 'rb') as f:
                 dme_matrix = pickle.load(f)
@@ -124,7 +124,7 @@ class Extractor:
             valid_row_number = 4 * 24 * config.coverage
             dme_matrix = np.empty((1, valid_row_number + len(config.dme_metadata)))
 
-            for link_file_name in os.listdir(config.dme_root_files):
+            for link_file_name in os.listdir(f'{config.dme_root_files}/raw'):
 
                 link_metadata = self.get_dme_metadata(link_file_name)
                 link_type = config.dme_scrape_config['link_objects']['measurement_type']
@@ -133,20 +133,21 @@ class Extractor:
                     "preprocessing: now processing link: {} of type: {}".format(link_metadata["link_name"], link_type))
 
                 df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
-                df = df[df.Interval == 15]
+                df = df[df.Interval == '15']
 
-                # todo: 'RFInputPower' is only good for one type of link
-                if len(list(df['RFInputPower'])) > valid_row_number:
+                if len(list(df['Time'])) != valid_row_number:
                     print(
-                        'The provided data for link {} contains more rows then it should {}/{}'.format(link_metadata["link_name"],
-                                                                                                       len(list(
-                                                                                                           df[
-                                                                                                               'RFInputPower'])),
-                                                                                                       valid_row_number))
+                        f'Number of rows for link: {link_metadata["link_name"]} is wrong: {len(list(df["Time"]))}!={valid_row_number}')
 
-                elif len(list(df['RFInputPower'])) == valid_row_number:
-                    dme_matrix = np.vstack(
-                        (dme_matrix, link_metadata["vector"] + list(df['RFInputPower'])))
+                else:
+                    if 'RFInputPower' in df:
+                        stack = [link_metadata["vector"] + x for x in [df.RFInputPower, df.RFOutputPower]]
+                    elif 'PowerRLTMmin' in df:
+                        stack = [link_metadata["vector"] + x for x in
+                                 [df.PowerTLTMmax, df.PowerTLTMmin, df.PowerRLTMmax, df.PowerRLTMmin]]
+                    else:
+                        raise Exception("Unsupported field in link")
+                    dme_matrix = np.vstack(dme_matrix, stack)
 
             dme_matrix = dme_matrix[1:]
 
