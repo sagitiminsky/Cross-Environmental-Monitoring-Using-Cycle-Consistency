@@ -74,8 +74,7 @@ radar_root_values = 'datasets/radar/processed'
 ############## IMS SCRAPPER ###########
 #######################################
 
-ims_root_files = f"CellEnMon/datasets/ims/{start_date_str_rep}-{end_date_str_rep}/raw"  # DD/MM/YYYY
-ims_root_values = 'CellEnMon/datasets/ims/processed'
+ims_root_files = f"CellEnMon/datasets/ims/{start_date_str_rep}-{end_date_str_rep}"  # DD/MM/YYYY
 ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping=[
     {
@@ -16774,19 +16773,17 @@ basic_db_path = 'libs/power_law/frequency_dependent_coefficients_for_estimating_
 ################################
 
 # IMS
-ims_pre_load_data = True
 ims_metadata = ['latitude', 'longitude']
 
 # DME
-dme_pre_load_data = True
 dme_metadata = {
-    'frequency': 'Link Frequency [MHz]',
-    'polarization': 'Link Polarization',
-    'length': 'Link Length (KM)',
+    # 'frequency': 'Link Frequency [MHz]',
+    # 'polarization': 'Link Polarization',
+    # 'length': 'Link Length (KM)',
     'tx_longitude': 'Tx Site Longitude',
     'tx_latitude': 'Tx Site Latitude',
     'rx_longitude': 'Rx Site Longitude',
     'rx_latitude': 'Rx Site Latitude',
-    'carrier': 'Link Carrier',
-    'id': 'Link ID'
+    # 'carrier': 'Link Carrier',
+    # 'id': 'Link ID'
 }
