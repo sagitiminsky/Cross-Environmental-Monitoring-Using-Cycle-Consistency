@@ -138,7 +138,7 @@ class Extractor:
                 # todo: 'RFInputPower' is only good for one type of link
                 if len(list(df['RFInputPower'])) > valid_row_number:
                     print(
-                        'The provided data for link {} contains more rows then it should {}/{}'.format(link_name,
+                        'The provided data for link {} contains more rows then it should {}/{}'.format(link_metadata["link_name"],
                                                                                                        len(list(
                                                                                                            df[
                                                                                                                'RFInputPower'])),
