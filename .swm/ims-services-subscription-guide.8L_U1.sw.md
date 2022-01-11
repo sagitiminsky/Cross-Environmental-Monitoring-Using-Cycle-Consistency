@@ -8,11 +8,15 @@ file_blobs:
   CellEnMon/config.py: 08c0ccbd89f6d81fa8892ecc1598531f6a363af1
 ---
 
-TLDR: send go to [https://ims.gov.il/he/ObservationDataAPI](https://ims.gov.il/he/ObservationDataAPI) you will find the API documenation and you'll be able to fill in the following form [https://ims.gov.il/sites/default/files/docs/terms\_0.pdf](https://ims.gov.il/sites/default/files/docs/terms_0.pdf) and send it back to [&#105;&#109;&#115;&#64;&#x69;&#109;&#115;&#x2e;&#103;&#x6f;&#118;&#x2e;&#x69;&#x6c;](mailto:ims@ims.gov.il).
+TLDR: python3 `📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py`
+
+send go to [https://ims.gov.il/he/ObservationDataAPI](https://ims.gov.il/he/ObservationDataAPI) you will find the API documenation and you'll be able to fill in the following form [https://ims.gov.il/sites/default/files/docs/terms\_0.pdf](https://ims.gov.il/sites/default/files/docs/terms_0.pdf) and send it back to [&#105;&#109;&#115;&#64;&#x69;&#109;&#115;&#x2e;&#103;&#x6f;&#118;&#x2e;&#x69;&#x6c;](mailto:ims@ims.gov.il).
 
 After receiving the approval from the ims you will be provided with an API Token, if you want, you can keep that in secret - put that in your gitignore file.
 
-There is a designated requirements file - you don't need torch if you are only intrested in the ims data
+I've created a small requirements file: `📄 CellEnMon/libs/scrappers/ims_scrapper/requirements.txt`  
+if you are not intresented to run the learning script, and you are only interested in the data. Make sure to run it:  
+pip3 install -r `📄 CellEnMon/libs/scrappers/ims_scrapper/requirements.txt`
 
 `📄 CellEnMon/libs/scrappers/ims_scrapper/requirements.txt`
 
