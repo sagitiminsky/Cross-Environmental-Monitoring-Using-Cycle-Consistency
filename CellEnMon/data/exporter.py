@@ -1,80 +1,44 @@
-import config as config
+import CellEnMon.config as config
 import pickle
 import numpy as np
 import pandas as pd
 import os
 import ast
-import re
-from datetime import datetime as dt
-from datetime import timedelta as dt_delta
+
+
+class Domain:
+    def __init__(self, db, metadata_vector_len):
+        self.db = db
+        self.metadat_vector_len = metadata_vector_len
+        self.metadata, self.data = db[:metadata_vector_len], db[metadata_vector_len:]
+        self.data_max, self.data_min, self.data_normalized = self.normalizer(self.data)
+        self.metadata_max, self.metadata_min, metadata_normalized = self.normalizer(self.metadata)
+
+    def normalizer(self, mat):
+        min = mat.min()
+        max = mat.max()
+        mat = 0 if max - min == 0 else (mat - min) / (max - min)
+        return min, max, mat
 
 
 class Extractor:
     def __init__(self):
-        self.dme_data, self.dme_order = self.load_dme_data()  # 1 day is 96 = 24*4 data samples + 7 metadata samples
-        self.ims_data, self.ims_order = self.load_ims_data()  # 1 day is 144 = 24*6 data samples + 2 metadata samples
-
-        ####################################################################################################################################
-        ### norm. - https://datascience.stackexchange.com/questions/5885/how-to-scale-an-array-of-signed-integers-to-range-from-0-to-1
-        ####################################################################################################################################
-
-        self.ims_data = self.ims_data.astype(np.float)
-        self.dme_data = self.dme_data.astype(np.float)
-
-        ################
-        ### location ###
-        ################
-        # ims
-        self.ims_location_min, self.ims_location_max = self.normalizer(0, 2, "ims")
-
-        # dme
-        self.dme_location_min, self.dme_location_max = self.normalizer(3, 7, "dme")
-
-        ##################
-        ### frequency ####
-        ##################
-        self.dme_frequency_min, self.dme_frequency_max = self.normalizer(0, 1, "dme")
-
-        ####################
-        ### polarization ###
-        ####################
-        self.dme_polarization_min, self.dme_polarization_max = self.normalizer(1, 2, "dme")
-
-        ####################
-        ####### length #####
-        ####################
-        self.dme_length_min, self.dme_length_max = self.normalizer(2, 3, "dme")
-
-        # data
-        self.ims_data_min, self.ims_data_max = self.ims_data[:, 2:].min(), self.ims_data[:, 2:].max()
-        self.dme_data_min, self.dme_data_max = self.dme_data[:, 2:].min(), self.dme_data[:, 2:].max()
-
-        self.ims_data[:, 2:] = (self.ims_data[:, 2:] - self.ims_data_min) / (
-                self.ims_data_max - self.ims_data_min)
-        self.dme_data[:, 2:] = (self.dme_data[:, 2:] - self.dme_data_min) / (
-                self.dme_data_max - self.dme_data_min)
-
-        # set dim.
-        self.dme_number_of_stations, self.dme_number_of_channels = self.dme_data.shape
-        self.ims_number_of_stations, self.ims_number_of_channels, = self.ims_data.shape
+        self.dme = Domain(*self.load_dme())  # 1 day is 96 = 24*4 data samples + 7 metadata samples
+        self.ims = Domain(*self.load_ims())  # 1 day is 144 = 24*6 data samples + 2 metadata samples
 
     def stats(self):
-        message = f"Links dim: {self.dme_data.shape} - each link is {self._1_d} dimential, and there are {self._1_n} links , covering {config.coverage} days \n" \
-                  f"Gueges dim: {self.ims_data.shape} - each gague has {self._2_d} dimentional, and there are  {self._2_n} gagues, covering {config.coverage} days"
+        message = f"start:{config.start_date_str_rep} end:{config.end_date_str_rep} --- in total it is {config.coverage} days" \
+                  "🚀 Links 🚀" \
+                  f"Link matrix shape: {self.dme.db.shape}" \
+                  f"This means that we have: {self.dme.db.shape[0]} links; each link is a vector of len:{self.dme.data.shape[1]}" \
+                  f"A link's vector is composed of #metadata:{self.dme.metadat_vector_len} and #data:{self.dme.db.shape[0] - self.dme.metadat_vector_len}" \
+                  "\n\n" \
+                  "🏺 Gauges 🏺" \
+                  f"Guege matrix shape: {self.ims.data.shape}" \
+                  f"This means that we have: {self.ims.data.shape[0]} gauges; each gauges is a vector of len:{self.ims.data.shape[1]}" \
+                  f"A gauge is a vector composed of metadata:{self.ims.metadat_vector_len} and data:{self.ims.db.shape[0] - self.ims.metadat_vector_len}"
 
         return message
-
-    def normalizer(self, begin, end, type):
-        if type == 'ims':
-            min, max = self.ims_data[:, begin:end].min(), self.ims_data[:, begin:end].max()
-            self.ims_data[:, begin:end] = 0 if max - min == 0 else (self.ims_data[:, begin:end] - min) / (max - min)
-        elif type == 'dme':
-            min, max = self.dme_data[:, begin:end].min(), self.dme_data[:, begin:end].max()
-            self.dme_data[:, begin:end] = 0 if max - min == 0 else (self.dme_data[:, begin:end] - min) / (max - min)
-        else:
-            raise ("This type is not supported: {}".format(type))
-
-        return min, max
 
     def get_entry(self, arr, type):
         i = 0
@@ -83,32 +47,32 @@ class Extractor:
 
         return arr[i]
 
-    def get_ims_metadata(self, station_folder):
-        f = open(config.ims_root_files + '/' + station_folder + '/' + 'metadata.txt', "r")
+    def get_ims_metadata(self, station_name):
         metadata = {}
+        station_name_splited = station_name.split('-')
+        metadata["latitude"] = station_name_splited[3]
+        metadata["longitude"] = station_name_splited[4]
+        metadata["vector"] = np.array([metadata['latitude'], metadata['longitude']])
+        return metadata
+
+    def load_ims(self):
+        temp_str = f'{config.ims_root_files}/processed'
+
         try:
-            for line in f:
-                if 'location' in line:
-                    location = re.findall(r"[-+]?\d*\.\d+|\d+", line)
-                    metadata['latitude'] = location[0]
-                    metadata['longitude'] = location[1]
-        except IndexError:
-            print("problem with metadata gague {}".format(station_folder))
-            return
+            with open(f'{temp_str}/values.pkl', 'rb') as f:
+                ims_matrix = pickle.load(f)
 
-        return np.array([metadata['latitude'], metadata['longitude']])
-
-    def load_ims_data(self):
-        if not config.ims_pre_load_data:
+        except FileNotFoundError:
 
             # 10[min] x 6 is an hour
             ims_matrix = np.empty((1, 6 * 24 * config.coverage + len(config.ims_metadata)))
-            ims_order = np.empty(1)
-            for index, station_folder in enumerate(os.listdir(config.ims_root_files)):
-                print("now processing gauge: {}".format(station_folder))
+            for index, station_file_name in enumerate(os.listdir(f'{config.ims_root_files}/raw')):
+                print("now processing gauge: {}".format(station_file_name))
                 try:
-                    df = pd.read_csv(config.ims_root_files + '/' + station_folder + '/' + 'data.csv')
-                    ims_vec = self.get_ims_metadata(station_folder)
+                    df = pd.read_csv(station_file_name)
+                    metadata = self.get_ims_metadata(station_file_name)
+                    ims_vec = metadata["vector"]
+
                     if (ims_vec, df) is not (None, None):
                         for row in list(df.channels):
                             ims_vec = np.append(ims_vec,
@@ -117,96 +81,83 @@ class Extractor:
                         ims_vec = ims_vec.T
                         try:
                             ims_matrix = np.vstack((ims_matrix, ims_vec))
-                            ims_order = np.hstack((ims_order, station_folder))
                         except ValueError:
-                            print("problem with stacking gague {}".format(station_folder))
+                            print("problem with stacking gague {}".format(station_file_name))
 
                 except FileNotFoundError:
-                    print("data does not exist in {}".format(station_folder))
+                    print("data does not exist in {}".format(station_file_name))
 
             ims_matrix = ims_matrix[1:]
-            ims_order = ims_order[1:]
 
-            if not os.path.isdir(config.ims_root_values + '/' + config.date_str_rep):
-                os.makedirs(config.ims_root_values + '/' + config.date_str_rep)
+            if not os.path.isdir(temp_str):
+                os.makedirs(temp_str)
 
-            with open(config.ims_root_values + '/' + config.date_str_rep + '/' + 'values.pkl', 'wb') as f:
+            with open(f'{temp_str}/values.pkl', 'wb') as f:
                 pickle.dump(ims_matrix, f)
 
-            with open(config.ims_root_values + '/' + config.date_str_rep + '/' + 'order.pkl', 'wb') as f:
-                pickle.dump(ims_order, f)
+        return ims_matrix.astype(np.float), len(metadata["vector"])
 
-        else:
-            with open(config.ims_root_values + '/' + config.date_str_rep + '/' + 'values.pkl', 'rb') as f:
-                ims_matrix = pickle.load(f)
+    def get_dme_metadata(self, link_file_name):
+        metadata = {}
+        link_file_name_splited = link_file_name.split('-')
+        metadata["source"] = f'{link_file_name_splited[0]}'
+        metadata["sink"] = f'{link_file_name_splited[3]}'
+        metadata["link_name"] = f'{metadata["source"]}-{metadata["sink"]}'
+        metadata["tx_longitude"] = link_file_name_splited[1]
+        metadata["tx_latitude"] = link_file_name_splited[2]
+        metadata["rx_longitude"] = link_file_name_splited[4]
+        metadata["rx_latitude"] = link_file_name_splited[5]
+        metadata["vector"] = [metadata["tx_longitude"], metadata["tx_latitude"], metadata["rx_longitude"],
+                              metadata["rx_latitude"]]
 
-            with open(config.ims_root_values + '/' + config.date_str_rep + '/' + 'order.pkl', 'rb') as f:
-                ims_order = pickle.load(f)
+        return metadata
 
-        return ims_matrix, ims_order
+    def load_dme(self):
+        temp_str = f'{config.dme_root_files}/processed'
+        try:
+            with open(f'{temp_str}/values.pkl', 'rb') as f:
+                dme_matrix = pickle.load(f)
 
-    def get_dme_metadata(self, link):
-        d = dict(zip(config.dme_metadata, link.split('_')[2::2]))
-        if d['polarization'] == 'Vertical':
-            d['polarization'] = 1
-        elif d['polarization'] == 'Horizontal':
-            d['Horizontal'] = 0
-        else:
-            raise ("Link polarization is not supported: {}".format(d['polarization']))
-
-        return d
-
-    def load_dme_data(self):
-        if not config.dme_pre_load_data:
+        except FileNotFoundError:
 
             # 15[min] x 4 is an hour
             valid_row_number = 4 * 24 * config.coverage
             dme_matrix = np.empty((1, valid_row_number + len(config.dme_metadata)))
-            dme_order = np.empty(1)
 
-            for link in os.listdir(config.dme_root_files):
+            for link_file_name in os.listdir(f'{config.dme_root_files}/raw'):
 
-                link_name = link.split('_')[0]
+                link_metadata = self.get_dme_metadata(link_file_name)
                 link_type = config.dme_scrape_config['link_objects']['measurement_type']
 
-                print("preprocessing: now processing link: {} of type: {}".format(link_name, link_type))
+                print(
+                    "preprocessing: now processing link: {} of type: {}".format(link_metadata["link_name"], link_type))
 
-                df = pd.read_csv(f"{config.dme_root_files}/{link}")
+                df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
+                df = df[df.Interval == '15']
 
-                df = df[df.Interval == 15]
-
-                # todo: 'RFInputPower' is only good for one type of link
-                if len(list(df['RFInputPower'])) > valid_row_number:
+                if len(list(df['Time'])) != valid_row_number:
                     print(
-                        'The provided data for link {} contains more rows then it should {}/{}'.format(link_name,
-                                                                                                       len(list(
-                                                                                                           df[
-                                                                                                               'RFInputPower'])),
-                                                                                                       valid_row_number))
+                        f'Number of rows for link: {link_metadata["link_name"]} is wrong: {len(list(df["Time"]))}!={valid_row_number}')
 
-                elif len(list(df['RFInputPower'])) == valid_row_number:
-                    dme_matrix = np.vstack(
-                        (dme_matrix, list(self.get_dme_metadata(link).values()) + list(df['RFInputPower'])))
-                    dme_order = np.hstack((dme_order, link_name))
+                else:
+                    if 'RFInputPower' in df:
+                        stack = [link_metadata["vector"] + x for x in [df.RFInputPower, df.RFOutputPower]]
+                    elif 'PowerRLTMmin' in df:
+                        stack = [link_metadata["vector"] + x for x in
+                                 [df.PowerTLTMmax, df.PowerTLTMmin, df.PowerRLTMmax, df.PowerRLTMmin]]
+                    else:
+                        raise Exception("Unsupported field in link")
+                    dme_matrix = np.vstack(dme_matrix, stack)
 
             dme_matrix = dme_matrix[1:]
-            dme_order = dme_order[1:]
 
-            if not os.path.isdir(config.dme_root_values + '/' + config.date_str_rep):
-                os.makedirs(config.dme_root_values + '/' + config.date_str_rep)
+            if not os.path.isdir(temp_str):
+                os.makedirs(temp_str)
 
-            with open(config.dme_root_values + '/' + config.date_str_rep + '/' + 'values.pkl', 'wb') as f:
+            with open(f'{temp_str}/values.pkl', 'wb') as f:
                 pickle.dump(dme_matrix, f)
-            with open(config.dme_root_values + '/' + config.date_str_rep + '/' + 'order.pkl', 'wb') as f:
-                pickle.dump(dme_order, f)
 
-        else:
-            with open(config.dme_root_values + '/' + config.date_str_rep + '/' + 'values.pkl', 'rb') as f:
-                dme_matrix = pickle.load(f)
-            with open(config.dme_root_values + '/' + config.date_str_rep + '/' + 'order.pkl', 'rb') as f:
-                dme_order = pickle.load(f)
-
-        return dme_matrix, dme_order
+        return dme_matrix.astype(np.float), len(link_metadata["vector"])
 
 
 if __name__ == "__main__":

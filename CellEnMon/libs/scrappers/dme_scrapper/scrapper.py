@@ -22,7 +22,7 @@ import numpy as np
 from CellEnMon.libs.power_law.power_law import PowerLaw
 from google.cloud import storage
 
-SELECTOR = ['EXTRACT', 'UPLOAD'] # DOWNLOAD | EXTRACT | UPLOAD
+SELECTOR = ['EXTRACT'] # DOWNLOAD | EXTRACT | UPLOAD
 
 
 ## Setting credentials using the downloaded JSON file
@@ -77,7 +77,7 @@ class DME_Scrapper_obj:
         res = dt.strptime(self.parse_date(date), "%m/%d/%y") + dt_delta(days=delta_days)
         return {
             'datetime_rep': res,
-            'str_rep': f"{str(res.day).zfill(2) + str(res.month).zfill(2) + str(res.year)}",
+            'str_rep': f"{str(res.month).zfill(2)+ str(res.day).zfill(2) + str(res.year)}",
             'dict_rep': {
                 'dd': str(res.day).zfill(2),
                 'mm': str(res.month).zfill(2),
@@ -132,33 +132,18 @@ class DME_Scrapper_obj:
 
     def extract_merge_save_csv(self):
 
-        data_paths = [f"{config.download_path}/{f}" for f in os.listdir(self.root_download) if
-                      '.zip' in f and 'cldb' in f]
-        metadata_paths = [f"{config.download_path}/{f}" for f in os.listdir(self.root_download) if
-                          '.csv' in f and 'export' in f]
-
-        data_paths.sort(key=os.path.getmtime)
-        metadata_paths.sort(key=os.path.getmtime)
-        paths="CellEnMon/libs/scrappers/dme_scrapper/paths/"
-        with open(f'{paths}/data_paths.txt', 'w') as f:
-            for item in data_paths:
-                f.write("{}\n".format(item))
-
-        with open(f'{paths}/metadata_paths.txt', 'w') as f:
-            for item in metadata_paths:
-                f.write("{}\n".format(item))
-
+        paths = f'{config.dme_root_files}/paths'
         with open(f'{paths}/data_paths.txt') as f1, open(f'{paths}/metadata_paths.txt') as f2:
             file_paths = {
                 'data_paths': f1.readlines(),
                 'metadata_paths': f2.readlines()
             }
 
-        carrier = config.dme_metadata['carrier']
-        id = config.dme_metadata['id']
-        frequency = config.dme_metadata['frequency']
-        polarization = config.dme_metadata['polarization']
-        length = config.dme_metadata['length']
+        # carrier = config.dme_metadata['carrier']
+        # id = config.dme_metadata['id']
+        # frequency = config.dme_metadata['frequency']
+        # polarization = config.dme_metadata['polarization']
+        # length = config.dme_metadata['length']
         tx_longitude=config.dme_metadata['tx_longitude']
         tx_latitude = config.dme_metadata['tx_latitude']
         rx_longitude = config.dme_metadata['rx_longitude']
@@ -249,11 +234,14 @@ class DME_Scrapper_obj:
             time.sleep(1)
 
             # download metadata
-            ActionChains(self.browser).context_click(
-                self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).send_keys(Keys.END).perform()
+
+            self.browser.find_element_by_xpath('//*[@id="dailies"]/div').click()
 
             ActionChains(self.browser).context_click(
-                self.browser.find_element_by_xpath('//*[@id="dailies"]/div/div[2]/div[1]/div[3]')).perform()
+                self.browser.find_element_by_xpath('//*[@id="dailies"]/div')).send_keys(Keys.END).perform()
+
+            ActionChains(self.browser).context_click(
+                self.browser.find_element_by_xpath('//*[@id="dailies"]/div')).perform()
             self.browser.find_element_by_xpath('//*[ @ id = "dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
 
             self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
@@ -364,6 +352,23 @@ class DME_Scrapper_obj:
         else:  # No need to look for link_id
             print('starting download range {}-{}...'.format(start_day, end_day))
             self.download_data(link_name='Nan',start_day=start_day, end_day=end_day)
+
+
+        data_paths = [f"{config.download_path}/{f}" for f in os.listdir(self.root_download) if
+                      '.zip' in f and 'cldb' in f]
+        metadata_paths = [f"{config.download_path}/{f}" for f in os.listdir(self.root_download) if
+                          '.csv' in f and 'export' in f]
+
+        data_paths.sort(key=os.path.getmtime)
+        metadata_paths.sort(key=os.path.getmtime)
+        paths=f'{config.dme_root_files}/paths'
+        with open(f'{paths}/data_paths.txt', 'w') as f:
+            for item in data_paths:
+                f.write("{}\n".format(item))
+
+        with open(f'{paths}/metadata_paths.txt', 'w') as f:
+            for item in metadata_paths:
+                f.write("{}\n".format(item))
 
 
     def log_in(self, browser):
