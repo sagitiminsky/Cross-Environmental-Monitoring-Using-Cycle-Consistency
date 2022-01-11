@@ -2,10 +2,10 @@
 id: 8L_U1
 name: IMS Services Subscription Guide
 file_version: 1.0.2
-app_version: 0.6.9-2
+app_version: 0.7.1-2
 file_blobs:
-  CellEnMon/libs/scrappers/ims_scrapper/scrapper.py: 83dded5fb7d8d0cb197d7dd3139fbea07684ec09
-  CellEnMon/config.py: d1992676523a12462209a14105391f795681f4ed
+  CellEnMon/libs/scrappers/ims_scrapper/scrapper.py: 1c06349cbc8591e8558c75507151df7fa1c42567
+  CellEnMon/config.py: 08c0ccbd89f6d81fa8892ecc1598531f6a363af1
 ---
 
 TLDR: send go to [https://ims.gov.il/he/ObservationDataAPI](https://ims.gov.il/he/ObservationDataAPI) you will find the API documenation and you'll be able to fill in the following form [https://ims.gov.il/sites/default/files/docs/terms\_0.pdf](https://ims.gov.il/sites/default/files/docs/terms_0.pdf) and send it back to [&#105;&#109;&#115;&#64;&#x69;&#109;&#115;&#x2e;&#103;&#x6f;&#118;&#x2e;&#x69;&#x6c;](mailto:ims@ims.gov.il).
@@ -24,7 +24,7 @@ There are two options to run the script:
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
-🟩 17     SELECTOR = ['DOWNLOAD']  # UPLOAD'
+🟩 17     SELECTOR = ['DOWNLOAD','UPLOAD']  # DOWNLOAD | UPLOAD
 ```
 
 <br/>
@@ -33,23 +33,23 @@ you can use the following token to verify that everything works for you
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/config.py
 ```python
-🟩 74     ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
-🟩 75     ims_mapping=[
-⬜ 76         {
-⬜ 77             "stationId": 2,
-⬜ 78             "name": "AVNE ETAN",
-⬜ 79             "shortName": "AVNE ETA",
-⬜ 80             "stationsTag": "(None)",
-⬜ 81             "location": {
-⬜ 82                 "latitude": 32.817,
-⬜ 83                 "longitude": 35.763
-⬜ 84             },
-⬜ 85             "timebase": 10,
-⬜ 86             "active": True,
-⬜ 87             "owner": "ims",
-⬜ 88             "regionId": 8,
-⬜ 89             "monitors": [
-⬜ 90                 {
+🟩 79     ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
+🟩 80     ims_mapping=[
+⬜ 81         {
+⬜ 82             "stationId": 2,
+⬜ 83             "name": "AVNE ETAN",
+⬜ 84             "shortName": "AVNE ETA",
+⬜ 85             "stationsTag": "(None)",
+⬜ 86             "location": {
+⬜ 87                 "latitude": 32.817,
+⬜ 88                 "longitude": 35.763
+⬜ 89             },
+⬜ 90             "timebase": 10,
+⬜ 91             "active": True,
+⬜ 92             "owner": "ims",
+⬜ 93             "regionId": 8,
+⬜ 94             "monitors": [
+⬜ 95                 {
 ```
 
 <br/>
@@ -58,18 +58,18 @@ This is how we are going to GET from the ims endpoint
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/libs/scrappers/ims_scrapper/scrapper.py
 ```python
-⬜ 27     class IMS_Scrapper_obj:
-⬜ 28         def __init__(self, index, station_id, station_name, location, _from, _to):
-⬜ 29             self.index = index
-⬜ 30             self.station_id = station_id
-⬜ 31             self._from = _from
-⬜ 32             self._to = _to
-⬜ 33             self.root = config.ims_root_files
-⬜ 34             self.station_id = station_id
-⬜ 35             self.station_name = station_name
-⬜ 36             self.station_location = location
-🟩 37             self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
-⬜ 38             self.bucket = client.get_bucket('cell_en_mon')
+⬜ 26     class IMS_Scrapper_obj:
+⬜ 27         def __init__(self, index, station_id, station_name, location, _from, _to):
+⬜ 28             self.index = index
+⬜ 29             self.station_id = station_id
+⬜ 30             self._from = _from
+⬜ 31             self._to = _to
+⬜ 32             self.root = config.ims_root_files
+⬜ 33             self.station_id = station_id
+⬜ 34             self.station_name = station_name
+⬜ 35             self.station_location = location
+🟩 36             self.station_data = f"https://api.ims.gov.il/v1/envista/stations/{station_id}/data/?from={_from}&to={_to}"
+⬜ 37             self.bucket = client.get_bucket('cell_en_mon')
 ```
 
 <br/>
@@ -82,24 +82,24 @@ To control the dates in the ims, you can change the dates in the config file:
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 CellEnMon/config.py
 ```python
-⬜ 24         }
-⬜ 25     
-⬜ 26     
-🟩 27     date = {
-🟩 28         'value': {
-🟩 29             'dd': '01',
-🟩 30             'mm': '01',
-🟩 31             'yyyy': '2013'
-🟩 32         },
-🟩 33         'value_range': {
-🟩 34             'dd': '02',
+⬜ 29         }
+⬜ 30     
+⬜ 31     
+🟩 32     date = {
+🟩 33         'value': {
+🟩 34             'dd': '01',
 🟩 35             'mm': '01',
 🟩 36             'yyyy': '2013'
-🟩 37         }
-🟩 38     }
-⬜ 39     
-⬜ 40     date_str_rep = add_days_to_date(date['value'])['str_rep_with_replace'] + '_' + add_days_to_date(date['value_range'])[
-⬜ 41         'str_rep_with_replace']
+🟩 37         },
+🟩 38         'value_range': {
+🟩 39             'dd': '02',
+🟩 40             'mm': '01',
+🟩 41             'yyyy': '2013'
+🟩 42         }
+🟩 43     }
+⬜ 44     
+⬜ 45     date_str_rep = add_days_to_date(date['value'])['str_rep_with_replace'] + '_' + add_days_to_date(date['value_range'])[
+⬜ 46         'str_rep_with_replace']
 ```
 
 <br/>
