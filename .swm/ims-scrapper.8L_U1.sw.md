@@ -1,6 +1,6 @@
 ---
 id: 8L_U1
-name: IMS Services Subscription Guide
+name: IMS scrapper
 file_version: 1.0.2
 app_version: 0.7.1-2
 file_blobs:
