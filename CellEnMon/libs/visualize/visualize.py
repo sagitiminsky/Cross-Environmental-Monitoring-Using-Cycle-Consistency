@@ -5,6 +5,23 @@ from pathlib import Path
 import sys
 
 class Visualizer:
+    '''Create a Folium interactive map of cmls:
+    out_path: str, path to output
+    data_path: str, path to metadata file
+    metadata_file_nameh: str, .csv file name
+    handle: folium.vector_layers.PolyLine, a handle of an exsisting map you wish to
+    edit
+    name_of_map_file: str, name of the output file
+    num_of_gridlines: int, number of gridlines for lat and for lon
+    area_min_lon, area_max_lon, area_min_lat, area_max_lat: float, filter area
+    of interest by setting coordinates boundaries
+    list_of_link_id_to_drop: list of strings, links you wish to discard
+    color_of_links: str, color of links from a given csv file
+
+    The function returns a handle for further edditing of the .html file.
+    By using the handle multiple companies can be plotted by calling the finction
+    for each of them while drawing them in different colors.
+    '''
     def __init__(self):
         self.map_name="TRY_MAP.html"
         self.dates_range="01012013_01022013"
