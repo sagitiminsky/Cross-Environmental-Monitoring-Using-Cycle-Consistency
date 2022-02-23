@@ -25,9 +25,9 @@ class Visualizer:
     def __init__(self):
         self.map_name="TRY_MAP.html"
         self.dates_range="01012013_01022013"
-        self.data_path_dme=Path(f"CellEnMon/datasets/dme/{self.dates_range}/raw")
-        self.data_path_ims=Path(f"CellEnMon/datasets/ims/{self.dates_range}/raw")
-        self.out_path = Path(f"CellEnMon/datasets/visualize/{self.dates_range}")
+        self.data_path_dme=Path(f"./CellEnMon/datasets/dme/{self.dates_range}/raw")
+        self.data_path_ims=Path(f"./CellEnMon/datasets/ims/{self.dates_range}/raw")
+        self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}/{self.map_name}")
         if not os.path.exists(self.out_path):
             os.makedirs(self.out_path)
 
@@ -44,20 +44,21 @@ class Visualizer:
             #dme
             return {
                 "ID": f"{instance_arr[0]}-{instance[3]}",
-                "Tx Site Latitude":instance_arr[1],
-                "Tx Site Longitude":instance_arr[2],
-                "Rx Site Latitude": instance_arr[4],
-                "Rx Site Longitude": instance_arr[5],
+                "Tx Site Latitude":float(instance_arr[1]),
+                "Tx Site Longitude":float(instance_arr[2]),
+                "Rx Site Latitude": float(instance_arr[4]),
+                "Rx Site Longitude": float(instance_arr[5].replace(".csv",""))
             }
         elif len(instance_arr)==5:
             #ims
             return {
                 "ID": f"{instance_arr[2]}",
-                "Tx Site Latitude": instance_arr[3],
-                "Tx Site Longitude": instance_arr[4],
-                "Rx Site Latitude": instance_arr[3],
-                "Rx Site Longitude": instance_arr[4],
+                "Tx Site Latitude": float(instance_arr[3]),
+                "Tx Site Longitude": float(instance_arr[4].replace(".csv","")),
+                "Rx Site Latitude": float(instance_arr[3]),
+                "Rx Site Longitude": float(instance_arr[4].replace(".csv",""))
             }
+
         else:
             raise Exception(f"Something went wrong: neither ims or dme provided:{instance_arr}")
 
@@ -89,10 +90,10 @@ class Visualizer:
         for station_type,data_path in station_type.items():
             for instance in os.listdir(data_path):
                 instace_dict=self.parse_instances(instance)
-                lat_min=min(lat_min,instace_dict["Tx Site Latitude"], instace_dict["Rx Site Latitude"])
-                lon_min=min(lon_min,instace_dict["Tx Site Longitude"], instace_dict["Rx Site Longitude"])
-                lat_max=max(lat_max, instace_dict["Tx Site Latitude"], instace_dict["Rx Site Latitude"])
-                lon_max=max(lon_max, instace_dict["Tx Site Longitude"],instace_dict["Rx Site Longitude"] )
+                lat_min=min(lat_min,float(instace_dict["Tx Site Latitude"]), float(instace_dict["Rx Site Latitude"]))
+                lon_min=min(lon_min,float(instace_dict["Tx Site Longitude"]), float(instace_dict["Rx Site Longitude"]))
+                lat_max=max(lat_max, float(instace_dict["Tx Site Latitude"]), float(instace_dict["Rx Site Latitude"]))
+                lon_max=max(lon_max, float(instace_dict["Tx Site Longitude"]),float(instace_dict["Rx Site Longitude"]))
 
 
                 folium.PolyLine([(instace_dict['Rx Site Latitude'],
@@ -100,7 +101,7 @@ class Visualizer:
                                  (instace_dict['Tx Site Latitude'],
                                   instace_dict['Tx Site Longitude'])],
                                 color=self.color_of_links if station_type=="link" else self.color_of_gauges,
-                                opacity=0.6,
+                                opacity=1.0,
                                 popup=f"ID:{instace_dict['ID']}"
                                 ).add_to(map_1)
 
@@ -125,7 +126,7 @@ class Visualizer:
                     folium.PolyLine(g, color="black", weight=0.5,
                                     opacity=0.5, popup=str(round(g[0][1], 5))).add_to(map_1)
 
-        map_1.save(self.out_path)
+        map_1.save((str(self.out_path.joinpath(self.map_name))))
 
         print(f"Map under the name {self.map_name} was generated")
 
