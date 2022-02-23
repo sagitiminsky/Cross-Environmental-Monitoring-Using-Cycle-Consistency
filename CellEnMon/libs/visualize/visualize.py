@@ -25,9 +25,9 @@ class Visualizer:
     def __init__(self):
         self.map_name="TRY_MAP.html"
         self.dates_range="01012013_01022013"
-        self.data_path_dme=Path(f"/datasets/dme/{self.dates_range}/processed")
-        self.data_path_ims=Path(f"/datasets/ims/{self.dates_range}/processed")
-        self.out_path = Path(f"/datasets/visualize/{self.dates_range}")
+        self.data_path_dme=Path(f"CellEnMon/datasets/dme/{self.dates_range}/raw")
+        self.data_path_ims=Path(f"CellEnMon/datasets/ims/{self.dates_range}/raw")
+        self.out_path = Path(f"CellEnMon/datasets/visualize/{self.dates_range}")
         if not os.path.exists(self.out_path):
             os.makedirs(self.out_path)
 
@@ -131,3 +131,5 @@ class Visualizer:
 
         return map_1
 
+if __name__=="__main__":
+    v=Visualizer()
