@@ -53,7 +53,7 @@ class IMS_Scrapper_obj:
         if data_response.status_code != 200:
             print("station id: {} , data response: {}".format(self.station_id, data_response.status_code))
 
-        else:
+        elif self.station_location['latitude'] and self.station_location['longitude']:
             data = json.loads(data_response.text.encode('utf8'))
 
             file_name = "{}-{}-{}-{}-{}.csv".format(self.index, self.station_id, self.station_name,
