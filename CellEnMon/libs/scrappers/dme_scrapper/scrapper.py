@@ -96,8 +96,6 @@ class DME_Scrapper_obj:
         if 'UPLOAD' in SELECTOR:
             self.upload_files_to_gcs()
 
-
-
     def create_merged_df_dict(self,metadata_df):
         return {
                 'data': pd.DataFrame(),
@@ -109,7 +107,6 @@ class DME_Scrapper_obj:
                 'rx_longitude': metadata_df[config.dme_metadata['rx_longitude']],
                 'rx_latitude': metadata_df[config.dme_metadata['rx_latitude']]
             }
-
 
     def is_different(self, new_param, link_name, link_dict, key):
         if link_dict[key] and new_param != link_dict[key]:
@@ -128,7 +125,6 @@ class DME_Scrapper_obj:
                 print(f'Uploaded file:{file} succesfully !')
             except Exception:
                 print(f'Uploaded file:{file} failed !')
-
 
     def extract_merge_save_csv(self):
 
@@ -172,9 +168,6 @@ class DME_Scrapper_obj:
                 #TODO: after the fix this data should come from the metadatafile, which is now empyu
                 #link_name = metadata_row[id]
 
-
-
-
                 bytes = zip_file_object.open(zip_file_name).read()
                 add_df = pd.read_csv(io.StringIO(bytes.decode('utf-8')), sep=',')
 
@@ -190,7 +183,7 @@ class DME_Scrapper_obj:
                 # add_df['rain'] = power_law.basic_attinuation_to_rain_multiple(
                 #     (-1) * add_df['RFInputPower'] - median)
 
-                merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df)
+                merged_df_dict[link_name]['data'] = merged_df_dict[link_name]['data'].append(add_df, ignore_index=True)
 
 
             if valid:
@@ -245,9 +238,6 @@ class DME_Scrapper_obj:
             self.browser.find_element_by_xpath('//*[ @ id = "dailies"]/div/div[6]/div/div/div[5]/span[2]').click()
 
             self.browser.find_element_by_xpath(self.xpaths['xpath_metadata_download']).click()
-
-
-
 
         except TimeoutException:  # rows do not exist
             if not end_day:
@@ -369,7 +359,6 @@ class DME_Scrapper_obj:
         with open(f'{paths}/metadata_paths.txt', 'w') as f:
             for item in metadata_paths:
                 f.write("{}\n".format(item))
-
 
     def log_in(self, browser):
         remember_me_xpth = '/html/body/div/form/div[4]/label/input'
