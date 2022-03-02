@@ -10,16 +10,16 @@ class Domain:
     def __init__(self, db):
         self.station_names_vec = db.keys()
         self.db = db
-        self.db_normalized={}
-        for station_name,value in db.items():
-            data_max, data_min, data_normalized=self.normalizer(value['data'])
+        self.db_normalized = {}
+        for station_name, value in db.items():
+            data_max, data_min, data_normalized = self.normalizer(value['data'])
             metadata_max, metadata_min, metadata_normalized = self.normalizer(value['metadata'])
-            self.db_normalized[station_name]={
+            self.db_normalized[station_name] = {
                 "data": data_normalized,
                 "time": value['time'],
-                "data_min":data_min,
-                "data_max":data_max,
-                "metadata":  metadata_normalized,
+                "data_min": data_min,
+                "data_max": data_max,
+                "metadata": metadata_normalized,
                 "metadata_max": metadata_max,
                 "metadata_min": metadata_min,
             }
@@ -37,16 +37,12 @@ class Extractor:
         self.ims = Domain(self.load_ims())  # 1 day is 144 = 24*6 data samples + 2 metadata samples
 
     def stats(self):
-        message = f"start:{config.start_date_str_rep} end:{config.end_date_str_rep} --- in total it is {config.coverage} days" \
-                  "🚀 Links 🚀" \
-                  f"Link matrix shape: {self.dme.db.shape}" \
-                  f"This means that we have: {self.dme.db.shape[0]} links; each link is a vector of len:{self.dme.data.shape[1]}" \
-                  f"A link's vector is composed of #metadata:{self.dme.metadat_vector_len} and #data:{self.dme.db.shape[0] - self.dme.metadat_vector_len}" \
-                  "\n\n" \
-                  "🏺 Gauges 🏺" \
-                  f"Guege matrix shape: {self.ims.data.shape}" \
-                  f"This means that we have: {self.ims.data.shape[0]} gauges; each gauges is a vector of len:{self.ims.data.shape[1]}" \
-                  f"A gauge is a vector composed of metadata:{self.ims.metadat_vector_len} and data:{self.ims.db.shape[0] - self.ims.metadat_vector_len}"
+        message = f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
+                  "🚀 Links 🚀\n" \
+                  f"We have: {len(self.dme.station_names_vec)} links\n" \
+                  "🏺 Gauges 🏺\n" \
+                  f"We have: {len(self.ims.station_names_vec)}"\
+
 
         return message
 
@@ -62,48 +58,39 @@ class Extractor:
         station_name_splited = station_name.split('-')
         metadata["logitude"] = station_name_splited[3]
         metadata["latitude"] = station_name_splited[4].replace(".csv", "")
-        metadata["gague_name"] = f"{station_name_splited[0]}-{station_name_splited[1]}-{station_name_splited[2]}"
-        metadata["vector"] = np.array([float(metadata['longitude']), float(metadata['latitude'])])
+        metadata["gauge_name"] = f"{station_name_splited[0]}-{station_name_splited[1]}-{station_name_splited[2]}"
+        metadata["vector"] = np.array([float(metadata['logitude']), float(metadata['latitude'])])
         return metadata
 
     def load_ims(self):
         temp_str = f'{config.ims_root_files}/processed'
-
         try:
             with open(f'{temp_str}/values.pkl', 'rb') as f:
                 ims_matrix = pickle.load(f)
-
         except FileNotFoundError:
-
             # 10[min] x 6 is an hour
             ims_matrix = {}
             for index, station_file_name in enumerate(os.listdir(f'{config.ims_root_files}/raw')):
                 print("now processing gauge: {}".format(station_file_name))
                 try:
-                    df = pd.read_csv(station_file_name)
-                    metadata = self.get_ims_metadata(station_file_name)
-                    ims_vec = metadata["vector"]
+                    df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
+                    metadata = self.get_ims_metadata(f'{station_file_name}')
+                    ims_vec = np.array([])
+                    time=np.array(df.datetime)
 
                     if (ims_vec, df) is not (None, None):
                         for row in list(df.channels):
                             ims_vec = np.append(ims_vec,
                                                 np.array([self.get_entry(ast.literal_eval(row), type='Rain')['value']]))
 
-                        ims_vec = ims_vec.T
-                        try:
-                            ims_matrix = np.vstack((ims_matrix, ims_vec))
-                            ims_matrix[metadata["gauge_name"]] = \
-                                {
-                                    "metadata_len": len(metadata["vector"]),
-                                    "data_len": len(ims_vec),
-                                    "data": ims_vec,
-                                    "time": Time,
-                                    "metadata": metadata["vector"]
-                                }
-
-                        except ValueError:
-                            print("problem with stacking gague {}".format(station_file_name))
-
+                        ims_matrix[metadata["gauge_name"]] = \
+                            {
+                                "metadata_len": len(metadata["vector"]),
+                                "data_len": len(ims_vec),
+                                "data": ims_vec,
+                                "time": time,
+                                "metadata": metadata["vector"]
+                            }
                 except FileNotFoundError:
                     print("data does not exist in {}".format(station_file_name))
 
@@ -125,9 +112,10 @@ class Extractor:
         metadata["tx_latitude"] = link_file_name_splited[2]
         metadata["rx_longitude"] = link_file_name_splited[4]
         metadata["rx_latitude"] = link_file_name_splited[5].replace(".csv", "")
-        metadata["vector"] = [float(metadata["tx_longitude"]), float(metadata["tx_latitude"]),
+        metadata["vector"] = np.array([float(metadata["tx_longitude"]),
+                              float(metadata["tx_latitude"]),
                               float(metadata["rx_longitude"]),
-                              float(metadata["rx_latitude"])]
+                              float(metadata["rx_latitude"])])
 
         return metadata
 
@@ -169,7 +157,7 @@ class Extractor:
 
                             dme_matrix[metadata["link_name"]] = {
                                 'metadata_len': len(metadata["vector"]),
-                                'data_len' : len(PowerRLTMmin),
+                                'data_len': len(PowerRLTMmin),
                                 "data": data,
                                 "time": Time,
                                 "metadata": metadata["vector"]
