@@ -4,10 +4,11 @@ import numpy as np
 import pandas as pd
 import os
 import ast
+import shutil
 
 
 class Domain:
-    def __init__(self, db):
+    def __init__(self, db, db_type):
         self.station_names_vec = db.keys()
         self.db = db
         self.db_normalized = {}
@@ -23,6 +24,7 @@ class Domain:
                 "metadata_max": metadata_max,
                 "metadata_min": metadata_min,
             }
+        self.df = pd.DataFrame.from_dict(self.db_normalized)
 
     def normalizer(self, mat):
         min = mat.min()
@@ -33,17 +35,15 @@ class Domain:
 
 class Extractor:
     def __init__(self):
-        self.dme = Domain(self.load_dme())  # 1 day is 96 = 24*4 data samples + 7 metadata samples
-        self.ims = Domain(self.load_ims())  # 1 day is 144 = 24*6 data samples + 2 metadata samples
+        self.dme = Domain(self.load_dme(), db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
+        self.ims = Domain(self.load_ims(), db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
 
     def stats(self):
         message = f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
-                  "🚀 Links 🚀\n" \
+                  "🖇️ Links 🖇️\n" \
                   f"We have: {len(self.dme.station_names_vec)} links\n" \
                   "🏺 Gauges 🏺\n" \
-                  f"We have: {len(self.ims.station_names_vec)}"\
-
-
+                  f"We have: {len(self.ims.station_names_vec)}\n"
         return message
 
     def get_entry(self, arr, type):
@@ -67,6 +67,10 @@ class Extractor:
         try:
             with open(f'{temp_str}/values.pkl', 'rb') as f:
                 ims_matrix = pickle.load(f)
+
+            if not os.path.isdir(temp_str):
+                os.makedirs(temp_str)
+
         except FileNotFoundError:
             # 10[min] x 6 is an hour
             ims_matrix = {}
@@ -76,7 +80,7 @@ class Extractor:
                     df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
                     metadata = self.get_ims_metadata(f'{station_file_name}')
                     ims_vec = np.array([])
-                    time=np.array(df.datetime)
+                    time = np.array(df.datetime)
 
                     if (ims_vec, df) is not (None, None):
                         for row in list(df.channels):
@@ -91,11 +95,12 @@ class Extractor:
                                 "time": time,
                                 "metadata": metadata["vector"]
                             }
+
+                        data = {'Time': time, 'RainAmout[mm/sec]': ims_vec}
+                        pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{station_file_name}", index=False)
+
                 except FileNotFoundError:
                     print("data does not exist in {}".format(station_file_name))
-
-            if not os.path.isdir(temp_str):
-                os.makedirs(temp_str)
 
             with open(f'{temp_str}/values.pkl', 'wb') as f:
                 pickle.dump(ims_matrix, f)
@@ -113,9 +118,9 @@ class Extractor:
         metadata["rx_longitude"] = link_file_name_splited[4]
         metadata["rx_latitude"] = link_file_name_splited[5].replace(".csv", "")
         metadata["vector"] = np.array([float(metadata["tx_longitude"]),
-                              float(metadata["tx_latitude"]),
-                              float(metadata["rx_longitude"]),
-                              float(metadata["rx_latitude"])])
+                                       float(metadata["tx_latitude"]),
+                                       float(metadata["rx_longitude"]),
+                                       float(metadata["rx_latitude"])])
 
         return metadata
 
@@ -124,6 +129,9 @@ class Extractor:
         try:
             with open(f'{temp_str}/values.pkl', 'rb') as f:
                 dme_matrix = pickle.load(f)
+
+            if not os.path.isdir(temp_str):
+                os.makedirs(temp_str)
 
         except FileNotFoundError:
 
@@ -163,6 +171,10 @@ class Extractor:
                                 "metadata": metadata["vector"]
                             }
 
+                            data = {'Time': Time, 'PowerTLTMmax[dBm]': PowerTLTMmax, 'PowerTLTMmin[dBm]': PowerTLTMmin,
+                                    'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin}
+                            pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{link_file_name}", index=False)
+
                         except ValueError:
                             print(
                                 f"link's:{metadata['link_name']} dim are not compatible: PowerTLTMmax:{len(PowerTLTMmax)} | PowerTLTMmin:{len(PowerTLTMmin)} | PowerRLTMmax:{len(PowerRLTMmax)} | PowerRLTMmin:{len(PowerRLTMmin)}")
@@ -170,9 +182,6 @@ class Extractor:
                     else:
                         print(
                             f"Not all fields [PowerTLTMmax | PowerTLTMmin | PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
-
-            if not os.path.isdir(temp_str):
-                os.makedirs(temp_str)
 
             with open(f'{temp_str}/values.pkl', 'wb') as f:
                 pickle.dump(dme_matrix, f)
