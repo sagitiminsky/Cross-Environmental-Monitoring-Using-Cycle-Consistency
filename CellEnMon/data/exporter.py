@@ -9,10 +9,20 @@ import ast
 class Domain:
     def __init__(self, db):
         self.station_names_vec = db.keys()
-        self.metadata, self.data = np.array([x['metadata'] for x in db.values()]), np.array(
-            [x['data'] for x in db.values()])
-        self.data_max, self.data_min, self.data_normalized = self.normalizer(self.data)
-        self.metadata_max, self.metadata_min, metadata_normalized = self.normalizer(self.metadata)
+        self.db = db
+        self.db_normalized={}
+        for station_name,value in db.items():
+            data_max, data_min, data_normalized=self.normalizer(value['data'])
+            metadata_max, metadata_min, metadata_normalized = self.normalizer(value['metadata'])
+            self.db_normalized[station_name]={
+                "data": data_normalized,
+                "time": value['time'],
+                "data_min":data_min,
+                "data_max":data_max,
+                "metadata":  metadata_normalized,
+                "metadata_max": metadata_max,
+                "metadata_min": metadata_min,
+            }
 
     def normalizer(self, mat):
         min = mat.min()
@@ -82,10 +92,12 @@ class Extractor:
                         ims_vec = ims_vec.T
                         try:
                             ims_matrix = np.vstack((ims_matrix, ims_vec))
-
                             ims_matrix[metadata["gauge_name"]] = \
                                 {
-                                    "data": ims_matrix[metadata["gauge_name"]] + ims_vec,
+                                    "metadata_len": len(metadata["vector"]),
+                                    "data_len": len(ims_vec),
+                                    "data": ims_vec,
+                                    "time": Time,
                                     "metadata": metadata["vector"]
                                 }
 
@@ -134,11 +146,6 @@ class Extractor:
             for link_file_name in os.listdir(f'{config.dme_root_files}/raw'):
 
                 metadata = self.get_dme_metadata(link_file_name)
-                if metadata["link_name"] not in dme_matrix:
-                    dme_matrix[metadata["link_name"]] = {
-                        "data": np.array([]),
-                        "metadata": metadata["vector"]
-                    }
                 print(f"preprocessing: now processing link: {metadata['link_name']}")
 
                 df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
@@ -146,19 +153,35 @@ class Extractor:
 
                 if len(list(df['Time'])) < valid_row_number:
                     print(
-                        f'Number of rows for link: {metadata["link_name"]} is wrong: {len(list(df["Time"]))}!={valid_row_number}')
+                        f'Number of rows for link: {metadata["link_name"]} is wrong: {len(list(df["Time"]))}<{valid_row_number}')
 
                 else:
                     # if 'RFInputPower' in df:
                     #     stack = [link_metadata["vector"] + x for x in [df.RFInputPower, df.RFOutputPower]]
                     if 'PowerTLTMmax' in df and 'PowerTLTMmin' in df and 'PowerRLTMmax' in df and 'PowerRLTMmax' in df:
-                        dme_matrix[metadata["link_name"]]["data"] = np.vstack(
-                            (np.array(df[~df.PowerTLTMmax.isnull()].PowerTLTMmax.astype(int)),
-                             np.array(df[~df.PowerTLTMmin.isnull()].PowerTLTMmin.astype(int)),
-                             np.array(df[~df.PowerRLTMmax.isnull()].PowerRLTMmax.astype(int)),
-                             np.array(df[~df.PowerRLTMmin.isnull()].PowerRLTMmin.astype(int)))).T
+                        try:
+                            PowerTLTMmax = np.array(df[~df.PowerTLTMmax.isnull()].PowerTLTMmax.astype(int))
+                            PowerTLTMmin = np.array(df[~df.PowerTLTMmin.isnull()].PowerTLTMmin.astype(int))
+                            PowerRLTMmax = np.array(df[~df.PowerRLTMmax.isnull()].PowerRLTMmax.astype(int))
+                            PowerRLTMmin = np.array(df[~df.PowerRLTMmin.isnull()].PowerRLTMmin.astype(int))
+                            Time = np.array(df[~df.PowerRLTMmin.isnull()].Time)
+                            data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T
+
+                            dme_matrix[metadata["link_name"]] = {
+                                'metadata_len': len(metadata["vector"]),
+                                'data_len' : len(PowerRLTMmin),
+                                "data": data,
+                                "time": Time,
+                                "metadata": metadata["vector"]
+                            }
+
+                        except ValueError:
+                            print(
+                                f"link's:{metadata['link_name']} dim are not compatible: PowerTLTMmax:{len(PowerTLTMmax)} | PowerTLTMmin:{len(PowerTLTMmin)} | PowerRLTMmax:{len(PowerRLTMmax)} | PowerRLTMmin:{len(PowerRLTMmin)}")
+
                     else:
-                        print(f"Not all fields were provided in link:{metadata['link_name']}")
+                        print(
+                            f"Not all fields [PowerTLTMmax | PowerTLTMmin | PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
 
             if not os.path.isdir(temp_str):
                 os.makedirs(temp_str)
