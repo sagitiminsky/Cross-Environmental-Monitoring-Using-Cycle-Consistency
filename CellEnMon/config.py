@@ -1,4 +1,4 @@
-# export PYTHONPATH=$PYTHON_PATH:/Users/sagit/Desktop/CellEnMon-Research
+PYTHONPATH="/Users/sagit/Desktop/CellEnMon-Research"
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 import os
@@ -16539,6 +16539,8 @@ ims_scrape_config = {
     'total_number_of_ims_stations': len(ims_mapping)
 }
 
+def dme_ims_root_file(db_type):
+    return f"CellEnMon/datasets/{db_type}/{start_date_str_rep_ddmmyyyy}_{end_date_str_rep_ddmmyyyy}"  # DD/MM/YYYY
 ################################
 ######### DME SCRAPPER #########
 ################################

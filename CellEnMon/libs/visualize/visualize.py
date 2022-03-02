@@ -25,8 +25,8 @@ class Visualizer:
     def __init__(self):
         self.map_name="TRY_MAP.html"
         self.dates_range="01012013_01022013"
-        self.data_path_dme=Path(f"./CellEnMon/datasets/dme/{self.dates_range}/raw")
-        self.data_path_ims=Path(f"./CellEnMon/datasets/ims/{self.dates_range}/raw")
+        self.data_path_dme=Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
+        self.data_path_ims=Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
         self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}/{self.map_name}")
         if not os.path.exists(self.out_path):
             os.makedirs(self.out_path)
@@ -89,21 +89,22 @@ class Visualizer:
 
         for station_type,data_path in station_type.items():
             for instance in os.listdir(data_path):
-                instace_dict=self.parse_instances(instance)
-                lat_min=min(lat_min,float(instace_dict["Tx Site Latitude"]), float(instace_dict["Rx Site Latitude"]))
-                lon_min=min(lon_min,float(instace_dict["Tx Site Longitude"]), float(instace_dict["Rx Site Longitude"]))
-                lat_max=max(lat_max, float(instace_dict["Tx Site Latitude"]), float(instace_dict["Rx Site Latitude"]))
-                lon_max=max(lon_max, float(instace_dict["Tx Site Longitude"]),float(instace_dict["Rx Site Longitude"]))
+                if ".csv" in instance:
+                    instace_dict=self.parse_instances(instance)
+                    lat_min=min(lat_min,float(instace_dict["Tx Site Latitude"]), float(instace_dict["Rx Site Latitude"]))
+                    lon_min=min(lon_min,float(instace_dict["Tx Site Longitude"]), float(instace_dict["Rx Site Longitude"]))
+                    lat_max=max(lat_max, float(instace_dict["Tx Site Latitude"]), float(instace_dict["Rx Site Latitude"]))
+                    lon_max=max(lon_max, float(instace_dict["Tx Site Longitude"]),float(instace_dict["Rx Site Longitude"]))
 
 
-                folium.PolyLine([(instace_dict['Rx Site Latitude'],
-                                  instace_dict['Rx Site Longitude']),
-                                 (instace_dict['Tx Site Latitude'],
-                                  instace_dict['Tx Site Longitude'])],
-                                color=self.color_of_links if station_type=="link" else self.color_of_gauges,
-                                opacity=1.0,
-                                popup=f"ID:{instace_dict['ID']}"
-                                ).add_to(map_1)
+                    folium.PolyLine([(instace_dict['Rx Site Latitude'],
+                                      instace_dict['Rx Site Longitude']),
+                                     (instace_dict['Tx Site Latitude'],
+                                      instace_dict['Tx Site Longitude'])],
+                                    color=self.color_of_links if station_type=="link" else self.color_of_gauges,
+                                    opacity=1.0,
+                                    popup=f"ID:{instace_dict['ID']}"
+                                    ).add_to(map_1)
 
         # plot gridlines
         lats = np.linspace(lat_min, lat_max, self.num_of_gridlines)
