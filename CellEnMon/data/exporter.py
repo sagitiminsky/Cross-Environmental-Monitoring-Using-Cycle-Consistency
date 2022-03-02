@@ -8,8 +8,9 @@ import ast
 
 class Domain:
     def __init__(self, db):
-        self.station_names_vec=db.keys()
-        self.metadata, self.data = np.array([x['metadata'] for x in db.values()]), np.array([x['data'] for x in db.values()])
+        self.station_names_vec = db.keys()
+        self.metadata, self.data = np.array([x['metadata'] for x in db.values()]), np.array(
+            [x['data'] for x in db.values()])
         self.data_max, self.data_min, self.data_normalized = self.normalizer(self.data)
         self.metadata_max, self.metadata_min, metadata_normalized = self.normalizer(self.metadata)
 
@@ -49,10 +50,10 @@ class Extractor:
     def get_ims_metadata(self, station_name):
         metadata = {}
         station_name_splited = station_name.split('-')
-        metadata["latitude"] = station_name_splited[3]
-        metadata["longitude"] = station_name_splited[4]
-        metadata["gague_name"]=f"{station_name_splited[0]}-{station_name_splited[1]}-{station_name_splited[2]}"
-        metadata["vector"] = np.array([metadata['longitude'], metadata['latitude']])
+        metadata["logitude"] = station_name_splited[3]
+        metadata["latitude"] = station_name_splited[4].replace(".csv", "")
+        metadata["gague_name"] = f"{station_name_splited[0]}-{station_name_splited[1]}-{station_name_splited[2]}"
+        metadata["vector"] = np.array([float(metadata['longitude']), float(metadata['latitude'])])
         return metadata
 
     def load_ims(self):
@@ -84,7 +85,7 @@ class Extractor:
 
                             ims_matrix[metadata["gauge_name"]] = \
                                 {
-                                    "data": ims_matrix[metadata["gauge_name"]] + ims_vec
+                                    "data": ims_matrix[metadata["gauge_name"]] + ims_vec,
                                     "metadata": metadata["vector"]
                                 }
 
@@ -111,9 +112,10 @@ class Extractor:
         metadata["tx_longitude"] = link_file_name_splited[1]
         metadata["tx_latitude"] = link_file_name_splited[2]
         metadata["rx_longitude"] = link_file_name_splited[4]
-        metadata["rx_latitude"] = link_file_name_splited[5]
-        metadata["vector"] = [metadata["tx_longitude"], metadata["tx_latitude"], metadata["rx_longitude"],
-                              metadata["rx_latitude"]]
+        metadata["rx_latitude"] = link_file_name_splited[5].replace(".csv", "")
+        metadata["vector"] = [float(metadata["tx_longitude"]), float(metadata["tx_latitude"]),
+                              float(metadata["rx_longitude"]),
+                              float(metadata["rx_latitude"])]
 
         return metadata
 
@@ -132,15 +134,17 @@ class Extractor:
             for link_file_name in os.listdir(f'{config.dme_root_files}/raw'):
 
                 metadata = self.get_dme_metadata(link_file_name)
-                link_type = config.dme_scrape_config['link_objects']['measurement_type']
-
-                print(
-                    "preprocessing: now processing link: {} of type: {}".format(metadata["link_name"], link_type))
+                if metadata["link_name"] not in dme_matrix:
+                    dme_matrix[metadata["link_name"]] = {
+                        "data": np.array([]),
+                        "metadata": metadata["vector"]
+                    }
+                print(f"preprocessing: now processing link: {metadata['link_name']}")
 
                 df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
-                df = df[df.Interval == '15']
+                df = df[df.Interval == 15]
 
-                if len(list(df['Time'])) != valid_row_number:
+                if len(list(df['Time'])) < valid_row_number:
                     print(
                         f'Number of rows for link: {metadata["link_name"]} is wrong: {len(list(df["Time"]))}!={valid_row_number}')
 
@@ -148,11 +152,11 @@ class Extractor:
                     # if 'RFInputPower' in df:
                     #     stack = [link_metadata["vector"] + x for x in [df.RFInputPower, df.RFOutputPower]]
                     if 'PowerTLTMmax' in df and 'PowerTLTMmin' in df and 'PowerRLTMmax' in df and 'PowerRLTMmax' in df:
-                        dme_matrix[metadata["link_name"]] = \
-                            {
-                                "data": dme_matrix[metadata["link_name"]] + [df.PowerTLTMmax, df.PowerTLTMmin, df.PowerRLTMmax, df.PowerRLTMmin]
-                                "metadata": metadata["vector"]
-                            }
+                        dme_matrix[metadata["link_name"]]["data"] = np.vstack(
+                            (np.array(df[~df.PowerTLTMmax.isnull()].PowerTLTMmax.astype(int)),
+                             np.array(df[~df.PowerTLTMmin.isnull()].PowerTLTMmin.astype(int)),
+                             np.array(df[~df.PowerRLTMmax.isnull()].PowerRLTMmax.astype(int)),
+                             np.array(df[~df.PowerRLTMmin.isnull()].PowerRLTMmin.astype(int)))).T
                     else:
                         print(f"Not all fields were provided in link:{metadata['link_name']}")
 
