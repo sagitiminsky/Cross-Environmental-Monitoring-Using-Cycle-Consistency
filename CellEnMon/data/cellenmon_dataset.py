@@ -87,11 +87,14 @@ class CellenmonDataset(BaseDataset):
         
         so that len(A)==len(B)==48
         """
+
+        splice_start=0
+        slice_end=4
         d= {
-            'A': torch.Tensor(data_dict_A['data']),
-            'B': torch.Tensor(data_dict_B['data']),
-            'metadata_A': data_dict_A['metadata'],
-            'metadata_B': data_dict_B['metadata']
+            'A': torch.Tensor(data_dict_A['data'][splice_start:slice_end]),
+            'B': torch.Tensor(data_dict_B['data'][splice_start:slice_end]),
+            'metadata_A': data_dict_A['metadata'][splice_start:slice_end],
+            'metadata_B': data_dict_B['metadata'][splice_start:slice_end]
         }
 
         return d
