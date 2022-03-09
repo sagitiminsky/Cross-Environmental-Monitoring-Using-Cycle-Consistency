@@ -23,8 +23,8 @@ class Visualizer:
     for each of them while drawing them in different colors.
     '''
     def __init__(self):
-        self.map_name="TRY_MAP.html"
-        self.dates_range="01012013_01022013"
+        self.dates_range = "01012013_01022013"
+        self.map_name=f"{self.dates_range}.html"
         self.data_path_dme=Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
         self.data_path_ims=Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
         self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}/{self.map_name}")
