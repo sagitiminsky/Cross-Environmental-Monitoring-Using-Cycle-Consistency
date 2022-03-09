@@ -4,6 +4,7 @@ import data
 import models
 import wandb
 ENABLE_WANDB=False
+import sys
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()  # get training options
@@ -36,6 +37,9 @@ if __name__ == '__main__':
             if total_iters % opt.print_freq == 0:  # print training losses and save logging information to the disk
                 losses = model.get_current_losses()
                 t_comp = (time.time() - iter_start_time) / opt.batch_size
+                print(f"losses:{losses}")
+                if ENABLE_WANDB:
+                    wandb.log(losses)
 
             if total_iters % opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
@@ -43,12 +47,10 @@ if __name__ == '__main__':
                 model.save_networks(save_suffix)
 
             iter_data_time = time.time()
-        if epoch % opt.save_epoch_freq == 0:  # cache our model every <save_epoch_freq> epochs
-            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
-            model.save_networks('latest')
-            model.save_networks(epoch)
+        # if epoch % opt.save_epoch_freq == 0:  # cache our model every <save_epoch_freq> epochs
+        #     print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
+        #     model.save_networks('latest')
+        #     model.save_networks(epoch)
 
-        if ENABLE_WANDB:
-            wandb.log(losses)
         print('End of epoch %d / %d \t Time Taken: %d sec' % (
         epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
