@@ -12,14 +12,11 @@ You need to implement the following functions:
     -- <__len__>: Return the number of images.
 """
 from CellEnMon.data.base_dataset import BaseDataset, get_transform
-from .exporter import Extractor
-import random
-import torch
 # from data.image_folder import make_dataset
 # from PIL import Image
 
 
-class CellenmonDataset(BaseDataset):
+class CellEnMonDataset(BaseDataset):
     """A template dataset class for you to implement custom datasets."""
     @staticmethod
     def modify_commandline_options(parser, is_train):
@@ -32,9 +29,8 @@ class CellenmonDataset(BaseDataset):
         Returns:
             the modified parser.
         """
-        # parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
-        # parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
-
+        parser.add_argument('--new_dataset_option', type=float, default=1.0, help='new dataset option')
+        parser.set_defaults(max_dataset_size=10, new_dataset_option=2.0)  # specify dataset-specific default values
         return parser
 
     def __init__(self, opt):
@@ -49,12 +45,11 @@ class CellenmonDataset(BaseDataset):
         - define the image transformation.
         """
         # save the option and dataset root
-        super().__init__(opt)
-        self.dataset=Extractor()
-
-        self.A_size=self.dataset.dme_number_of_stations
-        self.B_size = self.dataset.ims_number_of_stations
-
+        BaseDataset.__init__(self,opt)
+        # get the image paths of your dataset;
+        self.image_paths = []  # You can call sorted(make_dataset(self.root, opt.max_dataset_size)) to get all the image paths under the directory self.root
+        # define the default transform function. You can use <base_dataset.get_transform>; You can also define your custom transform function
+        self.transform = get_transform(opt)
 
     def __getitem__(self, index):
         """Return a data point and its metadata information.
@@ -70,36 +65,11 @@ class CellenmonDataset(BaseDataset):
         Step 3: convert your data to a PyTorch tensor. You can use helpder functions such as self.transform. e.g., data = self.transform(image)
         Step 4: return a data point as a dictionary.
         """
-
-        data_A = self.dataset.dme_data[index % self.A_size]  # make sure index is within then range ; # needs to be a tensor
-        if self.opt.serial_batches:   # make sure index is within then range
-            index_B = index % self.B_size
-        else:   # randomize the index for domain B to avoid fixed pairs.
-            index_B = random.randint(0, self.B_size - 1)
-
-        data_B = self.dataset.ims_data[index_B] # needs to be a tensor
-
-
-
-        dme_metadata_length=7
-        ims_metadata_length=2
-        """
-        dme: a day contains 96 samples
-        ims: a day contains 144 samples
-        
-        so that len(A)==len(B)==48
-        """
-        d= {
-            'A': torch.Tensor(data_A[dme_metadata_length::2]),
-            'B': torch.Tensor(data_B[ims_metadata_length::3]),
-            'metadata_A': data_A[:7],
-            'metadata_B': data_B[:2]
-        }
-
-        assert len(d['A'])==len(d['B'])
-
-        return d
+        path = 'temp'    # needs to be a string
+        data_A = None    # needs to be a tensor
+        data_B = None    # needs to be a tensor
+        return {'data_A': data_A, 'data_B': data_B, 'path': path}
 
     def __len__(self):
         """Return the total number of images."""
-        return max(self.A_size, self.B_size)
+        return len(self.image_paths)
