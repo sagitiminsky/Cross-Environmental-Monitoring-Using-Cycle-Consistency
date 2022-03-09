@@ -37,6 +37,7 @@ class Extractor:
     def __init__(self):
         self.dme = Domain(self.load_dme(), db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
         self.ims = Domain(self.load_ims(), db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
+        self.spec=self.stats()
 
     def stats(self):
         message = f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \

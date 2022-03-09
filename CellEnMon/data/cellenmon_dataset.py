@@ -52,8 +52,9 @@ class CellenmonDataset(BaseDataset):
         super().__init__(opt)
         self.dataset=Extractor()
 
-        self.A_size = len(self.dataset.dme.db)
-        self.B_size = len(self.dataset.ims.db)
+        self.dme_len = len(self.dataset.dme.db)
+        self.ims_len = len(self.dataset.ims.db)
+        self.spec=self.dataset.spec
 
 
     def __getitem__(self, index):
@@ -72,13 +73,13 @@ class CellenmonDataset(BaseDataset):
         """
         entry_list_dme = list(self.dataset.dme.db_normalized)
         entry_list_ims = list(self.dataset.ims.db_normalized)
-        data_dict_A = self.dataset.dme.db_normalized[entry_list_dme[index % self.A_size]]
+        data_dict_A = self.dataset.dme.db_normalized[entry_list_dme[index % self.dme_len]]
         if self.opt.serial_batches:   # make sure index is within then range
-            index_B = index % self.B_size
+            index_B = index % self.ims_len
         else:   # randomize the index for domain B to avoid fixed pairs.
-            index_B = random.randint(0, self.B_size - 1)
+            index_B = random.randint(0, self.ims_len - 1)
 
-        data_dict_B = self.dataset.ims.db_normalized[entry_list_ims[index_B % self.B_size]] # needs to be a tensor
+        data_dict_B = self.dataset.ims.db_normalized[entry_list_ims[index_B % self.ims_len]] # needs to be a tensor
 
         """
         dme: a day contains 96 samples
@@ -87,8 +88,8 @@ class CellenmonDataset(BaseDataset):
         so that len(A)==len(B)==48
         """
         d= {
-            'A': torch.Tensor(data_dict_A['data'][:6]),
-            'B': torch.Tensor(data_dict_B['data'][:6]),
+            'A': torch.Tensor(data_dict_A['data']),
+            'B': torch.Tensor(data_dict_B['data']),
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata']
         }
@@ -97,4 +98,4 @@ class CellenmonDataset(BaseDataset):
 
     def __len__(self):
         """Return the total number of images."""
-        return max(self.A_size, self.B_size)
+        return max(self.dme_len, self.ims_len)
