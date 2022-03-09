@@ -26,13 +26,13 @@ class BaseOptions():
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='cycle_gan', help='chooses which model to use. [cycle_gan]')
-        parser.add_argument('--input_nc', type=int, default=48, help='# of input channels')
-        parser.add_argument('--output_nc', type=int, default=48, help='# of output channels')
+        parser.add_argument('--input_nc', type=int, default=1, help='# of input channels')
+        parser.add_argument('--output_nc', type=int, default=1, help='# of output channels')
         parser.add_argument('--ngf', type=int, default=1, help='# of gen filters in the last conv layer')
         parser.add_argument('--ndf', type=int, default=1, help='# of discrim filters in the first conv layer')
-        parser.add_argument('--netD', type=str, default='basic',
-                            help='specify discriminator architecture [basic | n_layers | pixel]. n_layers allows you to specify the layers in the discriminator')
-        parser.add_argument('--netG', type=str, default='basic', help='specify generator architecture [basic | resnet_9blocks | resnet_6blocks | unet_256 | unet_128]')
+        parser.add_argument('--netD', type=str, default='n_layers',
+                            help='specify discriminator architecture [n_layers]. n_layers allows you to specify the layers in the discriminator')
+        parser.add_argument('--netG', type=str, default='n_layers', help='specify generator architecture [n_layers]')
         parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers')
         parser.add_argument('--norm', type=str, default='instance',
                             help='instance normalization or batch normalization [instance | batch | none]')
