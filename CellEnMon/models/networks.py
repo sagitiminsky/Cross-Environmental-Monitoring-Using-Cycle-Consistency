@@ -338,22 +338,22 @@ class ResnetGenerator(nn.Module):
             use_bias = norm_layer == nn.InstanceNorm2d
 
         model = [nn.ReflectionPad2d(0),
-                 nn.Linear(4, 4, bias=use_bias),
+                 nn.Linear(input_nc, ngf, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        # n_downsampling = 2
-        # for i in range(n_downsampling):  # add downsampling layers
-        #     mult = 2 ** i
-        #     model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=0, bias=use_bias),
-        #               norm_layer(ngf * mult * 2),
-        #               nn.ReLU(True)]
-        #
+        n_downsampling = 2
+        for i in range(n_downsampling):  # add downsampling layers
+            mult = 2 ** i
+            model += [nn.Linear(ngf , ngf ), # kernel_size=16, stride=2, padding=0, bias=use_bias
+                      norm_layer(ngf * mult * 2),
+                      nn.ReLU(True)]
+
         # mult = 2 ** n_downsampling
         # for i in range(n_blocks):       # add ResNet blocks
         #
         #     model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-        #
+
         # for i in range(n_downsampling):  # add upsampling layers
         #     mult = 2 ** (n_downsampling - i)
         #     model += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
@@ -559,26 +559,26 @@ class NLayerDiscriminator(nn.Module):
             nn.Linear(4, 4),
             nn.LeakyReLU(0.2, True)
         ]
-        # nf_mult = 1
-        # nf_mult_prev = 1
-        # for n in range(1, n_layers):  # gradually increase the number of filters
-        #     nf_mult_prev = nf_mult
-        #     nf_mult = min(2 ** n, 8)
-        #     sequence += [
-        #         nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias),
-        #         norm_layer(ndf * nf_mult),
-        #         nn.LeakyReLU(0.2, True)
-        #     ]
-        #
-        # nf_mult_prev = nf_mult
-        # nf_mult = min(2 ** n_layers, 8)
-        # sequence += [
-        #     nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias),
-        #     norm_layer(ndf * nf_mult),
-        #     nn.LeakyReLU(0.2, True)
-        # ]
-        #
-        # sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
+        nf_mult = 1
+        nf_mult_prev = 1
+        for n in range(1, n_layers):  # gradually increase the number of filters
+            nf_mult_prev = nf_mult
+            nf_mult = min(2 ** n, 8)
+            sequence += [
+                nn.Conv1d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias),
+                norm_layer(ndf * nf_mult),
+                nn.LeakyReLU(0.2, True)
+            ]
+
+        nf_mult_prev = nf_mult
+        nf_mult = min(2 ** n_layers, 8)
+        sequence += [
+            nn.Conv1d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias),
+            norm_layer(ndf * nf_mult),
+            nn.LeakyReLU(0.2, True)
+        ]
+
+        sequence += [nn.Conv1d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
         self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
