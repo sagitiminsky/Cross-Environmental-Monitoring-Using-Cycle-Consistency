@@ -1,7 +1,7 @@
 import torch
 import itertools
 from .base_model import BaseModel
-from util.image_pool import SignalPool
+from CellEnMon.util.image_pool import SignalPool
 from .networks import define_G, define_D, GANLoss
 
 
