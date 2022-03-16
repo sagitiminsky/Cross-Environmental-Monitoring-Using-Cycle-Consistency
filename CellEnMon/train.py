@@ -4,7 +4,7 @@ import data
 import models
 import wandb
 ENABLE_WANDB=False
-import sys
+
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()  # get training options
