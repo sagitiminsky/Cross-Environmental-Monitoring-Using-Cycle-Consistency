@@ -15,6 +15,7 @@ from CellEnMon.data.base_dataset import BaseDataset, get_transform
 from .exporter import Extractor
 import random
 import torch
+import numpy as np
 # from data.image_folder import make_dataset
 # from PIL import Image
 
@@ -92,7 +93,7 @@ class CellenmonDataset(BaseDataset):
         slice_end=4
         d= {
             'A': torch.Tensor(data_dict_A['data'][splice_start:slice_end]),
-            'B': torch.Tensor(data_dict_B['data'][splice_start:slice_end]),
+            'B': torch.Tensor(np.tile(data_dict_B['data'][splice_start:slice_end],(4,1)).T),
             'metadata_A': data_dict_A['metadata'][splice_start:slice_end],
             'metadata_B': data_dict_B['metadata'][splice_start:slice_end]
         }
