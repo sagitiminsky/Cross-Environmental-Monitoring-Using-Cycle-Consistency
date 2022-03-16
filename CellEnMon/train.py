@@ -3,7 +3,7 @@ from options.train_options import TrainOptions
 import data
 import models
 import wandb
-ENABLE_WANDB=False
+ENABLE_WANDB=True
 import sys
 
 if __name__ == '__main__':
@@ -30,6 +30,7 @@ if __name__ == '__main__':
 
             total_iters += opt.batch_size
             epoch_iter += opt.batch_size
+            #TODO: on setinput we currently take only the data, we should consider using the metadata too
             model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters()  # calculate loss functions, get gradients, update network weights
 
