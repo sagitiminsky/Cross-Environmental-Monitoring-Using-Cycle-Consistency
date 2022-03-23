@@ -81,7 +81,6 @@ radar_root_values = 'datasets/radar/processed'
 #######################################
 
 ims_root_files = f"CellEnMon/datasets/ims/{start_date_str_rep_ddmmyyyy}_{end_date_str_rep_ddmmyyyy}"  # DD/MM/YYYY
-ims_token = 'f058958a-d8bd-47cc-95d7-7ecf98610e47'
 ims_mapping = [
     {
         "stationId": 2,
@@ -16634,8 +16633,6 @@ create_directory_if_does_not_exist(dme_root_files_paths)
 
 
 dme_scrape_config = {
-    'username': 'SagiT',
-    'password': 'W@st2020',
     'url': 'http://tau.omnisol.co.il/',
     'link_objects': {
         'date': {
