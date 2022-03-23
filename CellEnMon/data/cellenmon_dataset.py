@@ -108,7 +108,7 @@ class CellenmonDataset(BaseDataset):
             slice_start_A=random.randint(0, dme_vec_len - 1)
             time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
 
-            if time_stamp_A_start_time in data_dict_B['data']:
+            if time_stamp_A_start_time in data_dict_B['data'] and data_dict_B['data'][time_stamp_A_start_time]>0: #Only wet classification
                 slice_start_B = list(data_dict_B['data'].keys()).index(time_stamp_A_start_time)
 
                 filter_cond = slice_start_A + slice_dist > dme_vec_len \
