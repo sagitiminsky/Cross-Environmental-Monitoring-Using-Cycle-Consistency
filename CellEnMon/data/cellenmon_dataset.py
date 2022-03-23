@@ -92,8 +92,6 @@ class CellenmonDataset(BaseDataset):
         len(A)==len(B)==48
         
         """
-        data_dict_A['data_sync']=dict(list(data_dict_A['data'].items())[::2])
-        data_dict_B['data_sync']=dict(list(data_dict_B['data'].items())[::3])
 
 
         slice_start_A = 0
@@ -101,17 +99,17 @@ class CellenmonDataset(BaseDataset):
         slice_dist=4
         time_stamp_A_start_time=0
         time_stamp_B_start_time=1
-        dme_vec_len = len(data_dict_A['data_sync'])
-        ims_vec_len= len(data_dict_B['data_sync'])
+        dme_vec_len = len(data_dict_A['data'])
+        ims_vec_len= len(data_dict_B['data'])
         filter_cond=True
 
         while filter_cond:
             #go fetch
             slice_start_A=random.randint(0, dme_vec_len - 1)
-            time_stamp_A_start_time = list(data_dict_A['data_sync'].keys())[slice_start_A]
+            time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
 
-            if time_stamp_A_start_time in data_dict_B['data_sync']:
-                slice_start_B = list(data_dict_B['data_sync'].keys()).index(time_stamp_A_start_time)
+            if time_stamp_A_start_time in data_dict_B['data']:
+                slice_start_B = list(data_dict_B['data'].keys()).index(time_stamp_A_start_time)
 
                 filter_cond = slice_start_A + slice_dist > dme_vec_len \
                               or slice_start_B + slice_dist > ims_vec_len \
@@ -121,10 +119,10 @@ class CellenmonDataset(BaseDataset):
         slice_end_B = slice_start_B + slice_dist
 
         return {
-            'A': torch.Tensor(np.array(list(data_dict_A['data_sync'].values())[slice_start_A:slice_end_A])),
-            'B': torch.Tensor(np.tile(np.array(list(data_dict_B['data_sync'].values())[slice_start_B:slice_end_B]),(4,1)).T),
-            'Time_A': list(data_dict_A['data_sync'].keys())[slice_start_A:slice_end_A],
-            'Time_B': list(data_dict_B['data_sync'].keys())[slice_start_B:slice_end_B],
+            'A': torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A])),
+            'B': torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]),(4,1)).T),
+            'Time_A': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
+            'Time_B': list(data_dict_B['data'].keys())[slice_start_B:slice_end_B],
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata']
         }
