@@ -1,21 +1,18 @@
-PYTHONPATH should be: Research
+PYTHONPATH should be: CellEnMon-Research
 
 Suggested presets:
 + download pycharm
 + install Ansible Vault plugin
 
 
-**wandb:**
-
+**WandB**
 https://wandb.ai/sagitiminsky/CellEnMon_CycleGan
 
-**documentation:** -
-
-please look in the var.tfvars required creds. You can find the password to var.tfvars in the our cellenmon whatsapp
+**Documentation:** -
+Please look in the secrets.yaml required creds. You can find the master password in our cellenmon whatsapp
 description
 
 https://app.swimm.io/workspaces/jllXRmECUZBMawQBnXtN
 
 **Medium:**
-
 https://medium.com/me/stories/public
