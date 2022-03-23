@@ -1,15 +1,24 @@
-DB="ims" # dme | ims
-START_DATE="01012013"
-END_DATE="31122015"
-TYPE="raw" # raw | processed
+#!/bin/bash
 
-#gcloud auth login
-gcloud config set project cellenmon
+PROVIDER=$1 # aws | gcp
+DB=$2 # dme | ims
+START_DATE=$3 #ddmmyyyy
+END_DATE=$4 #ddmmyyyy
+TYPE=$5 # raw | processed
 
+echo "print args $@"
 
-source='gs://cell_en_mon/'"$DB"'/'"$START_DATE"'-'"$END_DATE"'/'"raw"'/'
-dest='./CellEnMon/datasets/'"$DB"'/'"$TYPE"'/'"$START_DATE"'-'"$END_DATE"
+if [ $PROVIDER == "gcp" ]; then
 
-mkdir -p $dest
+  gcloud config set project cellenmon
+  source='gs://cell_en_mon/'"$DB"'/'"$START_DATE"'-'"$END_DATE"'/'"raw"'/'
+  dest='./CellEnMon/datasets/'"$DB"'/'"$TYPE"'/'"$START_DATE"'-'"$END_DATE"
+  mkdir -p $dest
+  gsutil -m cp -r  $source $dest
 
-gsutil -m cp -r  $source $dest
+elif [ $PROVIDEDR == "aws" ]; then
+  echo "$AWS_config"  | base64 -d > ~/.aws/config
+  echo "$AWS_credentials" | base64 -d > ~/.aws/credentials
+
+else
+fi
