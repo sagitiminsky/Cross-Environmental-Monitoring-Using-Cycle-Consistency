@@ -86,16 +86,44 @@ class CellenmonDataset(BaseDataset):
         dme: a day contains 96 samples
         ims: a day contains 144 samples
         
-        so that len(A)==len(B)==48
+        So that after taking each 2nd measurment of dme
+        And after taking each 3rd measurment of ims we get
+        
+        len(A)==len(B)==48
+        
         """
+        data_dict_A['data_sync']=dict(list(data_dict_A['data'].items())[::2])
+        data_dict_B['data_sync']=dict(list(data_dict_B['data'].items())[::3])
 
-        splice_start=0
-        slice_end=4
+
+        slice_start_A = 0
+        slice_start_B = 0
+        slice_dist=4
+        time_stamp_A_start_time=0
+        time_stamp_B_start_time=1
+        dme_vec_len = len(data_dict_A['data_sync'])
+        ims_vec_len= len(data_dict_B['data_sync'])
+        filter_cond=True
+
+        while filter_cond:
+            #go fetch
+            time_stamp_A_start_time = data_dict_A['time_sync'][slice_start_A]
+            slice_start_B=
+
+
+            filter_cond = time_stamp_A_start_time != time_stamp_B_start_time \
+                          or slice_start_A + slice_dist > dme_vec_len \
+                          or slice_start_B + slice_dist > ims_vec_len \
+                # or data_dict_B['data'][slice_start]==0 #go fetch if dry period
+
+        slice_end_A = slice_start_A + slice_dist
+        slice_end_B = slice_start_B + slice_dist
+
         d= {
-            'A': torch.Tensor(data_dict_A['data'][splice_start:slice_end]),
-            'B': torch.Tensor(np.tile(data_dict_B['data'][splice_start:slice_end],(4,1)).T),
-            'metadata_A': data_dict_A['metadata'][splice_start:slice_end],
-            'metadata_B': data_dict_B['metadata'][splice_start:slice_end]
+            'A': torch.Tensor(data_dict_A['data_sync'].items()[slice_start_A:slice_end_A]),
+            'B': torch.Tensor(np.tile(data_dict_B['data_sync'].items()[slice_start_B:slice_end_B],(4,1)).T),
+            'metadata_A': data_dict_A['metadata'],
+            'metadata_B': data_dict_B['metadata']
         }
 
         return d
