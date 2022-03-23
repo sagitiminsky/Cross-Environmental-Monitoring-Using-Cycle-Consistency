@@ -21,9 +21,9 @@ from datetime import timedelta as dt_delta
 import numpy as np
 from CellEnMon.libs.power_law.power_law import PowerLaw
 from google.cloud import storage
-
+from CellEnMon.libs.vault.vault import VaultService
 SELECTOR = ['EXTRACT'] # DOWNLOAD | EXTRACT | UPLOAD
-
+vault_service=VaultService()
 
 ## Setting credentials using the downloaded JSON file
 if "UPLOAD" in SELECTOR:
@@ -367,8 +367,8 @@ class DME_Scrapper_obj:
         username = browser.find_element_by_name("username")
         password = browser.find_element_by_name("password")
 
-        username.send_keys(config.dme_scrape_config['username'])
-        password.send_keys(config.dme_scrape_config['password'])
+        username.send_keys(vault_service.dict_secrets["dme"]["username"])
+        password.send_keys(vault_service.dict_secrets["dme"]["password"])
 
         browser.find_element_by_xpath(remember_me_xpth).click()
         browser.find_element_by_xpath(submit_button).click()
