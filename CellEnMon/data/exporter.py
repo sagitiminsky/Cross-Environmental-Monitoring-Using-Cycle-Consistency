@@ -16,7 +16,7 @@ class Domain:
             data_max, data_min, data_normalized = self.normalizer(np.array(list(value['data'].values())))
             metadata_max, metadata_min, metadata_normalized = self.normalizer(value['metadata'])
             self.db_normalized[station_name] = {
-                "data": data_normalized,
+                "data": dict(zip(np.array(list(value['data'].keys())),data_normalized)),
                 "time": np.array(list(value['data'].keys())),
                 "data_min": data_min,
                 "data_max": data_max,
