@@ -86,19 +86,44 @@ class CellenmonDataset(BaseDataset):
         dme: a day contains 96 samples
         ims: a day contains 144 samples
         
-        so that len(A)==len(B)==48
+        So that after taking each 2nd measurment of dme
+        And after taking each 3rd measurment of ims we get
+        
         """
 
-        splice_start=0
-        slice_end=4
-        d= {
-            'A': torch.Tensor(data_dict_A['data'][splice_start:slice_end]),
-            'B': torch.Tensor(np.tile(data_dict_B['data'][splice_start:slice_end],(4,1)).T),
-            'metadata_A': data_dict_A['metadata'][splice_start:slice_end],
-            'metadata_B': data_dict_B['metadata'][splice_start:slice_end]
-        }
 
-        return d
+        slice_start_A = 0
+        slice_start_B = 0
+        slice_dist=4
+        time_stamp_A_start_time=0
+        time_stamp_B_start_time=1
+        dme_vec_len = len(data_dict_A['data'])
+        ims_vec_len= len(data_dict_B['data'])
+        filter_cond=True
+
+        while filter_cond:
+            #go fetch
+            slice_start_A=random.randint(0, dme_vec_len - 1)
+            time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
+
+            if time_stamp_A_start_time in data_dict_B['data'] and data_dict_B['data'][time_stamp_A_start_time]>0: #Only wet classification
+                slice_start_B = list(data_dict_B['data'].keys()).index(time_stamp_A_start_time)
+
+                filter_cond = slice_start_A + slice_dist > dme_vec_len \
+                              or slice_start_B + slice_dist > ims_vec_len \
+                # or data_dict_B['data'][slice_start]==0 #go fetch if dry period
+
+        slice_end_A = slice_start_A + slice_dist
+        slice_end_B = slice_start_B + slice_dist
+
+        return {
+            'A': torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A])),
+            'B': torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]),(4,1)).T),
+            'Time_A': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
+            'Time_B': list(data_dict_B['data'].keys())[slice_start_B:slice_end_B],
+            'metadata_A': data_dict_A['metadata'],
+            'metadata_B': data_dict_B['metadata']
+        }
 
     def __len__(self):
         """Return the total number of images."""
