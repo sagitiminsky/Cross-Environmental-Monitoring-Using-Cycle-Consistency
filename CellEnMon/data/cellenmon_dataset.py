@@ -108,29 +108,26 @@ class CellenmonDataset(BaseDataset):
         while filter_cond:
             #go fetch
             slice_start_A=random.randint(0, dme_vec_len - 1)
-            time_stamp_A_start_time = data_dict_A['data'].items()[slice_start_A]
-            try:
-                slice_start_B=data_dict_B[]
-            except ValueError:
-                print(f"{time_stamp_A_start_time} is not in ims vec")
+            time_stamp_A_start_time = list(data_dict_A['data_sync'].keys())[slice_start_A]
 
+            if time_stamp_A_start_time in data_dict_B['data_sync']:
+                slice_start_B = list(data_dict_B['data_sync'].keys()).index(time_stamp_A_start_time)
 
-            filter_cond = time_stamp_A_start_time != time_stamp_B_start_time \
-                          or slice_start_A + slice_dist > dme_vec_len \
-                          or slice_start_B + slice_dist > ims_vec_len \
+                filter_cond = slice_start_A + slice_dist > dme_vec_len \
+                              or slice_start_B + slice_dist > ims_vec_len \
                 # or data_dict_B['data'][slice_start]==0 #go fetch if dry period
 
         slice_end_A = slice_start_A + slice_dist
         slice_end_B = slice_start_B + slice_dist
 
-        d= {
-            'A': torch.Tensor(data_dict_A['data_sync'].items()[slice_start_A:slice_end_A]),
-            'B': torch.Tensor(np.tile(data_dict_B['data_sync'].items()[slice_start_B:slice_end_B],(4,1)).T),
+        return {
+            'A': torch.Tensor(np.array(list(data_dict_A['data_sync'].values())[slice_start_A:slice_end_A])),
+            'B': torch.Tensor(np.tile(np.array(list(data_dict_B['data_sync'].values())[slice_start_B:slice_end_B]),(4,1)).T),
+            'Time_A': list(data_dict_A['data_sync'].keys())[slice_start_A:slice_end_A],
+            'Time_B': list(data_dict_B['data_sync'].keys())[slice_start_B:slice_end_B],
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata']
         }
-
-        return d
 
     def __len__(self):
         """Return the total number of images."""
