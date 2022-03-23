@@ -1,17 +1,17 @@
 #!/bin/bash
 MODE=upload # upload | download
 PROVIDER=$1 # s3 | gs
-DB=$2 # dme | ims
+DB=$2 # dme | ims | visualize
 START_DATE=$3 #ddmmyyyy
 END_DATE=$4 #ddmmyyyy
 TYPE=$5 # raw | processed
 
 echo "print args $@"
 
-remote="$PROVIDER"'://cell_en_mon/'"$DB"'/'"$START_DATE"'-'"$END_DATE"'/'"raw"'/'
-local='./CellEnMon/datasets/'"$DB"'/'"$TYPE"'/'"$START_DATE"'-'"$END_DATE"
+remote="$PROVIDER"'://cellenmon/'"$DB"'/'"$START_DATE"'_'"$END_DATE"'/'"$TYPE"'/'
+local='./CellEnMon/datasets/'"$DB"'/'"$START_DATE"'_'"$END_DATE"'/'"$TYPE"'/'
 
-if [ $PROVIDER == "gcp" ]; then
+if [ $PROVIDER == "gs" ]; then
   #google auth
   gcloud config set project cellenmon
 
@@ -27,14 +27,13 @@ elif [ $PROVIDEDR == "aws" ]; then
   export AWS_ACCESS_KEY_ID=python3 CellEnMon/libs/vault/vault.py aws key
   export AWS_SECRET_ACCESS_KEY=python3 CellEnMon/libs/vault/vault.py aws secret
 
-    if [ $MODE == "download"]; then
+  if [ $MODE == "download"]; then
     mkdir -p $dest
-    s3 -m cp -r  $remote $local
+    aws s3 cp $remote $local --recursive
   else
-    s3 -m cp -r  $local $remote
+    aws s3 cp $local $remote --recursive
   fi
 
-
-
 else
+  echo "$PROVIDER Proivder is not supported !"
 fi
