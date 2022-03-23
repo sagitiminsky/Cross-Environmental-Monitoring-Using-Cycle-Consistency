@@ -107,8 +107,12 @@ class CellenmonDataset(BaseDataset):
 
         while filter_cond:
             #go fetch
-            time_stamp_A_start_time = data_dict_A['time_sync'][slice_start_A]
-            slice_start_B=
+            slice_start_A=random.randint(0, dme_vec_len - 1)
+            time_stamp_A_start_time = data_dict_A['data'].items()[slice_start_A]
+            try:
+                slice_start_B=data_dict_B[]
+            except ValueError:
+                print(f"{time_stamp_A_start_time} is not in ims vec")
 
 
             filter_cond = time_stamp_A_start_time != time_stamp_B_start_time \
