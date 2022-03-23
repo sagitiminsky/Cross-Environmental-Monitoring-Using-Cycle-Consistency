@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import os
 import ast
-import shutil
+from datetime import time
 
 
 class Domain:
@@ -13,11 +13,11 @@ class Domain:
         self.db = db
         self.db_normalized = {}
         for station_name, value in db.items():
-            data_max, data_min, data_normalized = self.normalizer(value['data'])
+            data_max, data_min, data_normalized = self.normalizer(np.array(list(value['data'].values())))
             metadata_max, metadata_min, metadata_normalized = self.normalizer(value['metadata'])
             self.db_normalized[station_name] = {
-                "data": data_normalized,
-                "time": value['time'],
+                "data": dict(zip(np.array(list(value['data'].keys())),data_normalized)),
+                "time": np.array(list(value['data'].keys())),
                 "data_min": data_min,
                 "data_max": data_max,
                 "metadata": metadata_normalized,
@@ -81,7 +81,7 @@ class Extractor:
                     df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
                     metadata = self.get_ims_metadata(f'{station_file_name}')
                     ims_vec = np.array([])
-                    time = np.array(df.datetime)
+                    time = np.array([" ".join(t.split('+')[0].split('T')) for t in df.datetime])
 
                     if (ims_vec, df) is not (None, None):
                         for row in list(df.channels):
@@ -92,8 +92,7 @@ class Extractor:
                             {
                                 "metadata_len": len(metadata["vector"]),
                                 "data_len": len(ims_vec),
-                                "data": ims_vec,
-                                "time": time,
+                                "data": dict(zip(time,ims_vec)),
                                 "metadata": metadata["vector"]
                             }
 
@@ -167,8 +166,7 @@ class Extractor:
                             dme_matrix[metadata["link_name"]] = {
                                 'metadata_len': len(metadata["vector"]),
                                 'data_len': len(PowerRLTMmin),
-                                "data": data,
-                                "time": Time,
+                                "data": dict(zip(Time,data)),
                                 "metadata": metadata["vector"]
                             }
 
