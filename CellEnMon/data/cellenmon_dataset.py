@@ -89,8 +89,6 @@ class CellenmonDataset(BaseDataset):
         So that after taking each 2nd measurment of dme
         And after taking each 3rd measurment of ims we get
         
-        len(A)==len(B)==48
-        
         """
 
 
