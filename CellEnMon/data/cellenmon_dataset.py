@@ -72,13 +72,13 @@ class CellenmonDataset(BaseDataset):
 
         c = 2 * asin(sqrt(a))
 
-        # Radius of earth in kilometers. Use 3956 for miles
-        r = 6371
+        # Radius of earth in kilometers (6371). Use 3956 for miles. We use 1 because it is normalized
+        r = 1
         return {
             "dist": c * r,
             "center": {
-                "longitude": longitude,
-                "latitude": latitude
+                "longitude": (x1_longitude+x2_longitude)/2,
+                "latitude": (x1_latitude+x2_latitude)/2
             }
         }
 
@@ -168,7 +168,7 @@ class CellenmonDataset(BaseDataset):
             'Time_B': list(data_dict_B['data'].keys())[slice_start_B:slice_end_B],
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata'],
-            'distance': dist
+            'distance': dist # in KM
         }
 
     def __len__(self):
