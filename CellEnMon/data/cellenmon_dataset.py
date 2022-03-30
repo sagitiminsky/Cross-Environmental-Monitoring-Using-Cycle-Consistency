@@ -16,6 +16,7 @@ from .exporter import Extractor
 import random
 import torch
 import numpy as np
+from math import radians, cos, sin, asin, sqrt
 # from data.image_folder import make_dataset
 # from PIL import Image
 
@@ -58,6 +59,29 @@ class CellenmonDataset(BaseDataset):
         self.spec=self.dataset.spec
 
 
+    def calc_dist_and_center_point(self,tx_longitude,tx_latitude,rx_longitude,rx_latitude)->dict:
+        lon1 = radians(tx_longitude)
+        lon2 = radians(tx_latitude)
+        lat1 = radians(rx_longitude)
+        lat2 = radians(rx_latitude)
+
+        # Haversine formula
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+
+        c = 2 * asin(sqrt(a))
+
+        # Radius of earth in kilometers. Use 3956 for miles
+        r = 6371
+        return {
+            "dist": c * r,
+            "center": {
+                "longitude": tx_longitude,
+                "latitude": tx_latitude
+            }
+        }
+
     def __getitem__(self, index):
         """Return a data point and its metadata information.
 
@@ -90,7 +114,28 @@ class CellenmonDataset(BaseDataset):
         And after taking each 3rd measurment of ims we get
         
         """
+        ##########################
+        #### Station Distance ####
+        ##########################
 
+
+        dme_station_coo=self.calc_dist_and_center_point(tx_longitude=data_dict_A["metadata"][0],
+                                                          tx_latitude=data_dict_A["metadata"][1],
+                                                          rx_longitude=data_dict_A["metadata"][2],
+                                                          rx_latitude=data_dict_A["metadata"][3])
+
+        ims_station_coo = self.calc_dist_and_center_point(tx_longitude=data_dict_B["metadata"][0],
+                                                          tx_latitude=data_dict_B["metadata"][1],
+                                                          rx_longitude=data_dict_B["metadata"][0],
+                                                          rx_latitude=data_dict_B["metadata"][1])
+
+        dist=self.calc_dist_and_center_point(tx_longitude=,
+                                             tx_latitude=,
+                                             )
+
+        ##########################
+        #### Match and Filter ####
+        ##########################
 
         slice_start_A = 0
         slice_start_B = 0
@@ -122,7 +167,8 @@ class CellenmonDataset(BaseDataset):
             'Time_A': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
             'Time_B': list(data_dict_B['data'].keys())[slice_start_B:slice_end_B],
             'metadata_A': data_dict_A['metadata'],
-            'metadata_B': data_dict_B['metadata']
+            'metadata_B': data_dict_B['metadata'],
+            'distance': dist
         }
 
     def __len__(self):
