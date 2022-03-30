@@ -59,11 +59,11 @@ class CellenmonDataset(BaseDataset):
         self.spec=self.dataset.spec
 
 
-    def calc_dist_and_center_point(self,tx_longitude,tx_latitude,rx_longitude,rx_latitude)->dict:
-        lon1 = radians(tx_longitude)
-        lon2 = radians(tx_latitude)
-        lat1 = radians(rx_longitude)
-        lat2 = radians(rx_latitude)
+    def calc_dist_and_center_point(self,x1_longitude,x1_latitude,x2_longitude,x2_latitude)->dict:
+        lon1 = radians(x1_longitude)
+        lon2 = radians(x1_latitude)
+        lat1 = radians(x2_longitude)
+        lat2 = radians(x2_latitude)
 
         # Haversine formula
         dlon = lon2 - lon1
@@ -77,8 +77,8 @@ class CellenmonDataset(BaseDataset):
         return {
             "dist": c * r,
             "center": {
-                "longitude": tx_longitude,
-                "latitude": tx_latitude
+                "longitude": longitude,
+                "latitude": latitude
             }
         }
 
@@ -118,20 +118,20 @@ class CellenmonDataset(BaseDataset):
         #### Station Distance ####
         ##########################
 
+        dme_station_coo=self.calc_dist_and_center_point(x1_longitude=data_dict_A["metadata"][0],
+                                                          x1_latitude=data_dict_A["metadata"][1],
+                                                          x2_longitude=data_dict_A["metadata"][2],
+                                                          x2_latitude=data_dict_A["metadata"][3])
 
-        dme_station_coo=self.calc_dist_and_center_point(tx_longitude=data_dict_A["metadata"][0],
-                                                          tx_latitude=data_dict_A["metadata"][1],
-                                                          rx_longitude=data_dict_A["metadata"][2],
-                                                          rx_latitude=data_dict_A["metadata"][3])
+        ims_station_coo = self.calc_dist_and_center_point(x1_longitude=data_dict_B["metadata"][0],
+                                                          x1_latitude=data_dict_B["metadata"][1],
+                                                          x2_longitude=data_dict_B["metadata"][0],
+                                                          x2_latitude=data_dict_B["metadata"][1])
 
-        ims_station_coo = self.calc_dist_and_center_point(tx_longitude=data_dict_B["metadata"][0],
-                                                          tx_latitude=data_dict_B["metadata"][1],
-                                                          rx_longitude=data_dict_B["metadata"][0],
-                                                          rx_latitude=data_dict_B["metadata"][1])
-
-        dist=self.calc_dist_and_center_point(tx_longitude=,
-                                             tx_latitude=,
-                                             )
+        dist=self.calc_dist_and_center_point(x1_longitude=ims_station_coo["center"]["longitude"],
+                                             x1_latitude=ims_station_coo["center"]["latitude"],
+                                             x2_longitude=dme_station_coo["center"]["longitude"],
+                                             x2_latitude=dme_station_coo["center"]["latitude"])["dist"]
 
         ##########################
         #### Match and Filter ####
