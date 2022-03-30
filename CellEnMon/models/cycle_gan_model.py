@@ -106,6 +106,7 @@ class CycleGANModel(BaseModel):
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
         self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
+        self.distance = input['distance'].to(self.device)
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
