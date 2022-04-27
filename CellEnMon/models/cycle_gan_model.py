@@ -109,6 +109,8 @@ class CycleGANModel(BaseModel):
         self.inv_distance = math.erf(1/input['distance'].to(self.device))
         self.rain_amount = input['rain_amount'].to(self.device)
 
+        self.correction =  1 + self.inv_distance
+
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B = self.netG_A(self.real_A)  # G_A(A)
@@ -134,19 +136,19 @@ class CycleGANModel(BaseModel):
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
-        loss_D = (loss_D_real + loss_D_fake) * 0.5 * (1 + self.inv_distance + self.rain_amount)
+        loss_D = (loss_D_real + loss_D_fake) * 0.5 * self.correction
         loss_D.backward()
         return loss_D
 
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B)  * (1 + self.inv_distance + self.rain_amount)
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B)  * self.correction
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)  * (1 + self.inv_distance + self.rain_amount)
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)  * self.correction
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -174,10 +176,10 @@ class CycleGANModel(BaseModel):
         # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
         # combined loss and calculate gradients
-        self.loss_G = (self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B ) * (1 + self.inv_distance + self.rain_amount)
+        self.loss_G = (self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B ) * self.correction
         self.loss_G.backward()
-        self.loss_mse_A = self.mse(self.rec_A, self.real_A) * (1 + self.inv_distance + self.rain_amount)
-        self.loss_mse_B = self.mse(self.rec_B, self.real_B) * (1 + self.inv_distance + self.rain_amount)
+        self.loss_mse_A = self.mse(self.rec_A, self.real_A) * self.correction
+        self.loss_mse_B = self.mse(self.rec_B, self.real_B) * self.correction
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
