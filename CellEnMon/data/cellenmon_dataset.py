@@ -169,7 +169,7 @@ class CellenmonDataset(BaseDataset):
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata'],
             'distance': dist, # in KM
-            'rain_amount': np.sum(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A]))
+            'rain_amount': np.sum(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]))
         }
 
     def __len__(self):
