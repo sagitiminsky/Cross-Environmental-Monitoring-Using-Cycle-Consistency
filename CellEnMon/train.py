@@ -3,7 +3,7 @@ from options.train_options import TrainOptions
 import data
 import models
 import wandb
-ENABLE_WANDB=False
+ENABLE_WANDB=True
 
 
 if __name__ == '__main__':
