@@ -56,7 +56,7 @@ Please cite one of following paper if you found our neural network model useful.
 ```
 @inproceedings{timinsky2022,
   title={Cross Environmental Monitoring Using Cycle Consistency},
-  author={Timinsky, Sergey Timinsky, J. Ostrometzky and H. Messer},
+  author={Sergey Timinsky},
   journal={M.Sc. Thesis, Tel Aviv University},
   year={2022},
 } 
