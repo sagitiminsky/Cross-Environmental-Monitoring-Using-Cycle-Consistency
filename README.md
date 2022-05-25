@@ -17,22 +17,19 @@ https://app.swimm.io/workspaces/jllXRmECUZBMawQBnXtN
 **Medium:**
 https://medium.com/me/stories/public
 
-# PyNNcml
-A python toolbox based on PyTorch which utilized neural network for rain estimation and classification from commercial microwave link (CMLs) data. This toolbox provides an implementation of algorithms for extracting rain-rate using neural networks and CMLs. Addinaly this project provides an example dataset with data from two CMLs and implementation of performance and robustness metrics.  
-# Install
-Installation via pip:
-```
-pip install pynncml
-
-```
+# Cross-Environmental-Monitoring-Using-Cycle-Consistency
+A python toolbox based on PyTorch which utilized neural network for rain estimation and classification from commercial microwave link (CMLs) data. This toolbox provides 4 main tools:
+1. API gateway to the Israeli Metereological servoce
+2. Scrapping tool for the Daily measurement explorer: A TAU hosted site which saves all the cellular data
+3. Visualization of the positioning of gauges and CML stations across Israel
+4. A cyclce consistency GAN frame work which allows us to map the rain domain to attenuation romain and vise versa.
 
 
 # Projects Structure
-
-1. Wet Dry Classification
-2. Baseline 
-3. Power Law 
-4. Rain estimation
+1. DME scrapping
+2. Utilization of IMS API
+3. Preprocessing
+4. Visualization
 5. Metrics
 6. Robustness
 
@@ -44,28 +41,24 @@ Please note that the dataset are not publicly available. To gain access to the b
 The following examples:
 
 
-
 # Model Zoo
-In this project we supply a set of trained networks in our [Model Zoo], those networks are trained on our own dataset which is not publicly available.
+In this project we supply a set of trained networks in our [Model Zoo](s3://cellenmon/model-zoo/).
 
 # Contributing
-
 If you find a bug or have a question, please create a GitHub issue.
-
-
 
 # Publications
 
 Please cite one of following paper if you found our neural network model useful. Thanks!
->[1] Timinsky, Sergey Timinsky, J. Ostrometzky and H. Messer ""
+>[1] Timinsky, Sergey Timinsky, J. Ostrometzky and H. Messer""
 ```
 @inproceedings{habi2018wet,
-  title={Wet-Dry Classification Using LSTM and Commercial Microwave Links},
-  author={Habi, Hai Victor and Messer, Hagit},
-  booktitle={2018 IEEE 10th Sensor Array and Multichannel Signal Processing Workshop (SAM)},
-  pages={149--153},
-  year={2018},
-  organization={IEEE}
+  title={xxx},
+  author={Timinsky, Sergey Timinsky, J. Ostrometzky and H. Messer},
+  booktitle={xxx},
+  pages={xxx},
+  year={xxx},
+  organization={xxx}
 } 
 ```
 
@@ -121,5 +114,3 @@ Conference on Acoustics, Speech and Signal Processing (ICASSP), pages 3744–374
 Calibration of the
 attenuation-rain rate power-law parameters using measurements from commercial microwave networks. In 2016 IEEE International Conference on Acoustics, Speech and Signal
 Processing (ICASSP), pages 3736–3740. IEEE, 2016.
-
-If you found on of this methods usefully please cite.
