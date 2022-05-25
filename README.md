@@ -4,6 +4,8 @@ Suggested presets:
 + download pycharm
 + install Ansible Vault plugin
 
+**Overleaf Thesis**
+https://www.overleaf.com/project/60e0745b27bb63de45f01822
 
 **WandB**
 https://wandb.ai/sagitiminsky/CellEnMon_CycleGan
@@ -52,13 +54,11 @@ If you find a bug or have a question, please create a GitHub issue.
 Please cite one of following paper if you found our neural network model useful. Thanks!
 >[1] Timinsky, Sergey Timinsky, J. Ostrometzky and H. Messer""
 ```
-@inproceedings{habi2018wet,
-  title={xxx},
+@inproceedings{timinsky2022,
+  title={Cross Environmental Monitoring Using Cycle Consistency},
   author={Timinsky, Sergey Timinsky, J. Ostrometzky and H. Messer},
-  booktitle={xxx},
-  pages={xxx},
-  year={xxx},
-  organization={xxx}
+  journal={M.Sc. Thesis, Tel Aviv University},
+  year={2022},
 } 
 ```
 
