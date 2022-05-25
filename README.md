@@ -52,7 +52,7 @@ If you find a bug or have a question, please create a GitHub issue.
 # Publications
 
 Please cite one of following paper if you found our neural network model useful. Thanks!
->[1] Timinsky, Sergey Timinsky, J. Ostrometzky and H. Messer""
+>[1] S. Timinsky, J. Ostrometzky and H. Messer""
 ```
 @inproceedings{timinsky2022,
   title={Cross Environmental Monitoring Using Cycle Consistency},
