@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import os
 import ast
+import matplotlib.pyplot as plt
 from datetime import time
 
 
@@ -38,6 +39,40 @@ class Extractor:
         self.dme = Domain(self.load_dme(), db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
         self.ims = Domain(self.load_ims(), db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
         self.spec=self.stats()
+
+    def visualize_ims(self,gauge_name=None):
+        if gauge_name in self.ims.db:
+            x=list(self.ims.db[gauge_name]['data'].keys())
+            RR=list(self.ims.db[gauge_name]['data'].values())
+            plt.plot(x,RR)
+
+            plt.xticks(x[::250], rotation=45)
+            plt.legend(["RR"])
+            plt.title("Rain Rate")
+            plt.xlabel("TimeStamp")
+            plt.ylabel("mm/h")
+            plt.show()
+        else:
+            raise FileNotFoundError(f"The provided gague_name:{gauge_name} doesn't exist in the ims dataset")
+    def extract_TSL_RSL(self,data):
+        return [x[0] for x in data],[x[1] for x in data],[x[2] for x in data],[x[3] for x in data]
+
+    def visualize_dme(self,link_name=None):
+        if link_name in self.dme.db:
+            x=list(self.dme.db[link_name]['data'].keys())
+            MTSL, mTSL, MRSL, mRSL=self.extract_TSL_RSL(list(self.dme.db[link_name]['data'].values()))
+            plt.plot(x,MRSL)
+            plt.plot(x,mRSL)
+
+            plt.xticks(x[::100], rotation=45)
+            plt.legend(["MRSL", "mRSL"])
+            plt.title("Receive Signal Level")
+            plt.xlabel("TimeStamp")
+            plt.ylabel("dBm")
+            plt.show()
+        else:
+            raise FileNotFoundError(f"The provided link_name:{link_name} doesn't exist in the dme dataset")
+
 
     def stats(self):
         message = f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
@@ -191,3 +226,5 @@ class Extractor:
 if __name__ == "__main__":
     dataset = Extractor()
     print(dataset.stats())
+    #dataset.visualize_dme(link_name='a459-6879')
+    dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
