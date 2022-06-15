@@ -1,3 +1,5 @@
+import math
+
 import CellEnMon.config as config
 import pickle
 import numpy as np
@@ -5,6 +7,7 @@ import pandas as pd
 import os
 import ast
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 from datetime import time
 
 
@@ -17,7 +20,7 @@ class Domain:
             data_max, data_min, data_normalized = self.normalizer(np.array(list(value['data'].values())))
             metadata_max, metadata_min, metadata_normalized = self.normalizer(value['metadata'])
             self.db_normalized[station_name] = {
-                "data": dict(zip(np.array(list(value['data'].keys())),data_normalized)),
+                "data": dict(zip(np.array(list(value['data'].keys())), data_normalized)),
                 "time": np.array(list(value['data'].keys())),
                 "data_min": data_min,
                 "data_max": data_max,
@@ -38,13 +41,12 @@ class Extractor:
     def __init__(self):
         self.dme = Domain(self.load_dme(), db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
         self.ims = Domain(self.load_ims(), db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
-        self.spec=self.stats()
 
-    def visualize_ims(self,gauge_name=None):
+    def visualize_ims(self, gauge_name=None):
         if gauge_name in self.ims.db:
-            x=list(self.ims.db[gauge_name]['data'].keys())
-            RR=list(self.ims.db[gauge_name]['data'].values())
-            plt.plot(x,RR)
+            x = list(self.ims.db[gauge_name]['data'].keys())
+            RR = list(self.ims.db[gauge_name]['data'].values())
+            plt.plot(x, RR)
 
             plt.xticks(x[::250], rotation=45)
             plt.legend(["RR"])
@@ -54,15 +56,16 @@ class Extractor:
             plt.show()
         else:
             raise FileNotFoundError(f"The provided gague_name:{gauge_name} doesn't exist in the ims dataset")
-    def extract_TSL_RSL(self,data):
-        return [x[0] for x in data],[x[1] for x in data],[x[2] for x in data],[x[3] for x in data]
 
-    def visualize_dme(self,link_name=None):
+    def extract_TSL_RSL(self, data):
+        return [x[0] for x in data], [x[1] for x in data], [x[2] for x in data], [x[3] for x in data]
+
+    def visualize_dme(self, link_name=None):
         if link_name in self.dme.db:
-            x=list(self.dme.db[link_name]['data'].keys())
-            MTSL, mTSL, MRSL, mRSL=self.extract_TSL_RSL(list(self.dme.db[link_name]['data'].values()))
-            plt.plot(x,MRSL)
-            plt.plot(x,mRSL)
+            x = list(self.dme.db[link_name]['data'].keys())
+            MTSL, mTSL, MRSL, mRSL = self.extract_TSL_RSL(list(self.dme.db[link_name]['data'].values()))
+            plt.plot(x, MRSL)
+            plt.plot(x, mRSL)
 
             plt.xticks(x[::100], rotation=45)
             plt.legend(["MRSL", "mRSL"])
@@ -73,14 +76,40 @@ class Extractor:
         else:
             raise FileNotFoundError(f"The provided link_name:{link_name} doesn't exist in the dme dataset")
 
+    def calculate_wet_events_histogram(self):
+        return np.array([y for x in self.ims.db for y in list(self.ims.db[x]['data'].values())])
+
+    def func_fit(self,x, a, b, c):
+        return a * np.exp(-b * x) + c
 
     def stats(self):
-        message = f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
-                  "🖇️ Links 🖇️\n" \
-                  f"We have: {len(self.dme.station_names_vec)} links\n" \
-                  "🏺 Gauges 🏺\n" \
-                  f"We have: {len(self.ims.station_names_vec)}\n"
-        return message
+        wet_events_hist = self.calculate_wet_events_histogram()
+        wet_events_precentage = len(wet_events_hist[wet_events_hist > 0]) / len(wet_events_hist)
+
+        counts, bins = np.histogram(wet_events_hist)
+        counts=[x/sum(counts) for x in counts]
+        plt.hist(bins[:-1], bins, weights=counts, rwidth=0.7, label="Rain Rate Histogram")
+
+        plt.title("Rain Rate All of Israel")
+        plt.xlabel("Rain Rate [mm/h]")
+        plt.ylabel("$f_{RR}(r)$")
+        plt.grid(color='gray', linestyle='-', linewidth=0.5)
+        # Plotting exp. fit
+        popt, pcov= curve_fit(self.func_fit,bins[:-1],counts/sum(counts))
+        plt.plot(bins, self.func_fit(bins, *popt),'r-',
+         label='fit[a * exp(-b * x) + c]: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
+
+        plt.yscale("log")
+        plt.legend()
+
+
+        print(
+            f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
+            f"🖇️ Links: {len(self.dme.station_names_vec)} 🖇️\n" \
+            f"🏺 Gauges: {len(self.ims.station_names_vec)} 🏺\n" \
+            f"\U0001F4A6 Wet:{wet_events_precentage} \U0001F4A6 \n" \
+            f"\U0001F975 Dry:{1 - wet_events_precentage} \U0001F975 \n\n" \
+            f"\U0001F9EA Exp fit:{popt} \U0001F9EA")
 
     def get_entry(self, arr, type):
         i = 0
@@ -127,7 +156,7 @@ class Extractor:
                             {
                                 "metadata_len": len(metadata["vector"]),
                                 "data_len": len(ims_vec),
-                                "data": dict(zip(time,ims_vec)),
+                                "data": dict(zip(time, ims_vec)),
                                 "metadata": metadata["vector"]
                             }
 
@@ -201,7 +230,7 @@ class Extractor:
                             dme_matrix[metadata["link_name"]] = {
                                 'metadata_len': len(metadata["vector"]),
                                 'data_len': len(PowerRLTMmin),
-                                "data": dict(zip(Time,data)),
+                                "data": dict(zip(Time, data)),
                                 "metadata": metadata["vector"]
                             }
 
@@ -225,6 +254,7 @@ class Extractor:
 
 if __name__ == "__main__":
     dataset = Extractor()
-    print(dataset.stats())
-    #dataset.visualize_dme(link_name='a459-6879')
-    dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
+    dataset.stats()
+    # dataset.visualize_dme(link_name='a459-6879')
+    # dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
+    plt.show()
