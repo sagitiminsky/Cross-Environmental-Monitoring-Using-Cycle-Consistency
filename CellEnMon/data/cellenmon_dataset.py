@@ -165,8 +165,8 @@ class CellenmonDataset(BaseDataset):
         B = torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]),(4,1)).T)
 
         return {
-            'A': A,
-            'B': B,
+            'A': A.repeat(64,64).reshape(1,256,256),
+            'B': B.repeat(64,64).reshape(1,256,256),
             'Time_A': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
             'Time_B': list(data_dict_B['data'].keys())[slice_start_B:slice_end_B],
             'metadata_A': data_dict_A['metadata'],
