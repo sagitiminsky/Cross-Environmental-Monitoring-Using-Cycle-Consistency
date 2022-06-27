@@ -53,10 +53,10 @@ class CellenmonDataset(BaseDataset):
         # save the option and dataset root
         super().__init__(opt)
         self.dataset=Extractor()
+        self.dataset.stats() #get a,b,c for a * np.exp(-b * x) + c
 
         self.dme_len = len(self.dataset.dme.db)
         self.ims_len = len(self.dataset.ims.db)
-        self.spec=self.dataset.spec
 
 
     def calc_dist_and_center_point(self,x1_longitude,x1_latitude,x2_longitude,x2_latitude)->dict:
@@ -133,9 +133,9 @@ class CellenmonDataset(BaseDataset):
                                              x2_longitude=dme_station_coo["center"]["longitude"],
                                              x2_latitude=dme_station_coo["center"]["latitude"])["dist"]
 
-        ##########################
-        #### Match and Filter ####
-        ##########################
+        ################################
+        #### Rain Rate Significance ####
+        ################################
 
         slice_start_A = 0
         slice_start_B = 0
@@ -151,25 +151,32 @@ class CellenmonDataset(BaseDataset):
             slice_start_A=random.randint(0, dme_vec_len - 1)
             time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
 
-            if time_stamp_A_start_time in data_dict_B['data'] and data_dict_B['data'][time_stamp_A_start_time]>0: #Only wet classification
+            if time_stamp_A_start_time in data_dict_B['data']:
                 slice_start_B = list(data_dict_B['data'].keys()).index(time_stamp_A_start_time)
 
                 filter_cond = slice_start_A + slice_dist > dme_vec_len \
                               or slice_start_B + slice_dist > ims_vec_len \
-                # or data_dict_B['data'][slice_start]==0 #go fetch if dry period
+
 
         slice_end_A = slice_start_A + slice_dist
         slice_end_B = slice_start_B + slice_dist
 
+        A = torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A]))
+        B = torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]),(4,1)).T)
+
         return {
-            'A': torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A])),
-            'B': torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]),(4,1)).T),
+            'A': A,
+            'B': B,
             'Time_A': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
             'Time_B': list(data_dict_B['data'].keys())[slice_start_B:slice_end_B],
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata'],
-            'distance': dist # in KM
+            'distance': dist, # in KM
+            'rain_rate': self.func_fit(x=np.average(B), a=self.dataset.a, b=self.dataset.b, c=self.dataset.c)
         }
+
+    def func_fit(self, x, a, b, c):
+        return a * np.exp(-b * x) + c
 
     def __len__(self):
         """Return the total number of images."""
