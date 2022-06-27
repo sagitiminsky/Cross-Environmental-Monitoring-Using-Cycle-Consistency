@@ -16,6 +16,7 @@ class Domain:
         self.station_names_vec = db.keys()
         self.db = db
         self.db_normalized = {}
+
         for station_name, value in db.items():
             data_max, data_min, data_normalized = self.normalizer(np.array(list(value['data'].values())))
             metadata_max, metadata_min, metadata_normalized = self.normalizer(value['metadata'])
@@ -41,6 +42,11 @@ class Extractor:
     def __init__(self):
         self.dme = Domain(self.load_dme(), db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
         self.ims = Domain(self.load_ims(), db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
+
+        # a * np.exp(-b * x) + c
+        self.a = None
+        self.b = None
+        self.c = None
 
     def visualize_ims(self, gauge_name=None):
         if gauge_name in self.ims.db:
@@ -79,7 +85,7 @@ class Extractor:
     def calculate_wet_events_histogram(self):
         return np.array([y for x in self.ims.db for y in list(self.ims.db[x]['data'].values())])
 
-    def func_fit(self,x, a, b, c):
+    def func_fit(self, x, a, b, c):
         return a * np.exp(-b * x) + c
 
     def stats(self):
@@ -87,7 +93,7 @@ class Extractor:
         wet_events_precentage = len(wet_events_hist[wet_events_hist > 0]) / len(wet_events_hist)
 
         counts, bins = np.histogram(wet_events_hist)
-        counts=[x/sum(counts) for x in counts]
+        counts = [x / sum(counts) for x in counts]
         plt.hist(bins[:-1], bins, weights=counts, rwidth=0.7, label="Rain Rate Histogram")
 
         plt.title("Rain Rate All of Israel")
@@ -95,13 +101,12 @@ class Extractor:
         plt.ylabel("$f_{RR}(r)$")
         plt.grid(color='gray', linestyle='-', linewidth=0.5)
         # Plotting exp. fit
-        popt, pcov= curve_fit(self.func_fit,bins[:-1],counts/sum(counts))
-        plt.plot(bins, self.func_fit(bins, *popt),'r-',
-         label='fit[a * exp(-b * x) + c]: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
-
+        popt, pcov = curve_fit(self.func_fit, bins[:-1], counts / sum(counts))
+        self.a, self.b, self.c = popt
+        plt.plot(bins, self.func_fit(bins, *popt), 'r-',
+                 label='fit[a * exp(-b * x) + c]: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
         plt.yscale("log")
         plt.legend()
-
 
         print(
             f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
