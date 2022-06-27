@@ -39,7 +39,7 @@ class Domain:
 
 
 class Extractor:
-    def __init__(self):
+    def __init__(self,is_train=True):
         self.dme = Domain(self.load_dme(), db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
         self.ims = Domain(self.load_ims(), db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
 

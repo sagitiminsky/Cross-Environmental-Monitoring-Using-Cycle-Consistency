@@ -12,8 +12,7 @@ if __name__ == '__main__':
     validation_opt = TestOptions().parse()
     if ENABLE_WANDB:
         wandb.init(project=train_opt.name,  entity='sagitiminsky')
-    train_dataset = data.create_dataset(train_opt)  # create a train dataset given opt.dataset_mode and other options
-    validation_dataset = data.create_dataset(train_opt)
+    dataset = data.create_dataset(train_opt)  # create a train and validation dataset given opt.dataset_mode and other options
     model = models.create_model(train_opt)  # create a model given opt.model and other options
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
@@ -24,7 +23,7 @@ if __name__ == '__main__':
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
-        for i, data in enumerate(train_dataset):  # inner loop within one epoch
+        for i, data in enumerate(dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % train_opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
@@ -40,18 +39,14 @@ if __name__ == '__main__':
                 losses = model.get_current_losses()
                 t_comp = (time.time() - iter_start_time) / train_opt.batch_size
 
-                for i,val_data in enumerate(validation_dataset):
-                    model.set_input(data)
-                    model.test()
-
 
                 print(f"losses:{losses}")
                 if ENABLE_WANDB:
                     wandb.log(losses)
 
-            if total_iters % opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
+            if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-                save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
+                save_suffix = 'iter_%d' % total_iters if train_opt.save_by_iter else 'latest'
                 model.save_networks(save_suffix)
 
             iter_data_time = time.time()
@@ -61,4 +56,4 @@ if __name__ == '__main__':
         #     model.save_networks(epoch)
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (
-        epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
+        epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
