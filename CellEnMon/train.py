@@ -37,24 +37,20 @@ if __name__ == '__main__':
 
             if total_iters % train_opt.print_freq == 0:  # print training and validation losses and save logging information to the disk
                 # Training losses
-                training_losses = model.get_current_losses()
+                training_losses = model.get_current_losses(is_train=True)
                 t_comp = (time.time() - iter_start_time) / train_opt.batch_size
 
                 # Validation losses
                 model.set_input(validation_dataset[i % len(validation_dataset)])
-                validation_losses = model.get_current_losses()
+                validation_losses = model.get_current_losses(is_train=False)
 
 
                 print(f"Training Losses:{training_losses}\n\n")
                 print(f"Validation Losses:{validation_losses}\n\n")
-                columns = ['train', 'validation']
+
                 if ENABLE_WANDB:
-                    for loss_name in training_losses:
-                        wandb.log({
-                            f"Train/{loss_name}": training_losses[loss_name],
-                            f"Validation/{loss_name}": training_losses[loss_name],
-                            "x": epoch
-                        })
+                    wandb.log({**validation_losses, **training_losses})
+
 
             if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
