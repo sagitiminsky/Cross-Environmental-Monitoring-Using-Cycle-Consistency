@@ -9,6 +9,7 @@ import ast
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from datetime import time
+from sklearn.model_selection import train_test_split
 
 
 class Domain:
@@ -40,8 +41,8 @@ class Domain:
 
 class Extractor:
     def __init__(self,is_train=True):
-        self.dme = Domain(self.load_dme(), db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
-        self.ims = Domain(self.load_ims(), db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
+        self.dme = Domain(self.load_dme(is_train=is_train), db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
+        self.ims = Domain(self.load_ims(is_train=is_train), db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
 
         # a * np.exp(-b * x) + c
         self.a = None
@@ -132,11 +133,12 @@ class Extractor:
         metadata["vector"] = np.array([float(metadata['logitude']), float(metadata['latitude'])])
         return metadata
 
-    def load_ims(self):
+    def load_ims(self, is_train=False):
+        dataset_type_str = "train" if is_train else "validation"
         temp_str = f'{config.ims_root_files}/processed'
         try:
-            with open(f'{temp_str}/values.pkl', 'rb') as f:
-                ims_matrix = pickle.load(f)
+            with open(f'{temp_str}/{dataset_type_str}.pkl', 'rb') as f:
+                dataset = pickle.load(f)
 
             if not os.path.isdir(temp_str):
                 os.makedirs(temp_str)
@@ -171,10 +173,13 @@ class Extractor:
                 except FileNotFoundError:
                     print("data does not exist in {}".format(station_file_name))
 
-            with open(f'{temp_str}/values.pkl', 'wb') as f:
-                pickle.dump(ims_matrix, f)
+            s = pd.Series(ims_matrix)
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, train_size=0.7)]
+            dataset = training_data if is_train else validation_data
+            with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
+                pickle.dump(dataset, f)
 
-        return ims_matrix
+        return dataset
 
     def get_dme_metadata(self, link_file_name):
         metadata = {}
@@ -193,11 +198,12 @@ class Extractor:
 
         return metadata
 
-    def load_dme(self):
+    def load_dme(self, is_train=False):
+        dataset_type_str = "train" if is_train else "validation"
         temp_str = f'{config.dme_root_files}/processed'
         try:
-            with open(f'{temp_str}/values.pkl', 'rb') as f:
-                dme_matrix = pickle.load(f)
+            with open(f'{temp_str}/{dataset_type_str}.pkl', 'rb') as f:
+                dataset = pickle.load(f)
 
             if not os.path.isdir(temp_str):
                 os.makedirs(temp_str)
@@ -251,10 +257,14 @@ class Extractor:
                         print(
                             f"Not all fields [PowerTLTMmax | PowerTLTMmin | PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
 
-            with open(f'{temp_str}/values.pkl', 'wb') as f:
-                pickle.dump(dme_matrix, f)
+            s = pd.Series(dme_matrix)
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, train_size=0.7)]
+            dataset = training_data if is_train else validation_data
+            with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
+                pickle.dump(dataset, f)
 
-        return dme_matrix
+
+        return dataset
 
 
 if __name__ == "__main__":
