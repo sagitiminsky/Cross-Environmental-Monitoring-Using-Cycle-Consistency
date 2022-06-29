@@ -134,7 +134,7 @@ class CycleGANModel(BaseModel):
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
-        loss_D = (loss_D_real + loss_D_fake) * 0.5 * self.inv_distance
+        loss_D = (loss_D_real + loss_D_fake)# * 0.5 * self.inv_distance
         loss_D.backward()
         return loss_D
 
@@ -166,9 +166,9 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True) * self.inv_distance + 1-self.rain_rate
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)# * self.inv_distance + 1-self.rain_rate
         # GAN loss D_B(G_B(B))
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True) * self.inv_distance + 1-self.rain_rate
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)# * self.inv_distance + 1-self.rain_rate
         # Forward cycle loss || G_B(G_A(A)) - A||
         self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
         # Backward cycle loss || G_A(G_B(B)) - B||
@@ -179,7 +179,7 @@ class CycleGANModel(BaseModel):
         self.loss_mse_A=self.mse(self.rec_A, self.real_A)
         self.loss_mse_B=self.mse(self.rec_B, self.real_B)
 
-    def optimize_parameters(self):
+    def optimize_parameters(self, is_train=True):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
         self.forward()  # compute fake images and reconstruction images.
@@ -187,10 +187,12 @@ class CycleGANModel(BaseModel):
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()  # calculate gradients for G_A and G_B
-        self.optimizer_G.step()  # update G_A and G_B's weights
+        if is_train:
+            self.optimizer_G.step()  # update G_A and G_B's weights
         # D_A and D_B
         self.set_requires_grad([self.netD_A, self.netD_B], True)
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
         self.backward_D_A()  # calculate gradients for D_A
         self.backward_D_B()  # calculate graidents for D_B
-        self.optimizer_D.step()  # update D_A and D_B's weights
+        if is_train:
+            self.optimizer_D.step()  # update D_A and D_B's weights

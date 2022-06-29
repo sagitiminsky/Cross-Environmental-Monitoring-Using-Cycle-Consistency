@@ -4,16 +4,24 @@ from options.test_options import TestOptions
 import data
 import models
 import wandb
-ENABLE_WANDB=True
-JOB_TYPES={0:"DEBUG"}
+
+ENABLE_WANDB = True
+GROUPS = {
+    "DEBUG": {0:"DEBUG"},
+    "GROUPED_LOSSES": {0: "lower metrics"}
+}
+SELECTED_GROUP_NAME = "GROUPED_LOSSES"
+SELECT_JOB = 0
 
 if __name__ == '__main__':
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
     if ENABLE_WANDB:
-        wandb.init(project=train_opt.name,  entity='sagitiminsky', job_type=JOB_TYPES[0], group=f"exp_{JOB_TYPES[0]}")
+        wandb.init(project=train_opt.name, entity='sagitiminsky',
+                   group=f"exp_{SELECTED_GROUP_NAME}", job_type=GROUPS[SELECTED_GROUP_NAME][SELECT_JOB])
     train_dataset = data.create_dataset(train_opt)  # create a train dataset given opt.dataset_mode and other options
-    validation_dataset = data.create_dataset(validation_opt)  # create a train dataset given opt.dataset_mode and other options
+    validation_dataset = data.create_dataset(
+        validation_opt)  # create a train dataset given opt.dataset_mode and other options
     model = models.create_model(train_opt)  # create a model given opt.model and other options
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
@@ -31,9 +39,9 @@ if __name__ == '__main__':
 
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
-            #TODO: on setinput we currently take only the data, we should consider using the metadata too
+            # TODO: on setinput we currently take only the data, we should consider using the metadata too
             model.set_input(data)  # unpack data from dataset and apply preprocessing
-            model.optimize_parameters()  # calculate loss functions, get gradients, update network weights
+            model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
 
             if total_iters % train_opt.print_freq == 0:  # print training and validation losses and save logging information to the disk
                 # Training losses
@@ -42,15 +50,15 @@ if __name__ == '__main__':
 
                 # Validation losses
                 model.set_input(validation_dataset[i % len(validation_dataset)])
+                model.optimize_parameters(
+                    is_train=False)  # calculate loss functions, get gradients, update network weights
                 validation_losses = model.get_current_losses(is_train=False)
-
 
                 print(f"Training Losses:{training_losses}\n\n")
                 print(f"Validation Losses:{validation_losses}\n\n")
 
                 if ENABLE_WANDB:
                     wandb.log({**validation_losses, **training_losses})
-
 
             if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
@@ -64,4 +72,4 @@ if __name__ == '__main__':
         #     model.save_networks(epoch)
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (
-        epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
+            epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
