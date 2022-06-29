@@ -84,6 +84,10 @@ class CustomDatasetDataLoader():
         """Return the number of data in the dataset"""
         return min(len(self.dataset), self.opt.max_dataset_size)
 
+    def __getitem__(self, item):
+        """Return single"""
+        return [data for data in self.dataloader][item]
+
     def __iter__(self):
         """Return a batch of data"""
         for i, data in enumerate(self.dataloader):
