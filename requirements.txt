@@ -1,2 +1,4 @@
 ansible==2.4.0.0 #for bash script
 ansible_vault==1.1.2 #for python script
+scikit-learn==1.1.1
+wand==0.12.19
