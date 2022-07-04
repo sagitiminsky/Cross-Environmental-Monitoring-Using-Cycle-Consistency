@@ -17,12 +17,21 @@ import random
 import torch
 import numpy as np
 from math import radians, cos, sin, asin, sqrt
+import torch.nn.functional as F
+
 # from data.image_folder import make_dataset
 # from PIL import Image
+
+# DIRECTIONS
+LEFT = (1, 0, 0, 0)
+RIGHT = (0, 1, 0, 0)
+UP = (0, 0, 1, 0)
+DOWN = (0, 0, 0, 1)
 
 
 class CellenmonDataset(BaseDataset):
     """A template dataset class for you to implement custom datasets."""
+
     @staticmethod
     def modify_commandline_options(parser, is_train):
         """Add new dataset-specific options, and rewrite default values for existing options.
@@ -52,14 +61,18 @@ class CellenmonDataset(BaseDataset):
         """
         # save the option and dataset root
         super().__init__(opt)
-        self.dataset=Extractor()
-        self.dataset.stats() #get a,b,c for a * np.exp(-b * x) + c
+        self.dataset = Extractor()
+        self.dataset.stats()  # get a,b,c for a * np.exp(-b * x) + c
 
         self.dme_len = len(self.dataset.dme.db)
         self.ims_len = len(self.dataset.ims.db)
 
+    def pad_with_respect_to_direction(self, A, B, dir, value_a, value_b):
+        A = F.pad(input=A, pad=dir, mode='constant', value=value_a)
+        B = F.pad(input=B, pad=dir, mode='constant', value=value_b)
+        return A, B
 
-    def calc_dist_and_center_point(self,x1_longitude,x1_latitude,x2_longitude,x2_latitude)->dict:
+    def calc_dist_and_center_point(self, x1_longitude, x1_latitude, x2_longitude, x2_latitude) -> dict:
         lon1 = radians(x1_longitude)
         lon2 = radians(x1_latitude)
         lat1 = radians(x2_longitude)
@@ -77,8 +90,8 @@ class CellenmonDataset(BaseDataset):
         return {
             "dist": c * r,
             "center": {
-                "longitude": (x1_longitude+x2_longitude)/2,
-                "latitude": (x1_latitude+x2_latitude)/2
+                "longitude": (x1_longitude + x2_longitude) / 2,
+                "latitude": (x1_latitude + x2_latitude) / 2
             }
         }
 
@@ -99,12 +112,12 @@ class CellenmonDataset(BaseDataset):
         entry_list_dme = list(self.dataset.dme.db_normalized)
         entry_list_ims = list(self.dataset.ims.db_normalized)
         data_dict_A = self.dataset.dme.db_normalized[entry_list_dme[index % self.dme_len]]
-        if self.opt.serial_batches:   # make sure index is within then range
+        if self.opt.serial_batches:  # make sure index is within then range
             index_B = index % self.ims_len
-        else:   # randomize the index for domain B to avoid fixed pairs.
+        else:  # randomize the index for domain B to avoid fixed pairs.
             index_B = random.randint(0, self.ims_len - 1)
 
-        data_dict_B = self.dataset.ims.db_normalized[entry_list_ims[index_B % self.ims_len]] # needs to be a tensor
+        data_dict_B = self.dataset.ims.db_normalized[entry_list_ims[index_B % self.ims_len]]  # needs to be a tensor
 
         """
         dme: a day contains 96 samples
@@ -118,7 +131,7 @@ class CellenmonDataset(BaseDataset):
         #### Station Distance ####
         ##########################
 
-        dme_station_coo=self.calc_dist_and_center_point(x1_longitude=data_dict_A["metadata"][0],
+        dme_station_coo = self.calc_dist_and_center_point(x1_longitude=data_dict_A["metadata"][0],
                                                           x1_latitude=data_dict_A["metadata"][1],
                                                           x2_longitude=data_dict_A["metadata"][2],
                                                           x2_latitude=data_dict_A["metadata"][3])
@@ -128,10 +141,10 @@ class CellenmonDataset(BaseDataset):
                                                           x2_longitude=data_dict_B["metadata"][0],
                                                           x2_latitude=data_dict_B["metadata"][1])
 
-        dist=self.calc_dist_and_center_point(x1_longitude=ims_station_coo["center"]["longitude"],
-                                             x1_latitude=ims_station_coo["center"]["latitude"],
-                                             x2_longitude=dme_station_coo["center"]["longitude"],
-                                             x2_latitude=dme_station_coo["center"]["latitude"])["dist"]
+        dist = self.calc_dist_and_center_point(x1_longitude=ims_station_coo["center"]["longitude"],
+                                               x1_latitude=ims_station_coo["center"]["latitude"],
+                                               x2_longitude=dme_station_coo["center"]["longitude"],
+                                               x2_latitude=dme_station_coo["center"]["latitude"])["dist"]
 
         ################################
         #### Rain Rate Significance ####
@@ -139,39 +152,46 @@ class CellenmonDataset(BaseDataset):
 
         slice_start_A = 0
         slice_start_B = 0
-        slice_dist=4
-        time_stamp_A_start_time=0
-        time_stamp_B_start_time=1
+        slice_dist = 4
+        time_stamp_A_start_time = 0
+        time_stamp_B_start_time = 1
         dme_vec_len = len(data_dict_A['data'])
-        ims_vec_len= len(data_dict_B['data'])
-        filter_cond=True
+        ims_vec_len = len(data_dict_B['data'])
+        filter_cond = True
 
         while filter_cond:
-            #go fetch
-            slice_start_A=random.randint(0, dme_vec_len - 1)
+            # go fetch
+            slice_start_A = random.randint(0, dme_vec_len - 1)
             time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
 
             if time_stamp_A_start_time in data_dict_B['data']:
                 slice_start_B = list(data_dict_B['data'].keys()).index(time_stamp_A_start_time)
 
                 filter_cond = slice_start_A + slice_dist > dme_vec_len \
-                              or slice_start_B + slice_dist > ims_vec_len \
-
-
+                              or slice_start_B + slice_dist > ims_vec_len
         slice_end_A = slice_start_A + slice_dist
         slice_end_B = slice_start_B + slice_dist
 
         A = torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A]))
-        B = torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]),(4,1)).T)
+        B = torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]), (4, 1)).T)
+
+        if self.opt.is_only_train:
+            A = A.repeat(64, 64).reshape(1, 256, 256)
+            B = B.repeat(64, 64).reshape(1, 256, 256)
+        else:
+            A_LEFT, B_LEFT = self.pad_with_respect_to_direction(A, B, LEFT, value_a=data_dict_A['metadata'][0], value_b=data_dict_B['metadata'][0])
+            A_RIGHT, B_RIGHT = self.pad_with_respect_to_direction(A_LEFT, A_LEFT, RIGHT,value_a=data_dict_A['metadata'][1], value_b=data_dict_B['metadata'][1])
+            A_UP, B_UP = self.pad_with_respect_to_direction(A_RIGHT, A_RIGHT, UP,value_a=data_dict_A['metadata'][2], value_b=data_dict_B['metadata'][2])
+            A, B = self.pad_with_respect_to_direction(A_UP, B_UP, DOWN,value_a=data_dict_A['metadata'][3], value_b=data_dict_B['metadata'][3])
 
         return {
-            'A': A.repeat(64,64).reshape(1,256,256),
-            'B': B.repeat(64,64).reshape(1,256,256),
+            'A': A,
+            'B': B,
             'Time_A': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
             'Time_B': list(data_dict_B['data'].keys())[slice_start_B:slice_end_B],
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata'],
-            'distance': dist, # in KM
+            'distance': dist,  # in KM
             'rain_rate': self.func_fit(x=np.average(B), a=self.dataset.a, b=self.dataset.b, c=self.dataset.c)
         }
 
