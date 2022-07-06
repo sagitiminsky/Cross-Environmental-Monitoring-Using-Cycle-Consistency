@@ -175,14 +175,19 @@ class CellenmonDataset(BaseDataset):
         A = torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A]))
         B = torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]), (4, 1)).T)
 
-        if self.opt.is_only_train:
+        if self.opt.is_only_dynamic:
             A = A.repeat(64, 64).reshape(1, 256, 256)
             B = B.repeat(64, 64).reshape(1, 256, 256)
         else:
             A_LEFT, B_LEFT = self.pad_with_respect_to_direction(A, B, LEFT, value_a=data_dict_A['metadata'][0], value_b=data_dict_B['metadata'][0])
-            A_RIGHT, B_RIGHT = self.pad_with_respect_to_direction(A_LEFT, A_LEFT, RIGHT,value_a=data_dict_A['metadata'][1], value_b=data_dict_B['metadata'][1])
-            A_UP, B_UP = self.pad_with_respect_to_direction(A_RIGHT, A_RIGHT, UP,value_a=data_dict_A['metadata'][2], value_b=data_dict_B['metadata'][2])
-            A, B = self.pad_with_respect_to_direction(A_UP, B_UP, DOWN,value_a=data_dict_A['metadata'][3], value_b=data_dict_B['metadata'][3])
+            A_UP, B_UP = self.pad_with_respect_to_direction(A_LEFT, B_LEFT, UP, value_a=data_dict_A['metadata'][2],
+                                                            value_b=data_dict_B['metadata'][1])
+            A_RIGHT, B_RIGHT = self.pad_with_respect_to_direction(A_UP, B_UP, RIGHT,value_a=data_dict_A['metadata'][1], value_b=data_dict_B['metadata'][0])
+
+            A, B = self.pad_with_respect_to_direction(A_RIGHT, B_RIGHT, DOWN,value_a=data_dict_A['metadata'][3], value_b=data_dict_B['metadata'][1])
+
+            A = A.repeat(43,43).reshape(-1)[:256*256].reshape(1,256,256)
+            B = B.repeat(43,43).reshape(-1)[:256*256].reshape(1, 256, 256)
 
         return {
             'A': A,
