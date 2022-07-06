@@ -6,11 +6,13 @@ import data
 import models
 import wandb
 
-ENABLE_WANDB = False
+ENABLE_WANDB = True
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
-    "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"}
+    "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
+    "Dymanic and Static" : {0: "first try"}
 }
+
 SELECTED_GROUP_NAME = "DYNAMIC_ONLY"
 SELECT_JOB = 3
 
