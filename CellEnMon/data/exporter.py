@@ -12,6 +12,9 @@ from scipy.optimize import curve_fit
 from datetime import time
 from sklearn.model_selection import train_test_split
 
+IS_TRAIN = True
+CROSS_DOMAIN_METADATA_NORMALIZATION=True
+
 
 class Domain:
     def __init__(self, db, db_type):
@@ -36,31 +39,30 @@ class Domain:
             # Find min-max for metadata normalization
             self.metadata_min_max_finder(value['metadata'])
 
-        # Metadata Normalization
-        for station_name, value in db.items():
-            metadata_vector = np.array(list(value['metadata'].values()))
-            self.db_normalized[station_name]["metadata"]= self.min_max_norm(metadata_vector)
-
-
-        # Save metadata min-max for long and lat for later use
-        self.db_normalized["metadata_long_max"] = self.metadata_long_max
-        self.db_normalized["metadata_long_min"] = self.metadata_long_min
-        self.db_normalized["metadata_lat_max"] = self.metadata_lat_max
-        self.db_normalized["metadata_lat_min"] = self.metadata_lat_min
         self.df = pd.DataFrame.from_dict(self.db_normalized)
 
+    def metadata_normalization(self):
+        for station_name, value in self.db.items():
+            self.db_normalized[station_name]["metadata"] = self.min_max_norm(value['metadata'])
+
     def metadata_min_max_finder(self, metadata_vector):
-        self.metadata_long_max = max(self.metadata_long_min, metadata_vector[0])
-        self.metadata_long_min = min(self.metadata_long_min, metadata_vector[1])
-        self.metadata_lat_max = max(self.metadata_lat_max, metadata_vector[2])
-        self.metadata_lat_min = min(self.metadata_lat_min, metadata_vector[3])
+        self.metadata_long_max = max(self.metadata_long_max, metadata_vector[0], metadata_vector[2])
+        self.metadata_long_min = min(self.metadata_long_min, metadata_vector[0], metadata_vector[2])
+        self.metadata_lat_max = max(self.metadata_lat_max, metadata_vector[1], metadata_vector[3])
+        self.metadata_lat_min = min(self.metadata_lat_min, metadata_vector[1], metadata_vector[3])
 
     def min_max_norm(self, x):
-        x[0] = x[0] - self.metadata_long_min / (self.metadata_long_max - self.metadata_long_min)
-        x[1] = x[1] - self.metadata_lat_min / (self.metadata_lat_max - self.metadata_lat_min)
-        x[2] = x[2] - self.metadata_long_min / (self.metadata_long_max - self.metadata_long_min)
-        x[3] = x[3] - self.metadata_lat_min / (self.metadata_lat_max - self.metadata_lat_min)
+        x[0] = self.norm(x[0], self.metadata_long_min, self.metadata_long_max)
+        x[1] = self.norm(x[1], self.metadata_lat_min, self.metadata_lat_max)
+        x[2] = self.norm(x[2], self.metadata_long_min, self.metadata_long_max)
+        x[3] = self.norm(x[3], self.metadata_lat_min, self.metadata_lat_max)
         return x
+
+    def norm(self, x, mmin, mmax):
+        if mmin == mmax:
+            return 0
+        else:
+            return (x - mmin) / (mmax - mmin)
 
     def normalizer(self, mat):
         min = mat.min()
@@ -75,6 +77,28 @@ class Extractor:
                           db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
         self.ims = Domain(self.load_ims(is_train=is_train),
                           db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
+
+        self.metadata_long_max = max(self.dme.metadata_long_max,self.ims.metadata_long_max)
+        self.metadata_long_min = min(self.dme.metadata_long_min,self.ims.metadata_long_min)
+        self.metadata_lat_max = max(self.dme.metadata_lat_max,self.ims.metadata_lat_max)
+        self.metadata_lat_min = min(self.dme.metadata_lat_min,self.ims.metadata_lat_min)
+
+
+        if CROSS_DOMAIN_METADATA_NORMALIZATION:
+            #dme
+            self.dme.metadata_long_max=self.metadata_long_max
+            self.dme.metadata_long_min=self.metadata_long_min
+            self.dme.metadata_lat_max=self.metadata_lat_max
+            self.dme.metadata_lat_min = self.metadata_lat_min
+
+            #ims
+            self.ims.metadata_long_max = self.metadata_long_max
+            self.ims.metadata_long_min = self.metadata_long_min
+            self.ims.metadata_lat_max = self.metadata_lat_max
+            self.ims.metadata_lat_min = self.metadata_lat_min
+
+        self.dme.metadata_normalization()
+        self.ims.metadata_normalization()
 
         # a * np.exp(-b * x) + c
         self.a = None
@@ -301,7 +325,7 @@ class Extractor:
 
 
 if __name__ == "__main__":
-    dataset = Extractor()
+    dataset = Extractor(is_train=IS_TRAIN)
     dataset.stats()
     # dataset.visualize_dme(link_name='a459-6879')
     # dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
