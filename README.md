@@ -19,7 +19,7 @@ https://app.swimm.io/workspaces/jllXRmECUZBMawQBnXtN
 **Medium:**
 https://medium.com/me/stories/public
 
-# Cross-Environmental-Monitoring-Using-Cycle-Consistency
+# Cross Domain Environmental Monitoring Using Generative Adeversarial Netwoeks and Cycle Consistency Regularization
 A python toolbox based on PyTorch which utilized neural network for rain estimation and classification from commercial microwave link (CMLs) data. This toolbox provides 4 main tools:
 1. API gateway to the Israeli Metereological servoce
 2. Scrapping tool for the Daily measurement explorer: A TAU hosted site which saves all the cellular data
@@ -55,7 +55,7 @@ Please cite one of following paper if you found our neural network model useful.
 >[1] S. Timinsky, J. Ostrometzky and H. Messer""
 ```
 @inproceedings{timinsky2022,
-  title={Cross Environmental Monitoring Using Cycle Consistency},
+  title={Cross Domain Environmental Monitoring Using Generative Adeversarial Netwoeks and Cycle Consistency Regularization},
   author={Sergey Timinsky},
   journal={M.Sc. Thesis, Tel Aviv University},
   year={2022},

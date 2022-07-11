@@ -19,6 +19,7 @@ class BaseOptions():
     def initialize(self, parser):
         """Define the common options that are used in both training and test."""
         # basic parameters
+        parser.add_argument('--is_only_dynamic', default=False, help='indicated if the dataest constain only dynamic data or both dynamic and static dadta')
         parser.add_argument('--dataroot', required=False, help='supported by the data/exporter class')
         parser.add_argument('--name', type=str, default='CellEnMon_CycleGan',
                             help='name of the experiment. It decides where to store samples and models')
