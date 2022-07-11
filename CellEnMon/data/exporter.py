@@ -19,46 +19,47 @@ class Domain:
         self.db = db
         self.db_normalized = {}
         self.db_type = db_type
-        self.metadata_log_max=-sys.maxsize
-        self.metadata_log_min=sys.maxsize
-        self.metadata_lat_max=-sys.maxsize
+        self.metadata_long_max = -sys.maxsize
+        self.metadata_long_min = sys.maxsize
+        self.metadata_lat_max = -sys.maxsize
         self.metadata_lat_min = sys.maxsize
 
         # Data Normalization
         for station_name, value in db.items():
             data_max, data_min, data_normalized = self.normalizer(np.array(list(value['data'].values())))
-            self.metadata_log_max, self.metadata_log_min, self.metadata_lat_max, self.metadata_lat_min = self.metadata_normalizer(value['metadata'])
             self.db_normalized[station_name] = {
                 "data": dict(zip(np.array(list(value['data'].keys())), data_normalized)),
                 "time": np.array(list(value['data'].keys())),
                 "data_min": data_min,
                 "data_max": data_max,
             }
+            # Find min-max for metadata normalization
+            self.metadata_min_max_finder(value['metadata'])
 
         # Metadata Normalization
         for station_name, value in db.items():
             metadata_vector = np.array(list(value['metadata'].values()))
+            self.db_normalized[station_name]["metadata"]= self.min_max_norm(metadata_vector)
 
-            self.min_max_norm(metadata_vector)
-            self.db_normalized["metadata_log_max"] = metadata_log_max
-            self.db_normalized["metadata_log_min"] = metadata_log_min
-            self.db_normalized["metadata_lat_max"] = metadata_lat_max
-            self.db_normalized["metadata_lat_min"] = metadata_lat_min
 
-                self.df = pd.DataFrame.from_dict(self.db_normalized)
+        # Save metadata min-max for long and lat for later use
+        self.db_normalized["metadata_long_max"] = self.metadata_long_max
+        self.db_normalized["metadata_long_min"] = self.metadata_long_min
+        self.db_normalized["metadata_lat_max"] = self.metadata_lat_max
+        self.db_normalized["metadata_lat_min"] = self.metadata_lat_min
+        self.df = pd.DataFrame.from_dict(self.db_normalized)
 
-    def metadata_normalizer(self, metadata_vector):
-        self.metadata_log_max=max(self.metadata_log_min,metadata_vector[0])
-        self.metadata_log_min=min(self.metadata_log_min,metadata_vector[1])
-        self.metadata_lat_max=max(self.metadata_lat_max,metadata_vector[2])
+    def metadata_min_max_finder(self, metadata_vector):
+        self.metadata_long_max = max(self.metadata_long_min, metadata_vector[0])
+        self.metadata_long_min = min(self.metadata_long_min, metadata_vector[1])
+        self.metadata_lat_max = max(self.metadata_lat_max, metadata_vector[2])
         self.metadata_lat_min = min(self.metadata_lat_min, metadata_vector[3])
 
-
-    def min_max_norm(self, x, metadata_log_max, metadata_log_min, metadata_lat_max, metadata_lat_min):
-        x[0] = x[0] - metadata_log_min / (metadata_log_max-metadata_log_min)
-        x[1] = x[1] - metadata_lat_min / (metadata_lat_max-metadata_lat_min)
-        x[2] = x[2] - metadata_log_min / (metadata_log_max-metadata_log_min)
-        x[3] = x[3] - metadata_lat_min / (metadata_lat_max-metadata_lat_min)
+    def min_max_norm(self, x):
+        x[0] = x[0] - self.metadata_long_min / (self.metadata_long_max - self.metadata_long_min)
+        x[1] = x[1] - self.metadata_lat_min / (self.metadata_lat_max - self.metadata_lat_min)
+        x[2] = x[2] - self.metadata_long_min / (self.metadata_long_max - self.metadata_long_min)
+        x[3] = x[3] - self.metadata_lat_min / (self.metadata_lat_max - self.metadata_lat_min)
         return x
 
     def normalizer(self, mat):
@@ -161,7 +162,9 @@ class Extractor:
         metadata["logitude"] = station_name_splited[3]
         metadata["latitude"] = station_name_splited[4].replace(".csv", "")
         metadata["gauge_name"] = f"{station_name_splited[0]}-{station_name_splited[1]}-{station_name_splited[2]}"
-        metadata["vector"] = np.array([float(metadata['logitude']), float(metadata['latitude']),float(metadata['logitude']), float(metadata['latitude'])])
+        metadata["vector"] = np.array(
+            [float(metadata['logitude']), float(metadata['latitude']), float(metadata['logitude']),
+             float(metadata['latitude'])])
         return metadata
 
     def load_ims(self, is_train=False):
