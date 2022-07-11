@@ -61,7 +61,7 @@ class CellenmonDataset(BaseDataset):
         """
         # save the option and dataset root
         super().__init__(opt)
-        self.dataset = Extractor()
+        self.dataset = Extractor(is_train=opt.isTrain)
         self.dataset.stats()  # get a,b,c for a * np.exp(-b * x) + c
 
         self.dme_len = len(self.dataset.dme.db)

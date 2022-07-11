@@ -6,7 +6,7 @@ import data
 import models
 import wandb
 
-ENABLE_WANDB = True
+ENABLE_WANDB = False
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
@@ -23,8 +23,7 @@ if __name__ == '__main__':
         wandb.init(project=train_opt.name, entity='sagitiminsky',
                    group=f"exp_{SELECTED_GROUP_NAME}", job_type=GROUPS[SELECTED_GROUP_NAME][SELECT_JOB])
     train_dataset = data.create_dataset(train_opt)  # create a train dataset given opt.dataset_mode and other options
-    validation_dataset = data.create_dataset(
-        validation_opt)  # create a train dataset given opt.dataset_mode and other options
+    validation_dataset = data.create_dataset(validation_opt)  # create a train dataset given opt.dataset_mode and other options
     model = models.create_model(train_opt)  # create a model given opt.model and other options
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
