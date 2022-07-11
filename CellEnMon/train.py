@@ -6,15 +6,15 @@ import data
 import models
 import wandb
 
-ENABLE_WANDB = False
+ENABLE_WANDB = True
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
-    "Dymanic and Static" : {0: "first try"}
+    "Dymanic and Static" : {0: "first try", 1:"with RR only"}
 }
 
-SELECTED_GROUP_NAME = "DYNAMIC_ONLY"
-SELECT_JOB = 3
+SELECTED_GROUP_NAME = "Dymanic and Static"
+SELECT_JOB = 1
 
 if __name__ == '__main__':
     train_opt = TrainOptions().parse()  # get training options
@@ -82,6 +82,11 @@ if __name__ == '__main__':
             training_losses['Train/rmse_A'] = math.sqrt(agg_train_mse_A / len(train_dataset))
             training_losses['Train/rmse_B'] = math.sqrt(agg_train_mse_B / len(train_dataset))
 
+
+
+
             if ENABLE_WANDB:
                 wandb.log({**validation_losses, **training_losses})
+                visuals=model.get_current_visuals()
+                wandb.log({"examples": [wandb.Image(visuals[key], caption=key) for key in visuals]})
 
