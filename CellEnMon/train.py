@@ -17,15 +17,13 @@ GROUPS = {
 
 SELECTED_GROUP_NAME = "Dymanic and Static"
 SELECT_JOB = 1
-INTERCHAGING_DIRECTION_TOGGLE_ENABLED = True
+INTERCHANGING_DIRECTION_TOGGLE_ENABLED = True
 
 
 def toggle(t):
     if t == 'AtoB':
-        print(f"Direction:{'BtoA'}")
         return 'BtoA'
     else:
-        print(f"Direction:{'AtoB'}")
         return 'AtoB'
 
 
@@ -48,9 +46,11 @@ if __name__ == '__main__':
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
         agg_train_mse_A, agg_train_mse_B = 0, 0
-        if epoch + 1 % 20 == 0:
-            direction = toggle(direction) if INTERCHAGING_DIRECTION_TOGGLE_ENABLED else direction
+        if epoch % 20 == 0:
+            direction = toggle(direction) if INTERCHANGING_DIRECTION_TOGGLE_ENABLED else direction
         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
+
+        print(f"Direction:{direction}")
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % train_opt.print_freq == 0:
@@ -69,17 +69,17 @@ if __name__ == '__main__':
 
             t_comp = (time.time() - iter_start_time) / train_opt.batch_size
 
-            if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
-                print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-                save_suffix = 'iter_%d' % total_iters if train_opt.save_by_iter else 'latest'
-                model.save_networks(save_suffix)
+            # if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
+            #     print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
+            #     save_suffix = 'iter_%d' % total_iters if train_opt.save_by_iter else 'latest'
+            #     model.save_networks(save_suffix)
 
             iter_data_time = time.time()
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (
             epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
 
-        if epoch % 10 == 0:
+        if epoch % 10 == 0 and direction == train_opt.direction:
             # Validation losses
             agg_validation_mse_A, agg_validation_mse_B = 0, 0
             for val_data in validation_dataset:
@@ -89,23 +89,21 @@ if __name__ == '__main__':
                 agg_validation_mse_A += validation_losses["Validation/mse_A"]
                 agg_validation_mse_B += validation_losses["Validation/mse_B"]
 
-            print(f"Training Losses:{training_losses}\n\n")
-            print(f"Validation Losses:{validation_losses}\n\n")
-
             # agg fix
             validation_losses['Validation/rmse_A'] = math.sqrt(agg_validation_mse_A / len(validation_dataset))
             validation_losses['Validation/rmse_B'] = math.sqrt(agg_validation_mse_B / len(validation_dataset))
             training_losses['Train/rmse_A'] = math.sqrt(agg_train_mse_A / len(train_dataset))
             training_losses['Train/rmse_B'] = math.sqrt(agg_train_mse_B / len(train_dataset))
 
-            # Visualize
-            plt.clf()
+            if ENABLE_WANDB:
+                # Visualize
+                plt.clf()
 
             visuals = model.get_current_visuals()
             if train_opt.is_only_dynamic:
                 for fig_num, key in enumerate(visuals):
                     plt.subplot(240 + fig_num + 1)
-                    plt.title(key)
+                    plt.title(key, y=0.75)
                     plt.plot(visuals[key][0][0][:4].T.cpu().detach().numpy(),
                              marker='o',
                              linestyle='dashed',
@@ -114,7 +112,6 @@ if __name__ == '__main__':
             else:
                 raise NotImplementedError
 
-            if ENABLE_WANDB:
                 wandb.log({**validation_losses, **training_losses})
                 wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
                 wandb.log({"Series": plt})
