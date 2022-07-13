@@ -192,8 +192,7 @@ class CellenmonDataset(BaseDataset):
         return {
             'A': A,
             'B': B,
-            'Time_A': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
-            'Time_B': list(data_dict_B['data'].keys())[slice_start_B:slice_end_B],
+            'Time': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata'],
             'distance': dist,  # in KM

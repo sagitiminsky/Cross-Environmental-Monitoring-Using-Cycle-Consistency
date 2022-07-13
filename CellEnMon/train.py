@@ -6,7 +6,9 @@ import data
 import models
 import wandb
 import matplotlib.pyplot as plt
-import torch
+from mpl_finance import candlestick_ohlc
+from datetime import datetime
+import matplotlib.dates as mpl_dates
 
 ENABLE_WANDB = True
 GROUPS = {
@@ -18,6 +20,8 @@ GROUPS = {
 SELECTED_GROUP_NAME = "Dymanic and Static"
 SELECT_JOB = 1
 INTERCHANGING_DIRECTION_TOGGLE_ENABLED = True
+DME_KEYS = ['TMmax[dBm]', 'TMmin[dBm]', 'RMmax[dBm]', 'RMmin[dBm]']
+IMS_KEYS = ['RRMax[mm/h]', 'RRMin[mm/h]', 'RRMmax[mm/h]', 'RRMmin[mm/h]']
 
 
 def toggle(t):
@@ -99,18 +103,33 @@ if __name__ == '__main__':
                 # Visualize
                 plt.clf()
 
-            visuals = model.get_current_visuals()
-            if train_opt.is_only_dynamic:
-                for fig_num, key in enumerate(visuals):
-                    plt.subplot(240 + fig_num + 1)
-                    plt.title(key, y=0.75)
-                    plt.plot(visuals[key][0][0][:4].T.cpu().detach().numpy(),
-                             marker='o',
-                             linestyle='dashed',
-                             linewidth=0.5,
-                             markersize=4)
-            else:
-                raise NotImplementedError
+                visuals = model.get_current_visuals()
+                if train_opt.is_only_dynamic:
+                    fig, axs = plt.subplots(2, 4, figsize=(15, 15))
+                    plt.title('Series')
+                    for ax, key in zip(axs.flatten(), visuals):
+                        display = [[mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S'))] + data.tolist()
+                                   for t, data in
+                                   zip(model.t, visuals[key][0][0][:4].T.cpu().detach().numpy())]
+
+                        candlestick_ohlc(ax, display, width=1.5,
+                                         colorup='green', colordown='red', alpha=0.8)
+
+                        # Formatting Date
+                        date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
+                        ax.xaxis.set_major_formatter(date_format)
+
+                        # for i in range(4):
+                        #     plt.plot(visuals[key][0][0][:4][i].T.cpu().detach().numpy(),
+                        #              marker='o',
+                        #              linestyle='dashed',
+                        #              linewidth=0.5,
+                        #              markersize=4,
+                        #              label=DME_KEYS[i] if 'A' in key else IMS_KEYS[i])
+
+                        # plt.legend(loc='best')
+                else:
+                    raise NotImplementedError
 
                 wandb.log({**validation_losses, **training_losses})
                 wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
