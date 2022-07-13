@@ -68,7 +68,7 @@ class Domain:
         min = mat.min()
         max = mat.max()
         mat = 0 if max - min == 0 else (mat - min) / (max - min)
-        return min, max, mat
+        return max, min, mat
 
 
 class Extractor:

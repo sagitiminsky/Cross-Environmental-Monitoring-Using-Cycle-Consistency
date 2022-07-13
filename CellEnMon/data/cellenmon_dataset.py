@@ -152,7 +152,7 @@ class CellenmonDataset(BaseDataset):
 
         slice_start_A = 0
         slice_start_B = 0
-        slice_dist = 1000
+        slice_dist = self.opt.slice_dist
         time_stamp_A_start_time = 0
         time_stamp_B_start_time = 1
         dme_vec_len = len(data_dict_A['data'])
@@ -176,8 +176,8 @@ class CellenmonDataset(BaseDataset):
         B = torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]), (4, 1)).T)
 
         if self.opt.is_only_dynamic:
-            A = A.repeat(64, 64).reshape(-1)[:256*256].reshape(1, 256, 256)
-            B = B.repeat(64, 64).reshape(-1)[:256*256].reshape(1, 256, 256)
+            A = A.repeat(1, 64).reshape(1, 256, 256)
+            B = B.repeat(1, 64).reshape(1, 256, 256)
         else:
             A_LEFT, B_LEFT = self.pad_with_respect_to_direction(A, B, LEFT, value_a=data_dict_A['metadata'][0], value_b=data_dict_B['metadata'][0])
             A_UP, B_UP = self.pad_with_respect_to_direction(A_LEFT, B_LEFT, UP, value_a=data_dict_A['metadata'][2],

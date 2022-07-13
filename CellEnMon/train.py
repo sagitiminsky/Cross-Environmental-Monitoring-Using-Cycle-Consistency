@@ -5,16 +5,29 @@ from options.test_options import TestOptions
 import data
 import models
 import wandb
+import matplotlib.pyplot as plt
+import torch
 
 ENABLE_WANDB = True
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
-    "Dymanic and Static" : {0: "first try", 1:"with RR only"}
+    "Dymanic and Static": {0: "first try", 1: "with RR only"}
 }
 
 SELECTED_GROUP_NAME = "Dymanic and Static"
 SELECT_JOB = 1
+INTERCHAGING_DIRECTION_TOGGLE_ENABLED = True
+
+
+def toggle(t):
+    if t == 'AtoB':
+        print(f"Direction:{'BtoA'}")
+        return 'BtoA'
+    else:
+        print(f"Direction:{'AtoB'}")
+        return 'AtoB'
+
 
 if __name__ == '__main__':
     train_opt = TrainOptions().parse()  # get training options
@@ -23,17 +36,20 @@ if __name__ == '__main__':
         wandb.init(project=train_opt.name, entity='sagitiminsky',
                    group=f"exp_{SELECTED_GROUP_NAME}", job_type=GROUPS[SELECTED_GROUP_NAME][SELECT_JOB])
     train_dataset = data.create_dataset(train_opt)  # create a train dataset given opt.dataset_mode and other options
-    validation_dataset = data.create_dataset(validation_opt)  # create a train dataset given opt.dataset_mode and other options
+    validation_dataset = data.create_dataset(
+        validation_opt)  # create a train dataset given opt.dataset_mode and other options
     model = models.create_model(train_opt)  # create a model given opt.model and other options
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
-
+    direction = train_opt.direction
     for epoch in range(train_opt.epoch_count,
                        train_opt.n_epochs + train_opt.n_epochs_decay + 1):  # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
         agg_train_mse_A, agg_train_mse_B = 0, 0
+        if epoch + 1 % 20 == 0:
+            direction = toggle(direction) if INTERCHAGING_DIRECTION_TOGGLE_ENABLED else direction
         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
@@ -43,7 +59,7 @@ if __name__ == '__main__':
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
             # TODO: on setinput we currently take only the data, we should consider using the metadata too
-            model.set_input(data)  # unpack data from dataset and apply preprocessing
+            model.set_input(data, direction)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
 
             # Training losses
@@ -67,7 +83,7 @@ if __name__ == '__main__':
             # Validation losses
             agg_validation_mse_A, agg_validation_mse_B = 0, 0
             for val_data in validation_dataset:
-                model.set_input(val_data)
+                model.set_input(val_data, direction=direction)
                 model.optimize_parameters(is_train=False)  # calculate loss functions
                 validation_losses = model.get_current_losses(is_train=False)
                 agg_validation_mse_A += validation_losses["Validation/mse_A"]
@@ -82,11 +98,23 @@ if __name__ == '__main__':
             training_losses['Train/rmse_A'] = math.sqrt(agg_train_mse_A / len(train_dataset))
             training_losses['Train/rmse_B'] = math.sqrt(agg_train_mse_B / len(train_dataset))
 
+            # Visualize
+            plt.clf()
 
-
+            visuals = model.get_current_visuals()
+            if train_opt.is_only_dynamic:
+                for fig_num, key in enumerate(visuals):
+                    plt.subplot(240 + fig_num + 1)
+                    plt.title(key)
+                    plt.plot(visuals[key][0][0][:4].T.cpu().detach().numpy(),
+                             marker='o',
+                             linestyle='dashed',
+                             linewidth=0.5,
+                             markersize=4)
+            else:
+                raise NotImplementedError
 
             if ENABLE_WANDB:
                 wandb.log({**validation_losses, **training_losses})
-                visuals=model.get_current_visuals()
-                wandb.log({"examples": [wandb.Image(visuals[key], caption=key) for key in visuals]})
-
+                wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
+                wandb.log({"Series": plt})
