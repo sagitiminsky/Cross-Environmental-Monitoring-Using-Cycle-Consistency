@@ -108,6 +108,7 @@ class CycleGANModel(BaseModel):
         self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
         self.inv_distance = 1 / input['distance'].to(self.device)
         self.rain_rate_prob = input['rain_rate'].to(self.device)
+        self.t = input['Time']
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
