@@ -93,7 +93,7 @@ class CycleGANModel(BaseModel):
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
 
-    def set_input(self, input):
+    def set_input(self, input,direction='AtoB'):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
@@ -101,7 +101,7 @@ class CycleGANModel(BaseModel):
 
         The option 'direction' can be used to swap domain A and domain B.
         """
-        AtoB = self.opt.direction == 'AtoB'
+        AtoB = direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
