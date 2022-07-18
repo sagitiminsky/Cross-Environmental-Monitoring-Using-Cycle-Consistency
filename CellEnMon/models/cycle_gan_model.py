@@ -111,6 +111,8 @@ class CycleGANModel(BaseModel):
         self.t = input['Time']
         self.link = input['link']
         self.gague = input['gague']
+        self.data_transformation = input['data_transformation']
+
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""

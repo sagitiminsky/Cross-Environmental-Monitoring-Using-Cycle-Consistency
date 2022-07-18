@@ -112,8 +112,7 @@ class CellenmonDataset(BaseDataset):
         entry_list_dme = list(self.dataset.dme.db_normalized)
         entry_list_ims = list(self.dataset.ims.db_normalized)
 
-        selected_link=entry_list_dme[index % self.dme_len]
-
+        selected_link = entry_list_dme[index % self.dme_len]
 
         data_dict_A = self.dataset.dme.db_normalized[selected_link]
         if self.opt.serial_batches:  # make sure index is within then range
@@ -184,15 +183,18 @@ class CellenmonDataset(BaseDataset):
             A = A.repeat(1, 64).reshape(1, 256, 256)
             B = B.repeat(1, 64).reshape(1, 256, 256)
         else:
-            A_LEFT, B_LEFT = self.pad_with_respect_to_direction(A, B, LEFT, value_a=data_dict_A['metadata'][0], value_b=data_dict_B['metadata'][0])
+            A_LEFT, B_LEFT = self.pad_with_respect_to_direction(A, B, LEFT, value_a=data_dict_A['metadata'][0],
+                                                                value_b=data_dict_B['metadata'][0])
             A_UP, B_UP = self.pad_with_respect_to_direction(A_LEFT, B_LEFT, UP, value_a=data_dict_A['metadata'][2],
                                                             value_b=data_dict_B['metadata'][1])
-            A_RIGHT, B_RIGHT = self.pad_with_respect_to_direction(A_UP, B_UP, RIGHT,value_a=data_dict_A['metadata'][1], value_b=data_dict_B['metadata'][0])
+            A_RIGHT, B_RIGHT = self.pad_with_respect_to_direction(A_UP, B_UP, RIGHT, value_a=data_dict_A['metadata'][1],
+                                                                  value_b=data_dict_B['metadata'][0])
 
-            A, B = self.pad_with_respect_to_direction(A_RIGHT, B_RIGHT, DOWN,value_a=data_dict_A['metadata'][3], value_b=data_dict_B['metadata'][1])
+            A, B = self.pad_with_respect_to_direction(A_RIGHT, B_RIGHT, DOWN, value_a=data_dict_A['metadata'][3],
+                                                      value_b=data_dict_B['metadata'][1])
 
-            A = A.repeat(43,43).reshape(-1)[:256*256].reshape(1,256,256)
-            B = B.repeat(43,43).reshape(-1)[:256*256].reshape(1, 256, 256)
+            A = A.repeat(43, 43).reshape(-1)[:256 * 256].reshape(1, 256, 256)
+            B = B.repeat(43, 43).reshape(-1)[:256 * 256].reshape(1, 256, 256)
 
         return {
             'A': A,
@@ -202,8 +204,11 @@ class CellenmonDataset(BaseDataset):
             'gague': selected_gague,
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata'],
+            'data_transformation': {'link': {'min': data_dict_A['data_min'], 'max': data_dict_A['data_max']},
+                                    'gague': {'min': data_dict_B['data_min'], 'max': data_dict_B['data_max']}},
             'distance': dist,  # in KM
-            'rain_rate': self.func_fit(x=np.average(B), a=self.dataset.a, b=self.dataset.b, c=self.dataset.c)
+            'rain_rate': self.func_fit(x=np.average(B), a=self.dataset.a, b=self.dataset.b,
+                                       c=self.dataset.c)
         }
 
     def func_fit(self, x, a, b, c):
