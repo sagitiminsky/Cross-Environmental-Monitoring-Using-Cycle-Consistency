@@ -20,8 +20,8 @@ GROUPS = {
 SELECTED_GROUP_NAME = "Dymanic and Static"
 SELECT_JOB = 1
 INTERCHANGING_DIRECTION_TOGGLE_ENABLED = True
-DME_KEYS = ['TMmax[dBm]', 'TMmin[dBm]', 'RMmax[dBm]', 'RMmin[dBm]']
-IMS_KEYS = ['RRMax[mm/h]', 'RRMin[mm/h]', 'RRMmax[mm/h]', 'RRMmin[mm/h]']
+DME_KEYS = {1:'TMmax[dBm]', 2:'TMmin[dBm]', 3:'RMmax[dBm]', 4:'RMmin[dBm]'}
+IMS_KEYS = {1:'RRMax[mm/h]', 2:'RRMin[mm/h]', 3:'RRMmax[mm/h]', 4:'RRMmin[mm/h]'}
 
 
 def toggle(t):
@@ -83,7 +83,7 @@ if __name__ == '__main__':
         print('End of epoch %d / %d \t Time Taken: %d sec' % (
             epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
 
-        if epoch % 10 == 0 and direction == train_opt.direction:
+        if epoch % 5 == 0 and direction == train_opt.direction:
             # Validation losses
             agg_validation_mse_A, agg_validation_mse_B = 0, 0
             for val_data in validation_dataset:
@@ -106,31 +106,36 @@ if __name__ == '__main__':
                 visuals = model.get_current_visuals()
                 if train_opt.is_only_dynamic:
                     fig, axs = plt.subplots(2, 4, figsize=(15, 15))
-                    plt.title('Series')
+                    plt.title(f'{model.link}<->{model.gague}')
                     for ax, key in zip(axs.flatten(), visuals):
                         display = [[mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S'))] + data.tolist()
                                    for t, data in
                                    zip(model.t, visuals[key][0][0][:4].T.cpu().detach().numpy())]
 
-                        candlestick_ohlc(ax, display, width=1.5,
-                                         colorup='green', colordown='red', alpha=0.8)
+                        # Plot Data
+                        for i in range(1,5):
+                            ax.plot([x[0] for x in display], [x[i] for x in display],
+                                    marker='o',
+                                    linestyle='dashed',
+                                    linewidth=0.0,
+                                    markersize=4,
+                                    label=DME_KEYS[i] if 'A' in key else IMS_KEYS[i]
+                            )
+                            ax.set_title(key)
+
+                        # Legend
+                        # if 'A' in key:
+                        #     ax.legend(DME_KEYS if 'A' in key else IMS_KEYS)
+
 
                         # Formatting Date
                         date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
                         ax.xaxis.set_major_formatter(date_format)
 
-                        # for i in range(4):
-                        #     plt.plot(visuals[key][0][0][:4][i].T.cpu().detach().numpy(),
-                        #              marker='o',
-                        #              linestyle='dashed',
-                        #              linewidth=0.5,
-                        #              markersize=4,
-                        #              label=DME_KEYS[i] if 'A' in key else IMS_KEYS[i])
-
-                        # plt.legend(loc='best')
+                        plt.legend(loc='best')
                 else:
                     raise NotImplementedError
 
                 wandb.log({**validation_losses, **training_losses})
                 wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
-                wandb.log({"Series": plt})
+                wandb.log({f'{model.link}<->{model.gague}': plt})

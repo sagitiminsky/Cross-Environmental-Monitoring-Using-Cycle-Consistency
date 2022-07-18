@@ -109,6 +109,8 @@ class CycleGANModel(BaseModel):
         self.inv_distance = 1 / input['distance'].to(self.device)
         self.rain_rate_prob = input['rain_rate'].to(self.device)
         self.t = input['Time']
+        self.link = input['link']
+        self.gague = input['gague']
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""

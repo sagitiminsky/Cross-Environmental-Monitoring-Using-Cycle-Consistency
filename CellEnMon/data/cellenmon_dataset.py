@@ -111,13 +111,18 @@ class CellenmonDataset(BaseDataset):
         """
         entry_list_dme = list(self.dataset.dme.db_normalized)
         entry_list_ims = list(self.dataset.ims.db_normalized)
-        data_dict_A = self.dataset.dme.db_normalized[entry_list_dme[index % self.dme_len]]
+
+        selected_link=entry_list_dme[index % self.dme_len]
+
+
+        data_dict_A = self.dataset.dme.db_normalized[selected_link]
         if self.opt.serial_batches:  # make sure index is within then range
             index_B = index % self.ims_len
         else:  # randomize the index for domain B to avoid fixed pairs.
             index_B = random.randint(0, self.ims_len - 1)
 
-        data_dict_B = self.dataset.ims.db_normalized[entry_list_ims[index_B % self.ims_len]]  # needs to be a tensor
+        selected_gague = entry_list_ims[index_B % self.dme_len]
+        data_dict_B = self.dataset.ims.db_normalized[selected_gague]  # needs to be a tensor
 
         """
         dme: a day contains 96 samples
@@ -193,6 +198,8 @@ class CellenmonDataset(BaseDataset):
             'A': A,
             'B': B,
             'Time': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
+            'link': selected_link,
+            'gague': selected_gague,
             'metadata_A': data_dict_A['metadata'],
             'metadata_B': data_dict_B['metadata'],
             'distance': dist,  # in KM
