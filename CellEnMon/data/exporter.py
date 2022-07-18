@@ -12,7 +12,7 @@ from scipy.optimize import curve_fit
 from datetime import time
 from sklearn.model_selection import train_test_split
 
-IS_TRAIN = True
+IS_TRAIN = False
 CROSS_DOMAIN_METADATA_NORMALIZATION=True
 
 

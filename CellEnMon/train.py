@@ -20,8 +20,8 @@ GROUPS = {
 SELECTED_GROUP_NAME = "Dymanic and Static"
 SELECT_JOB = 1
 INTERCHANGING_DIRECTION_TOGGLE_ENABLED = True
-DME_KEYS = {1:'TMmax[dBm]', 2:'TMmin[dBm]', 3:'RMmax[dBm]', 4:'RMmin[dBm]'}
-IMS_KEYS = {1:'RRMax[mm/h]', 2:'RRMin[mm/h]', 3:'RRMmax[mm/h]', 4:'RRMmin[mm/h]'}
+DME_KEYS = {1: 'TMmax[dBm]', 2: 'TMmin[dBm]', 3: 'RMmax[dBm]', 4: 'RMmin[dBm]'}
+IMS_KEYS = {1: 'RRMax[mm/h]', 2: 'RRMin[mm/h]', 3: 'RRMmax[mm/h]', 4: 'RRMmin[mm/h]'}
 
 
 def toggle(t):
@@ -29,6 +29,10 @@ def toggle(t):
         return 'BtoA'
     else:
         return 'AtoB'
+
+
+def min_max_inv_transform(x, mmin, mmax):
+    return x * (mmax - mmin) + mmin
 
 
 if __name__ == '__main__':
@@ -110,23 +114,31 @@ if __name__ == '__main__':
                     for ax, key in zip(axs.flatten(), visuals):
                         display = [[mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S'))] + data.tolist()
                                    for t, data in
-                                   zip(model.t, visuals[key][0][0][:4].T.cpu().detach().numpy())]
+                                   zip(model.t, visuals[key][0][0][:,:4].cpu().detach().numpy())]
 
                         # Plot Data
-                        for i in range(1,5):
-                            ax.plot([x[0] for x in display], [x[i] for x in display],
+                        for i in range(1, 5):
+                            if 'A' in key:
+                                mmin=model.data_transformation['link']['min']
+                                mmax=model.data_transformation['link']['max']
+                                label=DME_KEYS[i]
+                                ax.legend(DME_KEYS)
+                            else:
+                                mmin = model.data_transformation['gague']['min']
+                                mmax = model.data_transformation['gague']['max']
+                                label=IMS_KEYS[i]
+                                ax.legend(IMS_KEYS)
+
+                            ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S')) for t in model.t],
+                                    visuals[key][0][0][:,:4].cpu().detach().numpy(),
+                                    # [min_max_inv_transform(x[i], mmin=mmin, mmax=mmax) for x in display],
                                     marker='o',
                                     linestyle='dashed',
                                     linewidth=0.0,
                                     markersize=4,
-                                    label=DME_KEYS[i] if 'A' in key else IMS_KEYS[i]
-                            )
-                            ax.set_title(key)
-
-                        # Legend
-                        # if 'A' in key:
-                        #     ax.legend(DME_KEYS if 'A' in key else IMS_KEYS)
-
+                                    # label=label
+                                    )
+                            ax.set_title(key, y=0.75)
 
                         # Formatting Date
                         date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
