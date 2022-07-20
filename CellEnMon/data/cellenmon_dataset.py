@@ -183,18 +183,12 @@ class CellenmonDataset(BaseDataset):
             A = A.repeat(1, 64).reshape(1, 256, 256)
             B = B.repeat(1, 64).reshape(1, 256, 256)
         else:
-            A_LEFT, B_LEFT = self.pad_with_respect_to_direction(A, B, LEFT, value_a=data_dict_A['metadata'][0],
-                                                                value_b=data_dict_B['metadata'][0])
-            A_UP, B_UP = self.pad_with_respect_to_direction(A_LEFT, B_LEFT, UP, value_a=data_dict_A['metadata'][2],
-                                                            value_b=data_dict_B['metadata'][1])
-            A_RIGHT, B_RIGHT = self.pad_with_respect_to_direction(A_UP, B_UP, RIGHT, value_a=data_dict_A['metadata'][1],
-                                                                  value_b=data_dict_B['metadata'][0])
 
-            A, B = self.pad_with_respect_to_direction(A_RIGHT, B_RIGHT, DOWN, value_a=data_dict_A['metadata'][3],
-                                                      value_b=data_dict_B['metadata'][1])
+            for a,b in zip(data_dict_A['metadata'],data_dict_B['metadata']):
+                A, B = self.pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
 
-            A = A.repeat(43, 43).reshape(-1)[:256 * 256].reshape(1, 256, 256)
-            B = B.repeat(43, 43).reshape(-1)[:256 * 256].reshape(1, 256, 256)
+            A = A.repeat(1, 32).reshape(1, 256, 256)
+            B = B.repeat(1, 32).reshape(1, 256, 256)
 
         return {
             'A': A,
