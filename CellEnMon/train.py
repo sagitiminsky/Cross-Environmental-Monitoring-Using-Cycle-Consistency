@@ -119,24 +119,22 @@ if __name__ == '__main__':
                         # Plot Data
                         for i in range(1, 5):
                             if 'A' in key:
-                                mmin=model.data_transformation['link']['min']
-                                mmax=model.data_transformation['link']['max']
+                                mmin=model.data_transformation['link']['min'][0].numpy()
+                                mmax=model.data_transformation['link']['max'][0].numpy()
                                 label=DME_KEYS[i]
-                                ax.legend(DME_KEYS)
                             else:
-                                mmin = model.data_transformation['gague']['min']
-                                mmax = model.data_transformation['gague']['max']
+                                mmin = model.data_transformation['gague']['min'][0].numpy()
+                                mmax = model.data_transformation['gague']['max'][0].numpy()
                                 label=IMS_KEYS[i]
-                                ax.legend(IMS_KEYS)
 
+                            data = visuals[key][0][0][:,i-1].cpu().detach().numpy()
                             ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S')) for t in model.t],
-                                    visuals[key][0][0][:,:4].cpu().detach().numpy(),
-                                    # [min_max_inv_transform(x[i], mmin=mmin, mmax=mmax) for x in display],
+                                    min_max_inv_transform(data, mmin=mmin, mmax=mmax),
                                     marker='o',
                                     linestyle='dashed',
                                     linewidth=0.0,
                                     markersize=4,
-                                    # label=label
+                                    label=label
                                     )
                             ax.set_title(key, y=0.75)
 
@@ -144,7 +142,7 @@ if __name__ == '__main__':
                         date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
                         ax.xaxis.set_major_formatter(date_format)
 
-                        plt.legend(loc='best')
+
                 else:
                     raise NotImplementedError
 
