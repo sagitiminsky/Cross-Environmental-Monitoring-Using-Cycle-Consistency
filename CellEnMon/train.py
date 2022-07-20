@@ -136,7 +136,7 @@ if __name__ == '__main__':
                                 markersize=4,
                                 label=label
                                 )
-                        ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n {visuals[key][0][0][0,4:8]}', y=0.75)
+                        ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n {visuals[key][0][0][0,4:8].cpu().numpy()}', y=0.75)
 
                     # Formatting Date
                     date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
