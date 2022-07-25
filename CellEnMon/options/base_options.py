@@ -19,7 +19,7 @@ class BaseOptions():
     def initialize(self, parser):
         """Define the common options that are used in both training and test."""
         # basic parameters
-        parser.add_argument('--is_only_dynamic', default=False, help='indicated if the dataest constain only dynamic data or both dynamic and static dadta')
+        parser.add_argument('--is_only_dynamic', default=True, help='indicated if the dataest constain only dynamic data or both dynamic and static dadta')
         parser.add_argument('--slice_dist', type=int, default=256,
                             help='Number of samples taken for ims and dme data in a single dataload')
         parser.add_argument('--dataroot', required=False, help='supported by the data/exporter class')

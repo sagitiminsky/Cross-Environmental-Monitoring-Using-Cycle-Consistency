@@ -112,6 +112,7 @@ class CycleGANModel(BaseModel):
         self.link = input['link']
         self.gague = input['gague']
         self.data_transformation = input['data_transformation']
+        self.metadata_transformation = input['metadata_transformation']
 
 
     def forward(self):
