@@ -119,6 +119,7 @@ if __name__ == '__main__':
                     N = 4 if train_opt.is_only_dynamic else 8
 
                     # Plot Data
+                    data = visuals[key][0].reshape(256, N).cpu().detach().numpy()
                     for i in range(1, 5):
                         if 'A' in key:
                             mmin = model.data_transformation['link']['min'][0].numpy()
@@ -129,31 +130,34 @@ if __name__ == '__main__':
                             mmax = model.data_transformation['gague']['max'][0].numpy()
                             label = IMS_KEYS[i]
 
-                        data = visuals[key][0].reshape(256, N).cpu().detach().numpy()
-                        metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
-                        metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
-                        metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
-                        metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
+                        data_vector = data[:, i - 1]
 
-                        metadata_inv_zip = [
-                            (metadata_long_max, metadata_long_min),
-                            (metadata_lat_max, metadata_lat_min),
-                            (metadata_long_max, metadata_long_min),
-                            (metadata_lat_max, metadata_lat_min)
-                        ]
+                        if not train_opt.is_only_dynamic:
+                            metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
+                            metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
+                            metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
+                            metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
 
-                        metadata = ["{:.3f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
-                                    (mmin, mmax), x in
-                                    zip(metadata_inv_zip, visuals[key][0][0, 4:8].cpu().detach().numpy())]
+                            metadata_inv_zip = [
+                                (metadata_long_max, metadata_long_min),
+                                (metadata_lat_max, metadata_lat_min),
+                                (metadata_long_max, metadata_long_min),
+                                (metadata_lat_max, metadata_lat_min)
+                            ]
+
+                            metadata = ["{:.3f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
+                                        (mmin, mmax), x in
+                                        zip(metadata_inv_zip, visuals[key][0][0, 4:8].cpu().detach().numpy())]
 
                         ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S')) for t in model.t],
-                                min_max_inv_transform(data, mmin=mmin, mmax=mmax),
+                                min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                 marker='o',
                                 linestyle='dashed',
                                 linewidth=0.0,
                                 markersize=4,
                                 label=label
                                 )
+
                         ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
                                                                            f' {metadata}', y=0.75)
 
