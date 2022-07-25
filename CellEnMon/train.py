@@ -6,7 +6,6 @@ import data
 import models
 import wandb
 import matplotlib.pyplot as plt
-from mpl_finance import candlestick_ohlc
 from datetime import datetime
 import matplotlib.dates as mpl_dates
 
