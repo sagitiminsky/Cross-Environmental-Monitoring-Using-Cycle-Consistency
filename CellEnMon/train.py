@@ -8,13 +8,14 @@ import wandb
 import matplotlib.pyplot as plt
 from datetime import datetime
 import matplotlib.dates as mpl_dates
-plt.switch_backend('agg') #RuntimeError: main thread is not in main loop
+
+plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 
 ENABLE_WANDB = True
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
-    "Dymanic and Static": {0: "first try", 1: "with RR only", 2:"plot with un-norm. values"}
+    "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"}
 }
 
 SELECTED_GROUP_NAME = "Dymanic and Static"
@@ -109,16 +110,13 @@ if __name__ == '__main__':
 
                 visuals = model.get_current_visuals()
                 fig, axs = plt.subplots(2, 4, figsize=(15, 15))
-                title=f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}' \
-                                                                                        f'[T.long, T.lat, R.long, R.lat]'
-
+                title = f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}' \
+                                                                                          f'[T.long, T.lat, R.long, R.lat]'
                 plt.title(title)
 
                 for ax, key in zip(axs.flatten(), visuals):
+
                     N = 4 if train_opt.is_only_dynamic else 8
-                    display = [[mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S'))] + data.tolist()
-                               for t, data in
-                               zip(model.t, visuals[key][0][0][:, :N].cpu().detach().numpy())]
 
                     # Plot Data
                     for i in range(1, 5):
@@ -131,7 +129,7 @@ if __name__ == '__main__':
                             mmax = model.data_transformation['gague']['max'][0].numpy()
                             label = IMS_KEYS[i]
 
-                        data = visuals[key][0][0][:, i - 1].cpu().detach().numpy()
+                        data = visuals[key][0].reshape(256, N).cpu().detach().numpy()
                         metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
                         metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
                         metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
@@ -146,7 +144,7 @@ if __name__ == '__main__':
 
                         metadata = ["{:.3f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
                                     (mmin, mmax), x in
-                                    zip(metadata_inv_zip, visuals[key][0][0][0, 4:8].cpu().detach().numpy())]
+                                    zip(metadata_inv_zip, visuals[key][0][0, 4:8].cpu().detach().numpy())]
 
                         ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S')) for t in model.t],
                                 min_max_inv_transform(data, mmin=mmin, mmax=mmax),
@@ -164,5 +162,5 @@ if __name__ == '__main__':
                     ax.xaxis.set_major_formatter(date_format)
 
                 wandb.log({**validation_losses, **training_losses})
-                wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
+                # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
                 wandb.log({title: plt})
