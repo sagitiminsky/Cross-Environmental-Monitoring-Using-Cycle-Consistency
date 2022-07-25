@@ -15,7 +15,10 @@ pandas
 selenium
 sklearn
 pyproj
-
+ansible==2.4.0.0
+ansible_vault==1.1.2
+scikit-learn==1.1.1
+numpy==1.19.5
 
 #scrapper
 webdriver-manager
@@ -28,10 +31,10 @@ sqlalchemy
 databases
 
 #train
-torch>=1.4.0
-torchvision>=0.5.0
 dominate>=2.4.0
 visdom>=0.1.8.8
+torch==1.10.1
+torchvision==0.11.2
 
 
 html==1.13
