@@ -109,25 +109,45 @@ if __name__ == '__main__':
 
                 visuals = model.get_current_visuals()
                 fig, axs = plt.subplots(2, 4, figsize=(15, 15))
-                plt.title(f'{model.link}<->{model.gague}')
+                title=f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}' \
+                                                                                        f'[T.long, T.lat, R.long, R.lat]'
+
+                plt.title(title)
+
                 for ax, key in zip(axs.flatten(), visuals):
-                    N=4 if train_opt.is_only_dynamic else 8
+                    N = 4 if train_opt.is_only_dynamic else 8
                     display = [[mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S'))] + data.tolist()
                                for t, data in
-                               zip(model.t, visuals[key][0][0][:,:N].cpu().detach().numpy())]
+                               zip(model.t, visuals[key][0][0][:, :N].cpu().detach().numpy())]
 
                     # Plot Data
                     for i in range(1, 5):
                         if 'A' in key:
-                            mmin=model.data_transformation['link']['min'][0].numpy()
-                            mmax=model.data_transformation['link']['max'][0].numpy()
-                            label=DME_KEYS[i]
+                            mmin = model.data_transformation['link']['min'][0].numpy()
+                            mmax = model.data_transformation['link']['max'][0].numpy()
+                            label = DME_KEYS[i]
                         else:
                             mmin = model.data_transformation['gague']['min'][0].numpy()
                             mmax = model.data_transformation['gague']['max'][0].numpy()
-                            label=IMS_KEYS[i]
+                            label = IMS_KEYS[i]
 
-                        data = visuals[key][0][0][:,i-1].cpu().detach().numpy()
+                        data = visuals[key][0][0][:, i - 1].cpu().detach().numpy()
+                        metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
+                        metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
+                        metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
+                        metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
+
+                        metadata_inv_zip = [
+                            (metadata_long_max, metadata_long_min),
+                            (metadata_lat_max, metadata_lat_min),
+                            (metadata_long_max, metadata_long_min),
+                            (metadata_lat_max, metadata_lat_min)
+                        ]
+
+                        metadata = ["{:.3f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
+                                    (mmin, mmax), x in
+                                    zip(metadata_inv_zip, visuals[key][0][0][0, 4:8].cpu().detach().numpy())]
+
                         ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S')) for t in model.t],
                                 min_max_inv_transform(data, mmin=mmin, mmax=mmax),
                                 marker='o',
@@ -136,13 +156,13 @@ if __name__ == '__main__':
                                 markersize=4,
                                 label=label
                                 )
-                        ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n {visuals[key][0][0][0,4:8].cpu().detach().numpy()}', y=0.75)
+                        ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
+                                                                           f' {metadata}', y=0.75)
 
                     # Formatting Date
                     date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
                     ax.xaxis.set_major_formatter(date_format)
 
-
                 wandb.log({**validation_losses, **training_losses})
                 wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
-                wandb.log({f'{model.link}<->{model.gague}': plt})
+                wandb.log({title: plt})

@@ -184,7 +184,7 @@ class CellenmonDataset(BaseDataset):
             B = B.repeat(1, 64).reshape(1, 256, 256)
         else:
 
-            for a,b in zip(data_dict_A['metadata'],data_dict_B['metadata']):
+            for a, b in zip(data_dict_A['metadata'], data_dict_B['metadata']):
                 A, B = self.pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
 
             A = A.repeat(1, 32).reshape(1, 256, 256)
@@ -200,6 +200,10 @@ class CellenmonDataset(BaseDataset):
             'metadata_B': data_dict_B['metadata'],
             'data_transformation': {'link': {'min': data_dict_A['data_min'], 'max': data_dict_A['data_max']},
                                     'gague': {'min': data_dict_B['data_min'], 'max': data_dict_B['data_max']}},
+            'metadata_transformation': {'metadata_lat_max': self.dataset.metadata_lat_max,
+                                        'metadata_lat_min': self.dataset.metadata_lat_min,
+                                        'metadata_long_max': self.dataset.metadata_long_max,
+                                        'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
             'rain_rate': self.func_fit(x=np.average(B), a=self.dataset.a, b=self.dataset.b,
                                        c=self.dataset.c)
