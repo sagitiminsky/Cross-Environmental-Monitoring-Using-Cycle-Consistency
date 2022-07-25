@@ -8,16 +8,17 @@ import wandb
 import matplotlib.pyplot as plt
 from datetime import datetime
 import matplotlib.dates as mpl_dates
+plt.switch_backend('agg') #RuntimeError: main thread is not in main loop
 
 ENABLE_WANDB = True
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
-    "Dymanic and Static": {0: "first try", 1: "with RR only"}
+    "Dymanic and Static": {0: "first try", 1: "with RR only", 2:"plot with un-norm. values"}
 }
 
 SELECTED_GROUP_NAME = "Dymanic and Static"
-SELECT_JOB = 1
+SELECT_JOB = 2
 INTERCHANGING_DIRECTION_TOGGLE_ENABLED = True
 DME_KEYS = {1: 'TMmax[dBm]', 2: 'TMmin[dBm]', 3: 'RMmax[dBm]', 4: 'RMmin[dBm]'}
 IMS_KEYS = {1: 'RRMax[mm/h]', 2: 'RRMin[mm/h]', 3: 'RRMmax[mm/h]', 4: 'RRMmin[mm/h]'}
