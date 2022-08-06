@@ -20,7 +20,6 @@ GROUPS = {
 
 SELECTED_GROUP_NAME = "Dymanic and Static"
 SELECT_JOB = 2
-INTERCHANGING_DIRECTION_TOGGLE_ENABLED = True
 DME_KEYS = {1: 'TMmax[dBm]', 2: 'TMmin[dBm]', 3: 'RMmax[dBm]', 4: 'RMmin[dBm]'}
 IMS_KEYS = {1: 'RRMax[mm/h]', 2: 'RRMin[mm/h]', 3: 'RRMmax[mm/h]', 4: 'RRMmin[mm/h]'}
 
@@ -55,20 +54,18 @@ if __name__ == '__main__':
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
         agg_train_mse_A, agg_train_mse_B = 0, 0
-        if epoch % 2 == 0:
-            direction = toggle(direction) if INTERCHANGING_DIRECTION_TOGGLE_ENABLED else direction
         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
 
         print(f"Direction:{direction}")
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
-            # iter_start_time = time.time()  # timer for computation per iteration
-            # if total_iters % train_opt.print_freq == 0:
-            #     t_data = iter_start_time - iter_data_time
+            iter_start_time = time.time()  # timer for computation per iteration
+            if total_iters % train_opt.print_freq == 0:
+                t_data = iter_start_time - iter_data_time
 
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
 
-            model.set_input(data, direction)  # unpack data from dataset and apply preprocessing
+            model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
 
             # Training losses
@@ -76,23 +73,23 @@ if __name__ == '__main__':
             agg_train_mse_A += training_losses["Train/mse_A"]
             agg_train_mse_B += training_losses["Train/mse_B"]
 
-            # t_comp = (time.time() - iter_start_time) / train_opt.batch_size
+            t_comp = (time.time() - iter_start_time) / train_opt.batch_size
 
-            # if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
-            #     print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-            #     save_suffix = 'iter_%d' % total_iters if train_opt.save_by_iter else 'latest'
-            #     model.save_networks(save_suffix)
+            if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
+                print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
+                save_suffix = 'iter_%d' % total_iters if train_opt.save_by_iter else 'latest'
+                # model.save_networks(save_suffix)
 
             iter_data_time = time.time()
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (
             epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
 
-        if epoch % 5 == 0 and direction == train_opt.direction and False:
+        if epoch % 5 == 0:
             # Validation losses
             agg_validation_mse_A, agg_validation_mse_B = 0, 0
             for val_data in validation_dataset:
-                model.set_input(val_data, direction=direction)
+                model.set_input(val_data)
                 model.optimize_parameters(is_train=False)  # calculate loss functions
                 validation_losses = model.get_current_losses(is_train=False)
                 agg_validation_mse_A += validation_losses["Validation/mse_A"]
