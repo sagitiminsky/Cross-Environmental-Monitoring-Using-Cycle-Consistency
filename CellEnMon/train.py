@@ -11,17 +11,18 @@ import matplotlib.dates as mpl_dates
 
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 
-ENABLE_WANDB = False
+ENABLE_WANDB = True
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
-    "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"}
+    "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"},
+    "Dymanic and Static 4x1 <-> 1x4": {0: "first try"}
 }
 
-SELECTED_GROUP_NAME = "Dymanic and Static"
-SELECT_JOB = 2
+SELECTED_GROUP_NAME = "Dymanic and Static 4x1 <-> 1x4"
+SELECT_JOB = 0
 DME_KEYS = {1: 'TMmax[dBm]', 2: 'TMmin[dBm]', 3: 'RMmax[dBm]', 4: 'RMmin[dBm]'}
-IMS_KEYS = {1: 'RRMax[mm/h]', 2: 'RRMin[mm/h]', 3: 'RRMmax[mm/h]', 4: 'RRMmin[mm/h]'}
+IMS_KEYS = {1: 'RR[mm/h]'}
 
 
 def toggle(t):
@@ -106,14 +107,17 @@ if __name__ == '__main__':
                 plt.clf()
 
                 visuals = model.get_current_visuals()
-                fig, axs = plt.subplots(2, 4, figsize=(15, 15))
+                fig, axs = plt.subplots(2, 3, figsize=(15, 15))
                 title = f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}' \
                                                                                           f'[T.long, T.lat, R.long, R.lat]'
                 plt.title(title)
 
                 for ax, key in zip(axs.flatten(), visuals):
 
-                    N = 4 if train_opt.is_only_dynamic else 8
+                    if train_opt.is_only_dynamic:
+                        N = 4 if 'A' in key else 1
+                    else:
+                        raise NotImplemented
 
                     # Plot Data
                     data = visuals[key][0].reshape(256, N).cpu().detach().numpy()
@@ -122,12 +126,12 @@ if __name__ == '__main__':
                             mmin = model.data_transformation['link']['min'][0].numpy()
                             mmax = model.data_transformation['link']['max'][0].numpy()
                             label = DME_KEYS[i]
+                            data_vector = data[:, i - 1]
                         else:
                             mmin = model.data_transformation['gague']['min'][0].numpy()
                             mmax = model.data_transformation['gague']['max'][0].numpy()
-                            label = IMS_KEYS[i]
-
-                        data_vector = data[:, i - 1]
+                            label = IMS_KEYS[1]
+                            data_vector = data.T[0]
 
                         if not train_opt.is_only_dynamic:
                             metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
