@@ -76,8 +76,6 @@ class CycleGANModel(BaseModel):
                                    opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:
-            if opt.lambda_identity > 0.0:  # only works when input and output images have the same number of channels
-                assert (opt.input_nc == opt.output_nc)
             self.fake_A_pool = SignalPool(opt.pool_size)  # create signal buffer to store previously generated signals
             self.fake_B_pool = SignalPool(opt.pool_size)  # create signal buffer to store previously generated signals
             # define loss functions
