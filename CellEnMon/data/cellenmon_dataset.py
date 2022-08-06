@@ -180,8 +180,8 @@ class CellenmonDataset(BaseDataset):
         B = torch.Tensor(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]))
 
         if self.opt.is_only_dynamic:
-            A = A.repeat(1, 1).reshape(4, 256)
-            B = B.repeat(1, 1)
+            A = A.reshape(4, 256)
+            B = B.reshape(1, 256)
         else:
 
             for a, b in zip(data_dict_A['metadata'], data_dict_B['metadata']):
