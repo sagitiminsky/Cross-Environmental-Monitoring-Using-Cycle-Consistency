@@ -177,11 +177,11 @@ class CellenmonDataset(BaseDataset):
         slice_end_B = slice_start_B + slice_dist
 
         A = torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A]))
-        B = torch.Tensor(np.tile(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]), (4, 1)).T)
+        B = torch.Tensor(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]))
 
         if self.opt.is_only_dynamic:
-            A = A.repeat(1, 1).reshape(4, 256)
-            B = B.repeat(1, 1).reshape(4, 256)
+            A = A.reshape(4, 256)
+            B = B.reshape(1, 256)
         else:
 
             for a, b in zip(data_dict_A['metadata'], data_dict_B['metadata']):

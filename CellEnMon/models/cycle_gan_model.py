@@ -33,7 +33,7 @@ class CycleGANModel(BaseModel):
         if is_train:
             parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
             parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
-            parser.add_argument('--lambda_identity', type=float, default=0.5,
+            parser.add_argument('--lambda_identity', type=float, default=0.0,
                                 help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
 
         return parser
@@ -64,20 +64,18 @@ class CycleGANModel(BaseModel):
         # define networks (both Generators and discriminators)
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.netG_A = define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG, opt.norm,
+        self.netG_A = define_G(opt.input_nc_A, opt.output_nc_A, opt.ngf, opt.netG, opt.norm,
                                not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
-        self.netG_B = define_G(opt.output_nc, opt.input_nc, opt.ngf, opt.netG, opt.norm,
+        self.netG_B = define_G(opt.input_nc_B, opt.output_nc_B, opt.ngf, opt.netG, opt.norm,
                                not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define discriminators
-            self.netD_A = define_D(opt.output_nc, opt.ndf, opt.netD,
+            self.netD_A = define_D(opt.input_nc_B, opt.ndf, opt.netD,
                                    opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
-            self.netD_B = define_D(opt.input_nc, opt.ndf, opt.netD,
+            self.netD_B = define_D(opt.input_nc_A, opt.ndf, opt.netD,
                                    opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:
-            if opt.lambda_identity > 0.0:  # only works when input and output images have the same number of channels
-                assert (opt.input_nc == opt.output_nc)
             self.fake_A_pool = SignalPool(opt.pool_size)  # create signal buffer to store previously generated signals
             self.fake_B_pool = SignalPool(opt.pool_size)  # create signal buffer to store previously generated signals
             # define loss functions
@@ -93,7 +91,7 @@ class CycleGANModel(BaseModel):
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
 
-    def set_input(self, input,direction='AtoB'):
+    def set_input(self, input, direction='AtoB'):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
@@ -101,7 +99,7 @@ class CycleGANModel(BaseModel):
 
         The option 'direction' can be used to swap domain A and domain B.
         """
-        AtoB = direction == 'AtoB'
+        AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
@@ -113,7 +111,6 @@ class CycleGANModel(BaseModel):
         self.gague = input['gague']
         self.data_transformation = input['data_transformation']
         self.metadata_transformation = input['metadata_transformation']
-
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
@@ -181,7 +178,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
         # combined loss and calculate gradients
         self.loss_G = (
-                                  self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B) * self.rain_rate_prob  # * self.inv_distance
+                              self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B) * self.rain_rate_prob  # * self.inv_distance
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)
