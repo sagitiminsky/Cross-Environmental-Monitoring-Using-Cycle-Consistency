@@ -330,6 +330,13 @@ class ResnetGenerator(nn.Module):
             n_blocks (int)      -- the number of ResNet blocks
             padding_type (str)  -- the name of padding layer in conv layers: reflect | replicate | zero
         """
+
+
+
+        input_nc = 4 if AtoB else 1
+        output_nc = 1 if AtoB else 4
+
+
         assert(n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
         if type(norm_layer) == functools.partial:
