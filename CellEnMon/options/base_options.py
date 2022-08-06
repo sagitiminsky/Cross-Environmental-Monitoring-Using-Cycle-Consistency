@@ -19,7 +19,7 @@ class BaseOptions():
     def initialize(self, parser):
         """Define the common options that are used in both training and test."""
         # basic parameters
-        is_only_dynamic=False
+        is_only_dynamic=True
         parser.add_argument('--is_only_dynamic', default=is_only_dynamic, help='indicated if the dataest constain only dynamic data or both dynamic and static dadta')
         parser.add_argument('--slice_dist', type=int, default=256,
                             help='Number of samples taken for ims and dme data in a single dataload')
@@ -30,8 +30,10 @@ class BaseOptions():
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='cycle_gan', help='chooses which model to use. [cycle_gan]')
-        parser.add_argument('--input_nc', type=int, default=4 if is_only_dynamic else 8, help='# of input channels')
-        parser.add_argument('--output_nc', type=int, default=4 if is_only_dynamic else 8, help='# of output channels')
+        parser.add_argument('--input_nc_A', type=int, default=4 if is_only_dynamic else 8, help='# of input channels')
+        parser.add_argument('--output_nc_A', type=int, default=1 if is_only_dynamic else 8, help='# of output channels')
+        parser.add_argument('--input_nc_B', type=int, default=1 if is_only_dynamic else 8, help='# of input channels')
+        parser.add_argument('--output_nc_B', type=int, default=4 if is_only_dynamic else 8, help='# of output channels')
         parser.add_argument('--ngf', type=int, default=64, help='# of gen filters in the last conv layer')
         parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in the first conv layer')
         parser.add_argument('--netD', type=str, default='n_layers',
