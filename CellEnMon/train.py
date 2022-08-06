@@ -15,14 +15,14 @@ ENABLE_WANDB = True
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
-    "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"}
+    "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"},
+    "Dymanic and Static 4x1 <-> 1x4": {0: "first try"}
 }
 
-SELECTED_GROUP_NAME = "Dymanic and Static"
-SELECT_JOB = 2
-INTERCHANGING_DIRECTION_TOGGLE_ENABLED = True
+SELECTED_GROUP_NAME = "Dymanic and Static 4x1 <-> 1x4"
+SELECT_JOB = 0
 DME_KEYS = {1: 'TMmax[dBm]', 2: 'TMmin[dBm]', 3: 'RMmax[dBm]', 4: 'RMmin[dBm]'}
-IMS_KEYS = {1: 'RRMax[mm/h]', 2: 'RRMin[mm/h]', 3: 'RRMmax[mm/h]', 4: 'RRMmin[mm/h]'}
+IMS_KEYS = {1: 'RR[mm/h]'}
 
 
 def toggle(t):
@@ -55,8 +55,6 @@ if __name__ == '__main__':
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
         agg_train_mse_A, agg_train_mse_B = 0, 0
-        if epoch % 20 == 0:
-            direction = toggle(direction) if INTERCHANGING_DIRECTION_TOGGLE_ENABLED else direction
         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
 
         print(f"Direction:{direction}")
@@ -67,8 +65,8 @@ if __name__ == '__main__':
 
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
-            # TODO: on setinput we currently take only the data, we should consider using the metadata too
-            model.set_input(data, direction)  # unpack data from dataset and apply preprocessing
+
+            model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
 
             # Training losses
@@ -78,21 +76,21 @@ if __name__ == '__main__':
 
             t_comp = (time.time() - iter_start_time) / train_opt.batch_size
 
-            # if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
-            #     print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-            #     save_suffix = 'iter_%d' % total_iters if train_opt.save_by_iter else 'latest'
-            #     model.save_networks(save_suffix)
+            if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
+                print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
+                save_suffix = 'iter_%d' % total_iters if train_opt.save_by_iter else 'latest'
+                # model.save_networks(save_suffix)
 
             iter_data_time = time.time()
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (
             epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
 
-        if epoch % 5 == 0 and direction == train_opt.direction:
+        if epoch % 5 == 0:
             # Validation losses
             agg_validation_mse_A, agg_validation_mse_B = 0, 0
             for val_data in validation_dataset:
-                model.set_input(val_data, direction=direction)
+                model.set_input(val_data)
                 model.optimize_parameters(is_train=False)  # calculate loss functions
                 validation_losses = model.get_current_losses(is_train=False)
                 agg_validation_mse_A += validation_losses["Validation/mse_A"]
@@ -109,14 +107,17 @@ if __name__ == '__main__':
                 plt.clf()
 
                 visuals = model.get_current_visuals()
-                fig, axs = plt.subplots(2, 4, figsize=(15, 15))
+                fig, axs = plt.subplots(2, 3, figsize=(15, 15))
                 title = f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}' \
                                                                                           f'[T.long, T.lat, R.long, R.lat]'
                 plt.title(title)
 
                 for ax, key in zip(axs.flatten(), visuals):
 
-                    N = 4 if train_opt.is_only_dynamic else 8
+                    if train_opt.is_only_dynamic:
+                        N = 4 if 'A' in key else 1
+                    else:
+                        raise NotImplemented
 
                     # Plot Data
                     data = visuals[key][0].reshape(256, N).cpu().detach().numpy()
@@ -125,12 +126,12 @@ if __name__ == '__main__':
                             mmin = model.data_transformation['link']['min'][0].numpy()
                             mmax = model.data_transformation['link']['max'][0].numpy()
                             label = DME_KEYS[i]
+                            data_vector = data[:, i - 1]
                         else:
                             mmin = model.data_transformation['gague']['min'][0].numpy()
                             mmax = model.data_transformation['gague']['max'][0].numpy()
-                            label = IMS_KEYS[i]
-
-                        data_vector = data[:, i - 1]
+                            label = IMS_KEYS[1]
+                            data_vector = data.T[0]
 
                         if not train_opt.is_only_dynamic:
                             metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
