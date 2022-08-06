@@ -369,7 +369,6 @@ class ResnetGenerator(nn.Module):
 
     def forward(self, input):
         """Standard forward"""
-        print(input.shape)
         return self.model(input)
 
 
