@@ -3,6 +3,10 @@ import numpy as np
 import folium
 from pathlib import Path
 import sys
+import pandas as pd
+import json
+import vincent
+
 
 class Visualizer:
     '''Create a Folium interactive map of cmls:
@@ -43,7 +47,7 @@ class Visualizer:
         if len(instance_arr)==6:
             #dme
             return {
-                "ID": f"{instance_arr[0]}-{instance[3]}",
+                "ID": f"{instance_arr[0]}-{instance_arr[3]}",
                 "Tx Site Latitude":float(instance_arr[1]),
                 "Tx Site Longitude":float(instance_arr[2]),
                 "Rx Site Latitude": float(instance_arr[4]),
@@ -97,6 +101,7 @@ class Visualizer:
                     lon_max=max(lon_max, float(instace_dict["Tx Site Longitude"]),float(instace_dict["Rx Site Longitude"]))
 
 
+                    # metadata
                     folium.PolyLine([(instace_dict['Rx Site Latitude'],
                                       instace_dict['Rx Site Longitude']),
                                      (instace_dict['Tx Site Latitude'],
@@ -105,6 +110,34 @@ class Visualizer:
                                     opacity=1.0,
                                     popup=f"ID:{instace_dict['ID']}"
                                     ).add_to(map_1)
+
+                    ## create json of each cml timeseries for plotting
+
+                    df_ts= pd.read_csv(data_path.joinpath(str(instance)))
+                    df_ts['Time'] = pd.to_datetime(df_ts['Time'])
+                    df_ts.set_index('Time', inplace=True, drop=True)
+                    timeseries = vincent.Line(
+                        df_ts,
+                        height=350,
+                        width=750).axis_titles(
+                        x='Time',
+                        y='MTSL-mTSL-MRSL-mRSL (dBm)' if station_type=="link" else 'RainRate[mm/h]'
+                    )
+                    timeseries.legend(title=instace_dict["ID"])
+                    data_json = json.loads(timeseries.to_json())
+
+                    v = folium.features.Vega(data_json, width=1000, height=400)
+                    p = folium.Popup(max_width=1150)
+
+                    pl = folium.PolyLine([(instace_dict['Rx Site Latitude'],
+                                           instace_dict['Rx Site Longitude']),
+                                          (instace_dict['Tx Site Latitude'],
+                                           instace_dict['Tx Site Longitude'])],
+                                         color=self.color_of_links if station_type=="link" else self.color_of_gauges,
+                                         opacity=0.6
+                                         ).add_to(map_1)
+                    pl.add_child(p)
+                    p.add_child(v)
 
         # plot gridlines
         lats = np.linspace(lat_min, lat_max, self.num_of_gridlines)
@@ -126,6 +159,8 @@ class Visualizer:
                 else:
                     folium.PolyLine(g, color="black", weight=0.5,
                                     opacity=0.5, popup=str(round(g[0][1], 5))).add_to(map_1)
+
+
 
         map_1.save((str(self.out_path.joinpath(self.map_name))))
 
