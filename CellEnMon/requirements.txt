@@ -39,6 +39,7 @@ dominate>=2.4.0
 visdom>=0.1.8.8
 torch==1.10.1
 torchvision==0.11.2
+plotly
 
 
 html==1.13

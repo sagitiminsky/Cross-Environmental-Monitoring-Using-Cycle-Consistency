@@ -135,15 +135,18 @@ class CellenmonDataset(BaseDataset):
         #### Station Distance ####
         ##########################
 
-        dme_station_coo = self.calc_dist_and_center_point(x1_longitude=data_dict_A["metadata"][0],
-                                                          x1_latitude=data_dict_A["metadata"][1],
-                                                          x2_longitude=data_dict_A["metadata"][2],
-                                                          x2_latitude=data_dict_A["metadata"][3])
+        link_metadata = self.dataset.dme.db[selected_link]['metadata']
+        gauge_metadata=self.dataset.ims.db[selected_gague]['metadata']
 
-        ims_station_coo = self.calc_dist_and_center_point(x1_longitude=data_dict_B["metadata"][0],
-                                                          x1_latitude=data_dict_B["metadata"][1],
-                                                          x2_longitude=data_dict_B["metadata"][0],
-                                                          x2_latitude=data_dict_B["metadata"][1])
+        dme_station_coo = self.calc_dist_and_center_point(x1_longitude=link_metadata[0],
+                                                          x1_latitude=link_metadata[1],
+                                                          x2_longitude=link_metadata[2],
+                                                          x2_latitude=link_metadata[3])
+
+        ims_station_coo = self.calc_dist_and_center_point(x1_longitude=gauge_metadata[0],
+                                                          x1_latitude=gauge_metadata[1],
+                                                          x2_longitude=gauge_metadata[0],
+                                                          x2_latitude=gauge_metadata[1])
 
         dist = self.calc_dist_and_center_point(x1_longitude=ims_station_coo["center"]["longitude"],
                                                x1_latitude=ims_station_coo["center"]["latitude"],
@@ -190,14 +193,23 @@ class CellenmonDataset(BaseDataset):
             A = A.repeat(1, 1).reshape(8, 256)
             B = B.repeat(1, 1).reshape(8, 256)
 
+
+
         return {
             'A': A,
             'B': B,
             'Time': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
             'link': selected_link,
+            'link_norm_metadata': data_dict_A["norm_metadata"],
+            'link_metadata':link_metadata,
+            'link_full_name': f'{selected_link.split("-")[0]}-{link_metadata[0]}-{link_metadata[1]}-{selected_link.split("-")[1]}-{link_metadata[2]}-{link_metadata[3]}',
+            'link_center_metadata': dme_station_coo["center"],
             'gague': selected_gague,
-            'metadata_A': data_dict_A['metadata'],
-            'metadata_B': data_dict_B['metadata'],
+            'gague_norm_metadata': data_dict_B["norm_metadata"],
+            'gague_metadata': gauge_metadata,
+            'gague_full_name': f'{selected_gague}-{gauge_metadata[0]}-{gauge_metadata[1]}',
+            'metadata_A': link_metadata,
+            'metadata_B': gauge_metadata,
             'data_transformation': {'link': {'min': data_dict_A['data_min'], 'max': data_dict_A['data_max']},
                                     'gague': {'min': data_dict_B['data_min'], 'max': data_dict_B['data_max']}},
             'metadata_transformation': {'metadata_lat_max': self.dataset.metadata_lat_max,

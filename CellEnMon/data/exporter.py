@@ -43,7 +43,7 @@ class Domain:
 
     def metadata_normalization(self):
         for station_name, value in self.db.items():
-            self.db_normalized[station_name]["metadata"] = self.min_max_norm(value['metadata'])
+            self.db_normalized[station_name]["norm_metadata"] = self.min_max_norm(value['metadata'])
 
     def metadata_min_max_finder(self, metadata_vector):
         self.metadata_long_max = max(self.metadata_long_max, metadata_vector[0], metadata_vector[2])
@@ -52,11 +52,12 @@ class Domain:
         self.metadata_lat_min = min(self.metadata_lat_min, metadata_vector[1], metadata_vector[3])
 
     def min_max_norm(self, x):
-        x[0] = self.norm(x[0], self.metadata_long_min, self.metadata_long_max)
-        x[1] = self.norm(x[1], self.metadata_lat_min, self.metadata_lat_max)
-        x[2] = self.norm(x[2], self.metadata_long_min, self.metadata_long_max)
-        x[3] = self.norm(x[3], self.metadata_lat_min, self.metadata_lat_max)
-        return x
+        y=[0,0,0,0]
+        y[0] = self.norm(x[0], self.metadata_long_min, self.metadata_long_max)
+        y[1] = self.norm(x[1], self.metadata_lat_min, self.metadata_lat_max)
+        y[2] = self.norm(x[2], self.metadata_long_min, self.metadata_long_max)
+        y[3] = self.norm(x[3], self.metadata_lat_min, self.metadata_lat_max)
+        return y
 
     def norm(self, x, mmin, mmax):
         if mmin == mmax:
