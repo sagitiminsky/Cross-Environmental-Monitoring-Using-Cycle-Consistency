@@ -107,8 +107,18 @@ class CycleGANModel(BaseModel):
         self.inv_distance = 1 / input['distance'].to(self.device)
         self.rain_rate_prob = input['rain_rate'].to(self.device)
         self.t = input['Time']
+
         self.link = input['link']
+        self.link_norm_metadata=input['link_norm_metadata']
+        self.link_metadata=input['link_metadata']
+        self.link_full_name=input['link_full_name'][0]
+        self.link_center_metadata=input['link_center_metadata']
+
         self.gague = input['gague']
+        self.gague_norm_metadata=input['gague_norm_metadata']
+        self.gague_metadata=input['gague_metadata']
+        self.gague_full_name=input['gague_full_name'][0]
+
         self.data_transformation = input['data_transformation']
         self.metadata_transformation = input['metadata_transformation']
 
