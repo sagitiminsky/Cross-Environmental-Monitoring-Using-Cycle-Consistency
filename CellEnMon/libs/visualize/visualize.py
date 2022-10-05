@@ -30,14 +30,16 @@ class Visualizer:
     def __init__(self, type='processed'):
         self.dates_range = "01012013_01022013"
         self.map_name = f"{self.dates_range}.html"
-        self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/{type}")
-        self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/{type}")
+        self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
+        self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
+        self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict")
         self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}/{self.map_name}")
         if not os.path.exists(self.out_path):
             os.makedirs(self.out_path)
 
         self.color_of_links = 'red'
         self.color_of_gauges = 'blue'
+        self.color_of_produced_gauges = 'green'
         self.gridlines_on = False
         self.num_of_gridlines = 30
 
@@ -57,7 +59,7 @@ class Visualizer:
         elif len(instance_arr) == 5:
             # ims
             return {
-                "ID": f"{instance_arr[2]}",
+                "ID": f"{instance_arr[:3]}",
                 "Tx Site Latitude": float(instance_arr[3]),
                 "Tx Site Longitude": float(instance_arr[4].replace(".csv", "")),
                 "Rx Site Latitude": float(instance_arr[3]),
@@ -70,15 +72,22 @@ class Visualizer:
     def draw_cml_map(self):
         num_links_map = len(os.listdir(self.data_path_dme))
         num_gagues_map = len(os.listdir(self.data_path_ims))
-        station_type = {
+        try:
+            num_produced_gagues_map = len(os.listdir(self.data_path_produced_ims))
+        except FileNotFoundError:
+            num_produced_gagues_map = 0
+
+        station_types = {
             "link": self.data_path_dme,
-            "gauge": self.data_path_ims
+            "gauge": self.data_path_ims,
+            "produced_gague": self.data_path_produced_ims
         }
         num_stations_map = num_gagues_map + num_links_map
 
         print(f"Number of links on map:{num_links_map}")
         print(f"Number of gauges on map:{num_gagues_map}")
         print(f"Number of stations on map:{num_stations_map}")
+        print(f"Number of produced gagues on map:{num_produced_gagues_map}")
 
         grid = []
 
@@ -92,7 +101,7 @@ class Visualizer:
         lat_max = -sys.maxsize
         lon_max = -sys.maxsize
 
-        for station_type, data_path in station_type.items():
+        for station_type, data_path in station_types.items():
             for instance in os.listdir(data_path):
                 if ".csv" in instance:
                     instace_dict = self.parse_instances(instance)
@@ -106,11 +115,18 @@ class Visualizer:
                                   float(instace_dict["Rx Site Longitude"]))
 
                     # metadata
+                    if station_type=="link":
+                        color=self.color_of_links
+                    elif station_type=="gauge":
+                        color=self.color_of_gauges
+                    else:
+                        color=self.color_of_produced_gauges
+
                     folium.PolyLine([(instace_dict['Rx Site Latitude'],
                                       instace_dict['Rx Site Longitude']),
                                      (instace_dict['Tx Site Latitude'],
                                       instace_dict['Tx Site Longitude'])],
-                                    color=self.color_of_links if station_type == "link" else self.color_of_gauges,
+                                    color=color,
                                     opacity=1.0,
                                     popup=f"ID:{instace_dict['ID']}"
                                     ).add_to(map_1)
@@ -137,7 +153,7 @@ class Visualizer:
                                            instace_dict['Rx Site Longitude']),
                                           (instace_dict['Tx Site Latitude'],
                                            instace_dict['Tx Site Longitude'])],
-                                         color=self.color_of_links if station_type == "link" else self.color_of_gauges,
+                                         color=color,
                                          opacity=0.6
                                          ).add_to(map_1)
                     pl.add_child(p)
