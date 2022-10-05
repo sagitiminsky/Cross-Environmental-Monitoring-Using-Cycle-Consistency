@@ -20,6 +20,10 @@ ansible_vault==1.1.2
 scikit-learn==1.1.1
 numpy==1.19.5
 
+#visualize
+folium
+vincent
+
 #scrapper
 webdriver-manager
 google-cloud-storage==1.41.1

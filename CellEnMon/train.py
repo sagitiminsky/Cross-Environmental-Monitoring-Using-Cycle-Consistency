@@ -16,11 +16,17 @@ GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
     "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"},
-    "Dymanic and Static 4x1 <-> 1x4": {0: "first try"}
+    "Dymanic and Static 4x1 <-> 1x4": {0: "first try"},
+    "Dynamic only": {0: "first try"},
+    "Dynamic and Static": {0: "first try"}
 }
 
-SELECTED_GROUP_NAME = "Dymanic and Static 4x1 <-> 1x4"
+SELECTED_GROUP_NAME = "Dynamic only"
 SELECT_JOB = 0
+
+
+
+
 DME_KEYS = {1: 'TMmax[dBm]', 2: 'TMmin[dBm]', 3: 'RMmax[dBm]', 4: 'RMmin[dBm]'}
 IMS_KEYS = {1: 'RR[mm/h]'}
 
