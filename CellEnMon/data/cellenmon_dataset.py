@@ -112,15 +112,10 @@ class CellenmonDataset(BaseDataset):
         entry_list_dme = list(self.dataset.dme.db_normalized)
         entry_list_ims = list(self.dataset.ims.db_normalized)
 
-        selected_link = entry_list_dme[index % self.dme_len]
-
+        selected_link = entry_list_dme[random.randint(0, self.dme_len - 1)]
         data_dict_A = self.dataset.dme.db_normalized[selected_link]
-        if self.opt.serial_batches:  # make sure index is within then range
-            index_B = index % self.ims_len
-        else:  # randomize the index for domain B to avoid fixed pairs.
-            index_B = random.randint(0, self.ims_len - 1)
 
-        selected_gague = entry_list_ims[index_B % self.dme_len]
+        selected_gague = entry_list_ims[random.randint(0, self.ims_len - 1)]
         data_dict_B = self.dataset.ims.db_normalized[selected_gague]  # needs to be a tensor
 
         """
