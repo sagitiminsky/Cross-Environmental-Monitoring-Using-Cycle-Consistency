@@ -14,7 +14,7 @@ from datetime import datetime
 import matplotlib.dates as mpl_dates
 import config
 import numpy as np
-
+from libs.visualize.visualize import Visualizer
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 
 ENABLE_WANDB = True
@@ -54,9 +54,13 @@ if __name__ == '__main__':
     if ENABLE_WANDB:
         wandb.init(project=train_opt.name, entity='sagitiminsky',
                    group=f"exp_{SELECTED_GROUP_NAME}", job_type=GROUPS[SELECTED_GROUP_NAME][SELECT_JOB])
+    print(f'💪Train💪')
     train_dataset = data.create_dataset(train_opt)  # create a train dataset given opt.dataset_mode and other options
+    print(f'\n\n👀Validation👀')
     validation_dataset = data.create_dataset(
         validation_opt)  # create a train dataset given opt.dataset_mode and other options
+
+
     model = models.create_model(train_opt)  # create a model given opt.model and other options
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
@@ -189,7 +193,7 @@ if __name__ == '__main__':
 
                     if 'fake_B' == key:
                         if train_opt.is_only_dynamic:
-                            file_path=f'{folder}/PRODUCED-{model.link[0]}-{model.link_center_metadata["longitude"][0]}-{model.link_center_metadata["latitude"][0]}.csv'
+                            file_path=f'{folder}/PRODUCED-{model.link[0]}-{model.link_center_metadata["longitude"][0]:.3f}-{model.link_center_metadata["latitude"][0]:.3f}.csv'
                         else:
                             raise NotImplemented
                         with open(file_path, "w") as file:
@@ -200,6 +204,9 @@ if __name__ == '__main__':
                             fmt = ",".join(["%s"]*(c.shape[1]))
                             np.savetxt(file, c, fmt=fmt, header=headers, comments='')
 
+                path_to_html = Visualizer().out_path
+
                 wandb.log({**validation_losses, **training_losses})
                 # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
                 wandb.log({title: plt})
+                wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})

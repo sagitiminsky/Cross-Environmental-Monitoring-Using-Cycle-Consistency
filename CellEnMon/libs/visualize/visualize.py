@@ -27,14 +27,14 @@ class Visualizer:
     for each of them while drawing them in different colors.
     '''
 
-    def __init__(self, type='processed'):
+    def __init__(self):
         self.dates_range = "01012013_01022013"
-        self.map_name = f"{self.dates_range}.html"
+        self.map_name = "south_israel.html"
         self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
         self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
         self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict")
         self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}/{self.map_name}")
-        if not os.path.exists(self.out_path):
+        if not os.path.exists(Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")):
             os.makedirs(self.out_path)
 
         self.color_of_links = 'red'
@@ -122,15 +122,6 @@ class Visualizer:
                     else:
                         color=self.color_of_produced_gauges
 
-                    folium.PolyLine([(instace_dict['Rx Site Latitude'],
-                                      instace_dict['Rx Site Longitude']),
-                                     (instace_dict['Tx Site Latitude'],
-                                      instace_dict['Tx Site Longitude'])],
-                                    color=color,
-                                    opacity=1.0,
-                                    popup=f"ID:{instace_dict['ID']}"
-                                    ).add_to(map_1)
-
                     ## create json of each cml timeseries for plotting
 
                     df_ts = pd.read_csv(data_path.joinpath(str(instance)))
@@ -138,24 +129,32 @@ class Visualizer:
                     df_ts.set_index('Time', inplace=True, drop=True)
                     timeseries = vincent.Line(
                         df_ts,
-                        height=350,
-                        width=750).axis_titles(
+                        height=150,
+                        width=450).axis_titles(
                         x='Time',
                         y='MTSL-mTSL-MRSL-mRSL (dBm)' if station_type == "link" else 'RainRate[mm/h]'
                     )
                     timeseries.legend(title=instace_dict["ID"])
                     data_json = json.loads(timeseries.to_json())
 
-                    v = folium.features.Vega(data_json, width=1000, height=400)
+                    v = folium.features.Vega(data_json, width=600, height=200)
                     p = folium.Popup(max_width=1150)
 
-                    pl = folium.PolyLine([(instace_dict['Rx Site Latitude'],
-                                           instace_dict['Rx Site Longitude']),
-                                          (instace_dict['Tx Site Latitude'],
-                                           instace_dict['Tx Site Longitude'])],
-                                         color=color,
-                                         opacity=0.6
-                                         ).add_to(map_1)
+                    if station_type == "link":
+                        pl = folium.PolyLine([(instace_dict['Rx Site Latitude'],
+                                               instace_dict['Rx Site Longitude']),
+                                              (instace_dict['Tx Site Latitude'],
+                                               instace_dict['Tx Site Longitude'])],
+                                             color=color,
+                                             opacity=1.0
+                                             ).add_to(map_1)
+                    else:
+                        pl=folium.Marker(
+                            location=[instace_dict['Rx Site Latitude'], instace_dict['Rx Site Longitude']],
+                            popup=folium.Popup(f"ID:{instace_dict['ID']}"),
+                            icon=folium.Icon(color=color, prefix='fa', icon='circle')
+                        ).add_to(map_1)
+
                     pl.add_child(p)
                     p.add_child(v)
 
@@ -180,7 +179,7 @@ class Visualizer:
                     folium.PolyLine(g, color="black", weight=0.5,
                                     opacity=0.5, popup=str(round(g[0][1], 5))).add_to(map_1)
 
-        map_1.save((str(self.out_path.joinpath(self.map_name))))
+        map_1.save(self.out_path)
 
         print(f"Map under the name {self.map_name} was generated")
 
