@@ -65,9 +65,9 @@ class CycleGANModel(BaseModel):
         # The naming is different from those used in the paper.
         # Code (vs. paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
         self.netG_A = define_G(opt.input_nc_A, opt.output_nc_A, opt.ngf, opt.netG, opt.norm,
-                               not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+                               not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids,direction="AtoB")
         self.netG_B = define_G(opt.input_nc_B, opt.output_nc_B, opt.ngf, opt.netG, opt.norm,
-                               not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+                               not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids, direction="BtoA")
 
         if self.isTrain:  # define discriminators
             self.netD_A = define_D(opt.input_nc_B, opt.ndf, opt.netD,
@@ -105,7 +105,7 @@ class CycleGANModel(BaseModel):
         self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
         self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
         self.inv_distance = 1 / input['distance'].to(self.device)
-        self.rain_rate_prob = input['rain_rate'].to(self.device)
+        self.rain_rate_prob = 1 / input['rain_rate'].to(self.device)
         self.t = input['Time']
 
         self.link = input['link']
@@ -147,7 +147,7 @@ class CycleGANModel(BaseModel):
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
-        loss_D = (loss_D_real + loss_D_fake) * self.rain_rate_prob  # self.inv_distance
+        loss_D = loss_D_real + loss_D_fake
         loss_D.backward()
         return loss_D
 
@@ -187,8 +187,7 @@ class CycleGANModel(BaseModel):
         # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
         # combined loss and calculate gradients
-        self.loss_G = (
-                              self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B) * self.rain_rate_prob  # * self.inv_distance
+        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B + self.rain_rate_prob
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)
