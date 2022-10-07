@@ -212,7 +212,7 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_max': self.dataset.metadata_long_max,
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
-            'rain_rate': self.func_fit(x=np.average(B), a=self.dataset.a, b=self.dataset.b,
+            'rain_rate': self.func_fit(x=np.max(B.cpu().detach().numpy()), a=self.dataset.a, b=self.dataset.b,
                                        c=self.dataset.c)
         }
 
