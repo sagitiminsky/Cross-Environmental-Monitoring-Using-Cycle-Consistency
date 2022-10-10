@@ -49,8 +49,13 @@ def min_max_inv_transform(x, mmin, mmax):
 
 
 if __name__ == '__main__':
+
+
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
+    experiment_name = "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
+    v = Visualizer(experiment_name=experiment_name)
+    print("Visualizer Initialized!")
     if ENABLE_WANDB:
         wandb.init(project=train_opt.name, entity='sagitiminsky',
                    group=f"exp_{SELECTED_GROUP_NAME}", job_type=GROUPS[SELECTED_GROUP_NAME][SELECT_JOB])
@@ -185,18 +190,13 @@ if __name__ == '__main__':
                     # save in predict directory for generated data
                     start_date = config.start_date_str_rep_ddmmyyyy
                     end_date = config.end_date_str_rep_ddmmyyyy
-                    experiment_name= "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
                     folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict/{experiment_name}' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict/{experiment_name}'
 
                     if not os.path.exists(folder):
                         os.makedirs(folder)
 
                     if 'fake_B' == key:
-                        if train_opt.is_only_dynamic:
-                            file_path=f'{folder}/PRODUCED-{model.link[0]}-{model.link_center_metadata["longitude"][0]:.3f}-{model.link_center_metadata["latitude"][0]:.3f}.csv'
-                        else:
-                            print(f"metadata:{metadata}")
-                            file_path = f'{folder}/PRODUCED-{model.link[0]}-{float(metadata[0]):.3f}-{float(metadata[1]):.3f}.csv'
+                        file_path = f'{folder}/PRODUCED_{model.link[0]}.csv'
                         with open(file_path, "w") as file:
                             a=np.array([t[0] for t in model.t]).reshape(train_opt.slice_dist,1)
                             b=min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax).reshape(256,1)
@@ -205,9 +205,11 @@ if __name__ == '__main__':
                             fmt = ",".join(["%s"]*(c.shape[1]))
                             np.savetxt(file, c, fmt=fmt, header=headers, comments='')
 
-                v=Visualizer(experiment_name=experiment_name)
+                v.draw_cml_map(virtual_gauge_name=f'PRODUCED_{model.link[0]}.csv',virtual_gauge_coo={
+                    "longitude": f'{model.link_center_metadata["longitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[0]):.3f}',
+                    "latitude": f'{model.link_center_metadata["latitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[1]):.3f}'
+                })
                 path_to_html = v.out_path
-
                 wandb.log({**validation_losses, **training_losses})
                 # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
                 wandb.log({title: plt})
