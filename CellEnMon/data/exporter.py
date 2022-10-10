@@ -183,7 +183,7 @@ class Extractor:
 
     def get_ims_metadata(self, station_name):
         metadata = {}
-        station_name_splited = station_name.split('-')
+        station_name_splited = station_name.split('_')
         metadata["logitude"] = station_name_splited[3]
         metadata["latitude"] = station_name_splited[4].replace(".csv", "")
         metadata["gauge_name"] = f"{station_name_splited[0]}-{station_name_splited[1]}-{station_name_splited[2]}"
@@ -242,7 +242,7 @@ class Extractor:
 
     def get_dme_metadata(self, link_file_name):
         metadata = {}
-        link_file_name_splited = link_file_name.split('-')
+        link_file_name_splited = link_file_name.split('_')
         metadata["source"] = f'{link_file_name_splited[0]}'
         metadata["sink"] = f'{link_file_name_splited[3]}'
         metadata["link_name"] = f'{metadata["source"]}-{metadata["sink"]}'
