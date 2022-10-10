@@ -1,4 +1,6 @@
 import os
+import shutil
+
 import numpy as np
 import folium
 from pathlib import Path
@@ -27,12 +29,12 @@ class Visualizer:
     for each of them while drawing them in different colors.
     '''
 
-    def __init__(self):
+    def __init__(self, experiment_name='dynamic_and_static'):
         self.dates_range = "01012013_01022013"
         self.map_name = "south_israel.html"
         self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
         self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
-        self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict")
+        self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict/{experiment_name}")
         self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}/{self.map_name}")
         if not os.path.exists(Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")):
             os.makedirs(self.out_path)
@@ -43,27 +45,33 @@ class Visualizer:
         self.gridlines_on = False
         self.num_of_gridlines = 30
 
+        self.predict_files_to_archive = []
+
         self.handle = self.draw_cml_map()
 
     def parse_instances(self, instance):
         instance_arr = instance.split("-")
         if len(instance_arr) == 6:
             # dme
+
             return {
                 "ID": f"{instance_arr[0]}-{instance_arr[3]}",
-                "Tx Site Latitude": float(instance_arr[1]),
-                "Tx Site Longitude": float(instance_arr[2]),
-                "Rx Site Latitude": float(instance_arr[4]),
-                "Rx Site Longitude": float(instance_arr[5].replace(".csv", ""))
+
+                "Tx Site Longitude": float(instance_arr[1]),
+                "Tx Site Latitude": float(instance_arr[2]),
+                "Rx Site Longitude": float(instance_arr[4]),
+                "Rx Site Latitude": float(instance_arr[5].replace(".csv", "")),
+
             }
         elif len(instance_arr) == 5:
             # ims
             return {
-                "ID": f"{instance_arr[:3]}",
-                "Tx Site Latitude": float(instance_arr[3]),
-                "Tx Site Longitude": float(instance_arr[4].replace(".csv", "")),
-                "Rx Site Latitude": float(instance_arr[3]),
-                "Rx Site Longitude": float(instance_arr[4].replace(".csv", ""))
+                "ID": f"{instance_arr[1:3]}",
+                "Tx Site Longitude": float(instance_arr[3]),
+                "Tx Site Latitude": float(instance_arr[4].replace(".csv", "")),
+                "Rx Site Longitude": float(instance_arr[3]),
+                "Rx Site Latitude": float(instance_arr[4].replace(".csv", "")),
+
             }
 
         else:
@@ -73,7 +81,8 @@ class Visualizer:
         num_links_map = len(os.listdir(self.data_path_dme))
         num_gagues_map = len(os.listdir(self.data_path_ims))
         try:
-            num_produced_gagues_map = len(os.listdir(self.data_path_produced_ims))
+            num_produced_gagues_map = len(
+                [f for f in os.listdir(self.data_path_produced_ims) if f.split('.')[-1] == "csv"])
         except FileNotFoundError:
             num_produced_gagues_map = 0
 
@@ -115,12 +124,12 @@ class Visualizer:
                                   float(instace_dict["Rx Site Longitude"]))
 
                     # metadata
-                    if station_type=="link":
-                        color=self.color_of_links
-                    elif station_type=="gauge":
-                        color=self.color_of_gauges
+                    if station_type == "link":
+                        color = self.color_of_links
+                    elif station_type == "gauge":
+                        color = self.color_of_gauges
                     else:
-                        color=self.color_of_produced_gauges
+                        color = self.color_of_produced_gauges
 
                     ## create json of each cml timeseries for plotting
 
@@ -141,22 +150,24 @@ class Visualizer:
                     p = folium.Popup(max_width=1150)
 
                     if station_type == "link":
-                        pl = folium.PolyLine([(instace_dict['Rx Site Latitude'],
-                                               instace_dict['Rx Site Longitude']),
-                                              (instace_dict['Tx Site Latitude'],
-                                               instace_dict['Tx Site Longitude'])],
+                        pl = folium.PolyLine([(instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']),
+                                              (instace_dict['Tx Site Longitude'], instace_dict['Tx Site Latitude'])
+                                              ],
                                              color=color,
                                              opacity=1.0
                                              ).add_to(map_1)
                     else:
-                        pl=folium.Marker(
-                            location=[instace_dict['Rx Site Latitude'], instace_dict['Rx Site Longitude']],
+                        pl = folium.Marker(
+                            location=[instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']],
                             popup=folium.Popup(f"ID:{instace_dict['ID']}"),
                             icon=folium.Icon(color=color, prefix='fa', icon='circle')
                         ).add_to(map_1)
 
                     pl.add_child(p)
                     p.add_child(v)
+
+                    if "predict" in str(data_path):
+                        self.predict_files_to_archive.append(str(data_path.joinpath(str(instance))))
 
         # plot gridlines
         lats = np.linspace(lat_min, lat_max, self.num_of_gridlines)
@@ -180,11 +191,15 @@ class Visualizer:
                                     opacity=0.5, popup=str(round(g[0][1], 5))).add_to(map_1)
 
         map_1.save(self.out_path)
-
         print(f"Map under the name {self.map_name} was generated")
+
+        for p in self.predict_files_to_archive:
+            instance=p.split('/')[-1]
+            shutil.move(src=f'{self.data_path_produced_ims}/{instance}',dst=f'{self.data_path_produced_ims}/archive/{instance}')
+        print("Predict data was archived succesfully!")
 
         return map_1
 
 
 if __name__ == "__main__":
-    v = Visualizer()
+    v = Visualizer(experiment_name="dynamic_and_static")

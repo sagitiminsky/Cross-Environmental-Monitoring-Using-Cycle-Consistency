@@ -182,13 +182,13 @@ class CellenmonDataset(BaseDataset):
             B = B.reshape(1, 256)
         else:
 
-            for a, b in zip(data_dict_A['metadata'], data_dict_B['metadata']):
+            A=A.reshape(256,4)
+            B=B.reshape(256,1)
+            for a, b in zip(data_dict_A['norm_metadata'], data_dict_B['norm_metadata']):
                 A, B = self.pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
 
-            A = A.repeat(1, 1).reshape(8, 256)
-            B = B.repeat(1, 1).reshape(8, 256)
-
-
+            A=A.T # (8,256)
+            B=B.T # (5,256)
 
         return {
             'A': A,
