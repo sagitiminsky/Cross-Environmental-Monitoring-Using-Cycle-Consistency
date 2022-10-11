@@ -45,7 +45,7 @@ def toggle(t):
 
 
 def min_max_inv_transform(x, mmin, mmax):
-    return x * (mmax - mmin) + mmin
+    return (x+1) * (mmax - mmin) * 0.5 + mmin
 
 
 if __name__ == '__main__':
