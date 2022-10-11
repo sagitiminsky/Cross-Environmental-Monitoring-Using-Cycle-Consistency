@@ -63,12 +63,12 @@ class Domain:
         if mmin == mmax:
             return 0
         else:
-            return (x - mmin) / (mmax - mmin)
+            return 2*((x - mmin) / (mmax - mmin))-1
 
     def normalizer(self, mat):
         min = mat.min()
         max = mat.max()
-        mat = 0 if max - min == 0 else (mat - min) / (max - min)
+        mat = 0 if max - min == 0 else 2*((mat - min) / (max - min))-1
         return max, min, mat
 
 
