@@ -24,11 +24,11 @@ GROUPS = {
     "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"},
     "Dymanic and Static 4x1 <-> 1x4": {0: "first try"},
     "Dynamic only": {0: "first try"},
-    "Dynamic and Static": {0: "first try"}
+    "Dynamic and Static": {0: "first try", 1:"play around with configurations"}
 }
 
 SELECTED_GROUP_NAME = "Dynamic and Static"
-SELECT_JOB = 0
+SELECT_JOB = 1
 
 
 
