@@ -29,3 +29,4 @@ CellEnMon/.idea
 /checkpoints/
 /CellEnMon/libs/scrappers/dme_scrapper/paths/data_paths.txt
 /CellEnMon/libs/scrappers/dme_scrapper/paths/metadata_paths.txt
+*.dat

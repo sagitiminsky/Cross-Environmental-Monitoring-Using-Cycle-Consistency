@@ -146,7 +146,7 @@ class Visualizer:
                     ## create json of each cml timeseries for plotting
 
                     df_ts = pd.read_csv(data_path.joinpath(str(instance)))
-                    df_ts['Time'] = pd.to_datetime(df_ts['Time'])
+                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d/%m/%Y %H:%M')
                     df_ts.set_index('Time', inplace=True, drop=True)
                     timeseries = vincent.Line(
                         df_ts,
