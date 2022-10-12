@@ -28,12 +28,12 @@ class Visualizer:
     '''
 
     def __init__(self):
-        self.dates_range = "01012013_01022013"
-        self.map_name = "south_israel.html"
+        self.dates_range = "09062011_13082011"
+        self.map_name = "netherlands.html"
         self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
         self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
         self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict")
-        self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}/{self.map_name}")
+        self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")
         if not os.path.exists(Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")):
             os.makedirs(self.out_path)
 
@@ -46,11 +46,11 @@ class Visualizer:
         self.handle = self.draw_cml_map()
 
     def parse_instances(self, instance):
-        instance_arr = instance.split("-")
+        instance_arr = instance.split("_")
         if len(instance_arr) == 6:
             # dme
             return {
-                "ID": f"{instance_arr[0]}-{instance_arr[3]}",
+                "ID": f"{instance_arr[0]}_{instance_arr[3]}",
                 "Tx Site Latitude": float(instance_arr[1]),
                 "Tx Site Longitude": float(instance_arr[2]),
                 "Rx Site Latitude": float(instance_arr[4]),
@@ -71,7 +71,7 @@ class Visualizer:
 
     def draw_cml_map(self):
         num_links_map = len(os.listdir(self.data_path_dme))
-        num_gagues_map = len(os.listdir(self.data_path_ims))
+        #num_gagues_map = len(os.listdir(self.data_path_ims))
         try:
             num_produced_gagues_map = len(os.listdir(self.data_path_produced_ims))
         except FileNotFoundError:
@@ -79,15 +79,15 @@ class Visualizer:
 
         station_types = {
             "link": self.data_path_dme,
-            "gauge": self.data_path_ims,
-            "produced_gague": self.data_path_produced_ims
+            #"gauge": self.data_path_ims,
+            #"produced_gague": self.data_path_produced_ims
         }
-        num_stations_map = num_gagues_map + num_links_map
+        #num_stations_map = num_gagues_map + num_links_map
 
         print(f"Number of links on map:{num_links_map}")
-        print(f"Number of gauges on map:{num_gagues_map}")
-        print(f"Number of stations on map:{num_stations_map}")
-        print(f"Number of produced gagues on map:{num_produced_gagues_map}")
+        #print(f"Number of gauges on map:{num_gagues_map}")
+        #print(f"Number of stations on map:{num_stations_map}")
+        #print(f"Number of produced gagues on map:{num_produced_gagues_map}")
 
         grid = []
 
@@ -102,7 +102,7 @@ class Visualizer:
         lon_max = -sys.maxsize
 
         for station_type, data_path in station_types.items():
-            for instance in os.listdir(data_path):
+            for instance in os.listdir(data_path)[:10]:
                 if ".csv" in instance:
                     instace_dict = self.parse_instances(instance)
                     lat_min = min(lat_min, float(instace_dict["Tx Site Latitude"]),
@@ -125,7 +125,7 @@ class Visualizer:
                     ## create json of each cml timeseries for plotting
 
                     df_ts = pd.read_csv(data_path.joinpath(str(instance)))
-                    df_ts['Time'] = pd.to_datetime(df_ts['Time'])
+                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d/%m/%Y %H:%M')
                     df_ts.set_index('Time', inplace=True, drop=True)
                     timeseries = vincent.Line(
                         df_ts,
@@ -179,7 +179,7 @@ class Visualizer:
                     folium.PolyLine(g, color="black", weight=0.5,
                                     opacity=0.5, popup=str(round(g[0][1], 5))).add_to(map_1)
 
-        map_1.save(self.out_path)
+        map_1.save(f"{str(self.out_path)}/{self.map_name}")
 
         print(f"Map under the name {self.map_name} was generated")
 
