@@ -31,17 +31,20 @@ def add_days_to_date(date, delta_days=0):
         'str_rep_mmddyyyy': f"{str(res.month).zfill(2)}{str(res.day).zfill(2)}{res.year}"
     }
 
-export_type="dutch"
+#09062011_13082011 dutch
+#01012013_01022013 israel
+
+export_type="israel"
 date = {
     'value': {
-        'dd': '09',
-        'mm': '06',
-        'yyyy': '2011'
+        'dd': '01',
+        'mm': '01',
+        'yyyy': '2013'
     },
     'value_range': {
-        'dd': '13',
-        'mm': '08',
-        'yyyy': '2011'
+        'dd': '01',
+        'mm': '02',
+        'yyyy': '2013'
     }
 }
 

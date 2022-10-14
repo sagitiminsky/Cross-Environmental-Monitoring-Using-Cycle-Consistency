@@ -1,4 +1,4 @@
-NodeName,NeId,Object,Time,Interval,Direction,NeAlias,NeType,Position,PowerRLTMmin,PowerRLTMmax,SecondsRLTS1,SecondsRLTS2,IdLogNum,PowerTLTMmin,PowerTLTMmax,SecondsTLTS1,ES,SES,BBE,UAS
+NodeName,NeId,Object,Time,Interval,Direction,NeAlias,NeType,Position,PowerRLTMmin[dBm],PowerRLTMmax[dBm],SecondsRLTS1,SecondsRLTS2,IdLogNum,PowerTLTMmin[dBm],PowerTLTMmax[dBm],SecondsTLTS1,ES,SES,BBE,UAS
 SOEM-M,5123,RAU,2013-01-01 00:00:00,15,Near End,b119_01629_00473_5512.72,1+0,-,-50.8,-50.2,0.0,0.0,0,,,,,,,
 SOEM-M,5123,RAU,2013-01-01 00:00:00,24,Near End,b119_01629_00473_5512.72,1+0,-,,,,,0,11.0,15.0,514.0,,,,
 SOEM-M,5123,HC,2013-01-01 00:00:00,15,Near End,b119_01629_00473_5512.72,1+0,-,,,,,0,,,,0.0,0.0,0.0,0.0

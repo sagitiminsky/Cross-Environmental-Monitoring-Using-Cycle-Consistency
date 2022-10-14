@@ -186,9 +186,9 @@ class Extractor:
         metadata = {}
         try:
             station_name_splited = station_name.split('_')
-            metadata["logitude"] = station_name_splited[1]
-            metadata["latitude"] = station_name_splited[2].replace(".csv", "")
-            metadata["gauge_name"] = f"{station_name_splited[0]}"
+            metadata["logitude"] = station_name_splited[1] if config.export_type=="dutch" else station_name_splited[3]
+            metadata["latitude"] = station_name_splited[2].replace(".csv", "") if config.export_type=="dutch" else station_name_splited[4].replace(".csv", "")
+            metadata["gauge_name"] = f"{station_name_splited[0]}" if config.export_type=="dutch" else f"{station_name_splited[2]}"
             metadata["vector"] = np.array(
                 [float(metadata['logitude']), float(metadata['latitude']), float(metadata['logitude']),
                  float(metadata['latitude'])])
@@ -222,22 +222,25 @@ class Extractor:
                         if self.export_type=="israel":
                             ims_vec = np.array([])
                             time = np.array([" ".join(t.split('+')[0].split('T')) for t in df.datetime])
-
                             if (ims_vec, df) is not (None, None):
                                 for row in list(df.channels):
                                     ims_vec = np.append(ims_vec,
                                                         np.array([self.get_entry(ast.literal_eval(row), type='Rain')['value']]))
+                            
                         elif self.export_type=="dutch":
                             time=df.Time.to_numpy()
                             ims_vec=df["RainAmout[mm/h]"].to_numpy()
-                            ims_matrix[metadata["gauge_name"]] = \
-                                {
-                                    "metadata_len": len(metadata["vector"]),
-                                    "data_len": len(ims_vec),
-                                    "data": dict(zip(time, ims_vec)),
-                                    "metadata": metadata["vector"]
-                                }
+                            
+                        
+                        ims_matrix[metadata["gauge_name"]] = \
+                        {
+                            "metadata_len": len(metadata["vector"]),
+                            "data_len": len(ims_vec),
+                            "data": dict(zip(time, ims_vec)),
+                            "metadata": metadata["vector"]
+                        }
 
+                
                         data = {'Time': time, 'RainAmout[mm/h]': ims_vec}
                         pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{station_file_name}", index=False)
 
@@ -245,6 +248,7 @@ class Extractor:
                     print("data does not exist in {}".format(station_file_name))
 
             s = pd.Series(ims_matrix)
+            print(f"ims_matrix:{s}")
             training_data, validation_data = [i.to_dict() for i in train_test_split(s, train_size=0.7)]
             dataset = training_data if is_train else validation_data
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
