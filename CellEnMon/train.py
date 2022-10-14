@@ -1,9 +1,6 @@
 import math
 import os.path
 import time
-
-import pandas as pd
-
 from options.train_options import TrainOptions
 from options.test_options import TestOptions
 import data
