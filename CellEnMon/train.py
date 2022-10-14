@@ -24,11 +24,12 @@ GROUPS = {
     "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"},
     "Dymanic and Static 4x1 <-> 1x4": {0: "first try"},
     "Dynamic only": {0: "first try"},
-    "Dynamic and Static": {0: "first try", 1:"play around with configurations"}
+    "Dynamic and Static": {0: "first try", 1:"play around with configurations"},
+    "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations"}
 }
 
-SELECTED_GROUP_NAME = "Dynamic and Static"
-SELECT_JOB = 1
+SELECTED_GROUP_NAME = "Dynamic and Static Dutch"
+SELECT_JOB = 0
 
 
 
@@ -86,10 +87,12 @@ if __name__ == '__main__':
 
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
-
+            
+            
+            
             model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
-
+            
             # Training losses
             training_losses = model.get_current_losses(is_train=True)
             agg_train_mse_A += training_losses["Train/mse_A"]
@@ -171,7 +174,7 @@ if __name__ == '__main__':
                                     (mmin, mmax), x in
                                     zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
 
-                        ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S')) for t in model.t],
+                        ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%d-%m-%Y %H:%M:%S')) for t in model.t],
                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                 marker='o',
                                 linestyle='dashed',
@@ -209,7 +212,7 @@ if __name__ == '__main__':
                     "longitude": f'{model.link_center_metadata["longitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[0]):.3f}',
                     "latitude": f'{model.link_center_metadata["latitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[1]):.3f}'
                 })
-                path_to_html = v.out_path
+                path_to_html = f"{v.out_path}/{v.map_name}"
                 wandb.log({**validation_losses, **training_losses})
                 # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
                 wandb.log({title: plt})

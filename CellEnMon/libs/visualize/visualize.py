@@ -8,7 +8,7 @@ import sys
 import pandas as pd
 import json
 import vincent
-
+import CellEnMon.config as config
 
 class Visualizer:
     '''Create a Folium interactive map of cmls:
@@ -30,12 +30,12 @@ class Visualizer:
     '''
 
     def __init__(self, experiment_name='dynamic_and_static',virtual_gauge_coo={}):
-        self.dates_range = "01012013_01022013"
-        self.map_name = "south_israel.html"
+        self.dates_range = "09062011_13082011"
+        self.map_name = f"{config.export_type}.html"
         self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
         self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
         self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict/{experiment_name}")
-        self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}/{self.map_name}")
+        self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")
         if not os.path.exists(Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")):
             os.makedirs(self.out_path)
 
@@ -58,6 +58,15 @@ class Visualizer:
                 "Rx Site Longitude": float(instance_arr[4]),
                 "Rx Site Latitude": float(instance_arr[5].replace(".csv", "")),
 
+            }
+        elif len(instance_arr)==3:
+            # dutch
+            return {
+                "ID": f"{instance_arr[0]}",
+                "Tx Site Longitude": float(instance_arr[2].replace(".csv", "")),
+                "Tx Site Latitude": float(instance_arr[1]),
+                "Rx Site Longitude": float(instance_arr[2].replace(".csv", "")),
+                "Rx Site Latitude": float(instance_arr[1])
             }
         elif len(instance_arr) == 5:
             # ims or produeced ims in only dynamic experiment
@@ -90,7 +99,7 @@ class Visualizer:
                 "Rx Site Latitude": float(self.virtual_gagues[instance_name]["latitude"]),
             }
 
-    def draw_cml_map(self,virtual_gauge_name, virtual_gauge_coo):
+    def draw_cml_map(self,virtual_gauge_name=None, virtual_gauge_coo=None):
         num_links_map = len(os.listdir(self.data_path_dme))
         num_gagues_map = len(os.listdir(self.data_path_ims))
         num_produced_gagues_map = len(self.virtual_gagues)
@@ -98,7 +107,7 @@ class Visualizer:
         station_types = {
             "link": self.data_path_dme,
             "gauge": self.data_path_ims,
-            "produced_gague": self.data_path_produced_ims
+#             "produced_gague": self.data_path_produced_ims
         }
         num_stations_map = num_gagues_map + num_links_map
 
@@ -146,7 +155,7 @@ class Visualizer:
                     ## create json of each cml timeseries for plotting
 
                     df_ts = pd.read_csv(data_path.joinpath(str(instance)))
-                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d/%m/%Y %H:%M')
+                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d-%m-%Y %H:%M:%S')
                     df_ts.set_index('Time', inplace=True, drop=True)
                     timeseries = vincent.Line(
                         df_ts,
@@ -200,11 +209,11 @@ class Visualizer:
                     folium.PolyLine(g, color="black", weight=0.5,
                                     opacity=0.5, popup=str(round(g[0][1], 5))).add_to(map_1)
 
-        map_1.save(self.out_path)
+        map_1.save(f"{str(self.out_path)}/{self.map_name}")
         print(f"Map under the name {self.map_name} was generated")
 
         return map_1
 
 
 if __name__ == "__main__":
-    v = Visualizer(experiment_name="only_dynamic")
+    v = Visualizer(experiment_name="dynamic_and_static").draw_cml_map()

@@ -40,9 +40,9 @@ class BaseOptions():
                             help='specify discriminator architecture [n_layers]. n_layers allows you to specify the layers in the discriminator')
         parser.add_argument('--netG', type=str, default='resnet_9blocks', help='specify generator architecture [n_layers]')
         parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers')
-        parser.add_argument('--norm', type=str, default='none',
+        parser.add_argument('--norm', type=str, default='instance',
                             help='instance normalization or batch normalization [instance | batch | none]')
-        parser.add_argument('--init_type', type=str, default='xavier',
+        parser.add_argument('--init_type', type=str, default='normal',
                             help='network initialization [normal | xavier | kaiming | orthogonal]')
         parser.add_argument('--init_gain', type=float, default=0.02,
                             help='scaling factor for normal, xavier and orthogonal.')
