@@ -25,11 +25,12 @@ GROUPS = {
     "Dymanic and Static 4x1 <-> 1x4": {0: "first try"},
     "Dynamic only": {0: "first try"},
     "Dynamic and Static": {0: "first try", 1:"play around with configurations"},
-    "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations"}
+    "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations"},
+    "Dynamic and Static Israel": {0: "first try", 1:"play around with configurations"}
 }
 
-SELECTED_GROUP_NAME = "Dynamic and Static Dutch"
-SELECT_JOB = 0
+SELECTED_GROUP_NAME = "Dynamic and Static Israel"
+SELECT_JOB = 1
 
 
 
@@ -51,7 +52,7 @@ def min_max_inv_transform(x, mmin, mmax):
 
 if __name__ == '__main__':
 
-
+    datetime_format='%Y-%m-%d %H:%M:%S' if config.export_type=="israel" else '%d-%m-%Y %H:%M:%S'
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
     experiment_name = "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
@@ -169,12 +170,11 @@ if __name__ == '__main__':
                             (metadata_long_max, metadata_long_min),
                             (metadata_lat_max, metadata_lat_min)
                         ]
-
                         metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
                                     (mmin, mmax), x in
                                     zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
 
-                        ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%d-%m-%Y %H:%M:%S')) for t in model.t],
+                        ax.plot([mpl_dates.date2num(datetime.strptime(t[0], datetime_format)) for t in model.t],
                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                 marker='o',
                                 linestyle='dashed',
@@ -199,7 +199,7 @@ if __name__ == '__main__':
                         os.makedirs(folder)
 
                     if 'fake_B' == key:
-                        file_path = f'{folder}/PRODUCED_{model.link[0]}.csv'
+                        file_path = f'{folder}/PRODUCED_{model.link[0]}-{model.gague[0]}.csv'
                         with open(file_path, "w") as file:
                             a=np.array([t[0] for t in model.t]).reshape(train_opt.slice_dist,1)
                             b=min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax).reshape(256,1)
@@ -208,7 +208,7 @@ if __name__ == '__main__':
                             fmt = ",".join(["%s"]*(c.shape[1]))
                             np.savetxt(file, c, fmt=fmt, header=headers, comments='')
 
-                v.draw_cml_map(virtual_gauge_name=f'PRODUCED_{model.link[0]}.csv',virtual_gauge_coo={
+                v.draw_cml_map(virtual_gauge_name=f'PRODUCED_{model.link[0]}-{model.gague[0]}.csv',virtual_gauge_coo={
                     "longitude": f'{model.link_center_metadata["longitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[0]):.3f}',
                     "latitude": f'{model.link_center_metadata["latitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[1]):.3f}'
                 })

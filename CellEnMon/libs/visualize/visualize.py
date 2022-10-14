@@ -30,7 +30,7 @@ class Visualizer:
     '''
 
     def __init__(self, experiment_name='dynamic_and_static',virtual_gauge_coo={}):
-        self.dates_range = "09062011_13082011"
+        self.dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
         self.map_name = f"{config.export_type}.html"
         self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
         self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
@@ -100,21 +100,21 @@ class Visualizer:
             }
 
     def draw_cml_map(self,virtual_gauge_name=None, virtual_gauge_coo=None):
-        num_links_map = len(os.listdir(self.data_path_dme))
-        #num_gagues_map = len(os.listdir(self.data_path_ims))
+        num_links_map = len([file for file in os.listdir(self.data_path_dme) if ".csv" in file])
+        num_gagues_map = len([file for file in os.listdir(self.data_path_ims) if ".csv" in file])
         num_produced_gagues_map = len(self.virtual_gagues)
 
         station_types = {
             "link": self.data_path_dme,
-            #"gauge": self.data_path_ims,
-#             "produced_gague": self.data_path_produced_ims
+            "gauge": self.data_path_ims,
+            "produced_gague": self.data_path_produced_ims
         }
-        #num_stations_map = num_gagues_map + num_links_map
+        num_stations_map = num_gagues_map + num_links_map
 
         print(f"Number of links on map:{num_links_map}")
-        #print(f"Number of gauges on map:{num_gagues_map}")
-        #print(f"Number of stations on map:{num_stations_map}")
-        #print(f"Number of produced gagues on map:{num_produced_gagues_map}")
+        print(f"Number of gauges on map:{num_gagues_map}")
+        print(f"Number of stations on map:{num_stations_map}")
+        print(f"Number of produced gagues on map:{num_produced_gagues_map}")
 
         grid = []
 
@@ -129,7 +129,7 @@ class Visualizer:
         lon_max = -sys.maxsize
 
         for station_type, data_path in station_types.items():
-            for instance in os.listdir(data_path)[:10]:
+            for instance in os.listdir(data_path):
                 if ".csv" in instance:
                     if station_type=="produced_gague" and virtual_gauge_name in instance:
                         instace_dict = self.parse_instances(instance,virtual_gauge_coo)
@@ -155,15 +155,16 @@ class Visualizer:
                     ## create json of each cml timeseries for plotting
 
                     df_ts = pd.read_csv(data_path.joinpath(str(instance)))
-                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d-%m-%Y %H:%M:%S')
+                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d-%m-%Y %H:%M:%S' if config.export_type=="dutch" else '%Y-%m-%d %H:%M:%S')
                     df_ts.set_index('Time', inplace=True, drop=True)
-                    timeseries = vincent.Line(
+                    timeseries = vincent.Scatter(
                         df_ts,
                         height=150,
                         width=450).axis_titles(
                         x='Time',
                         y='MTSL-mTSL-MRSL-mRSL (dBm)' if station_type == "link" else 'RainRate[mm/h]'
                     )
+                    timeseries.marks[0].marks[0].properties.enter.size.value = 10
                     timeseries.legend(title=instace_dict["ID"])
                     data_json = json.loads(timeseries.to_json())
 
