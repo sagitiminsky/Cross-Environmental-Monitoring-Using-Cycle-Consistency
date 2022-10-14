@@ -195,7 +195,7 @@ class DME_Scrapper_obj:
                 link_rx_longitude=merged_df_dict[link_name]['rx_longitude'][0]
                 link_rx_latitude=merged_df_dict[link_name]['rx_latitude'][0]
                 tx_name,rx_name=link_name.split("-")
-                metadata=f"{tx_name}-{link_tx_latitude}-{link_tx_longitude}-{rx_name}-{link_rx_latitude}-{link_rx_longitude}"
+                metadata=f"{tx_name}_{link_tx_longitude}_{link_tx_latitude}_{rx_name}_{link_rx_longitude}_{link_rx_latitude}"
                 link_file_name= f"{config.dme_root_files}/raw/{metadata}.csv"
 
                 try:

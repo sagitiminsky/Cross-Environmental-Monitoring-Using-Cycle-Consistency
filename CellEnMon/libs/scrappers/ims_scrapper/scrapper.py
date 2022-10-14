@@ -59,9 +59,9 @@ class IMS_Scrapper_obj:
         elif self.station_location['latitude'] and self.station_location['longitude']:
             data = json.loads(data_response.text.encode('utf8'))
 
-            file_name = "{}-{}-{}-{}-{}.csv".format(self.index, self.station_id, self.station_name,
-                                                    self.station_location['latitude'],
-                                                    self.station_location['longitude'])
+            file_name = "{}_{}_{}_{}_{}.csv".format(self.index, self.station_id, self.station_name,
+                                                    self.station_location['longitude'],
+                                                    self.station_location['latitude'])
             if not os.path.exists(self.root):
                 os.makedirs(f'{self.root}/raw')
 

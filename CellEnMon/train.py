@@ -24,10 +24,11 @@ GROUPS = {
     "Dymanic and Static": {0: "first try", 1: "with RR only", 2: "plot with un-norm. values"},
     "Dymanic and Static 4x1 <-> 1x4": {0: "first try"},
     "Dynamic only": {0: "first try"},
-    "Dynamic and Static": {0: "first try"}
+    "Dynamic and Static": {0: "first try", 1:"play around with configurations"},
+    "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations"}
 }
 
-SELECTED_GROUP_NAME = "Dynamic only"
+SELECTED_GROUP_NAME = "Dynamic and Static Dutch"
 SELECT_JOB = 0
 
 
@@ -45,12 +46,17 @@ def toggle(t):
 
 
 def min_max_inv_transform(x, mmin, mmax):
-    return x * (mmax - mmin) + mmin
+    return (x+1) * (mmax - mmin) * 0.5 + mmin
 
 
 if __name__ == '__main__':
+
+
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
+    experiment_name = "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
+    v = Visualizer(experiment_name=experiment_name)
+    print("Visualizer Initialized!")
     if ENABLE_WANDB:
         wandb.init(project=train_opt.name, entity='sagitiminsky',
                    group=f"exp_{SELECTED_GROUP_NAME}", job_type=GROUPS[SELECTED_GROUP_NAME][SELECT_JOB])
@@ -81,10 +87,12 @@ if __name__ == '__main__':
 
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
-
+            
+            
+            
             model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
-
+            
             # Training losses
             training_losses = model.get_current_losses(is_train=True)
             agg_train_mse_A += training_losses["Train/mse_A"]
@@ -121,11 +129,11 @@ if __name__ == '__main__':
             if ENABLE_WANDB:
                 # Visualize
                 plt.clf()
-
+                metadata=[0]*4
                 visuals = model.get_current_visuals()
                 fig, axs = plt.subplots(2, 3, figsize=(15, 15))
-                title = f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}' \
-                                                                                          f'[T.long, T.lat, R.long, R.lat]'
+                title = f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}'
+
                 plt.title(title)
 
                 for ax, key in zip(axs.flatten(), visuals):
@@ -133,11 +141,10 @@ if __name__ == '__main__':
                     if train_opt.is_only_dynamic:
                         N = 4 if 'A' in key else 1
                     else:
-                        raise NotImplemented
+                        N = 8 if 'A' in key else 5
 
                     # Plot Data
-                    data = visuals[key][0].reshape(256, N).cpu().detach().numpy()
-
+                    data = visuals[key][0].reshape(256, N).cpu().detach().numpy() if train_opt.is_only_dynamic else visuals[key][0].T.cpu().detach().numpy()
                     for i in range(1, 5):
                         if 'A' in key:
                             mmin = model.data_transformation['link']['min'][0].numpy()
@@ -165,9 +172,9 @@ if __name__ == '__main__':
 
                         metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
                                     (mmin, mmax), x in
-                                    zip(metadata_inv_zip, visuals[key][0][0, 4:8].cpu().detach().numpy())]
+                                    zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
 
-                        ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%Y-%m-%d %H:%M:%S')) for t in model.t],
+                        ax.plot([mpl_dates.date2num(datetime.strptime(t[0], '%d-%m-%Y %H:%M:%S')) for t in model.t],
                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                 marker='o',
                                 linestyle='dashed',
@@ -177,7 +184,7 @@ if __name__ == '__main__':
                                 )
 
                         ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
-                                                                           f' {metadata}', y=0.75)
+                                                                           f' {metadata}', y=0.75, fontdict={'fontsize':6})
 
                     # Formatting Date
                     date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
@@ -186,26 +193,26 @@ if __name__ == '__main__':
                     # save in predict directory for generated data
                     start_date = config.start_date_str_rep_ddmmyyyy
                     end_date = config.end_date_str_rep_ddmmyyyy
-                    folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict'
+                    folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict/{experiment_name}' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict/{experiment_name}'
 
                     if not os.path.exists(folder):
                         os.makedirs(folder)
 
                     if 'fake_B' == key:
-                        if train_opt.is_only_dynamic:
-                            file_path=f'{folder}/PRODUCED-{model.link[0]}-{model.link_center_metadata["longitude"][0]:.3f}-{model.link_center_metadata["latitude"][0]:.3f}.csv'
-                        else:
-                            raise NotImplemented
+                        file_path = f'{folder}/PRODUCED_{model.link[0]}.csv'
                         with open(file_path, "w") as file:
                             a=np.array([t[0] for t in model.t]).reshape(train_opt.slice_dist,1)
-                            b=min_max_inv_transform(data, mmin=mmin, mmax=mmax)
+                            b=min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax).reshape(256,1)
                             headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
                             c=np.hstack((a,b))
                             fmt = ",".join(["%s"]*(c.shape[1]))
                             np.savetxt(file, c, fmt=fmt, header=headers, comments='')
 
-                path_to_html = Visualizer().out_path
-
+                v.draw_cml_map(virtual_gauge_name=f'PRODUCED_{model.link[0]}.csv',virtual_gauge_coo={
+                    "longitude": f'{model.link_center_metadata["longitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[0]):.3f}',
+                    "latitude": f'{model.link_center_metadata["latitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[1]):.3f}'
+                })
+                path_to_html = f"{v.out_path}/{v.map_name}"
                 wandb.log({**validation_losses, **training_losses})
                 # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
                 wandb.log({title: plt})

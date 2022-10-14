@@ -1,4 +1,9 @@
 PYTHONPATH should be: CellEnMon-Research
+First Longditude
+Second Latitude
+
+First Transmit
+Second Receive
 
 Suggested presets:
 + download pycharm
