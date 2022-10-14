@@ -52,7 +52,7 @@ class Visualizer:
         if len(instance_arr) == 6:
             # dme
             return {
-                "ID": f"{instance_arr[0]}-{instance_arr[3]}",
+                "ID": f"{instance_arr[0]}_{instance_arr[3]}",
                 "Tx Site Longitude": float(instance_arr[1]),
                 "Tx Site Latitude": float(instance_arr[2]),
                 "Rx Site Longitude": float(instance_arr[4]),
@@ -101,20 +101,20 @@ class Visualizer:
 
     def draw_cml_map(self,virtual_gauge_name=None, virtual_gauge_coo=None):
         num_links_map = len(os.listdir(self.data_path_dme))
-        num_gagues_map = len(os.listdir(self.data_path_ims))
+        #num_gagues_map = len(os.listdir(self.data_path_ims))
         num_produced_gagues_map = len(self.virtual_gagues)
 
         station_types = {
             "link": self.data_path_dme,
-            "gauge": self.data_path_ims,
+            #"gauge": self.data_path_ims,
 #             "produced_gague": self.data_path_produced_ims
         }
-        num_stations_map = num_gagues_map + num_links_map
+        #num_stations_map = num_gagues_map + num_links_map
 
         print(f"Number of links on map:{num_links_map}")
-        print(f"Number of gauges on map:{num_gagues_map}")
-        print(f"Number of stations on map:{num_stations_map}")
-        print(f"Number of produced gagues on map:{num_produced_gagues_map}")
+        #print(f"Number of gauges on map:{num_gagues_map}")
+        #print(f"Number of stations on map:{num_stations_map}")
+        #print(f"Number of produced gagues on map:{num_produced_gagues_map}")
 
         grid = []
 
@@ -129,7 +129,7 @@ class Visualizer:
         lon_max = -sys.maxsize
 
         for station_type, data_path in station_types.items():
-            for instance in os.listdir(data_path):
+            for instance in os.listdir(data_path)[:10]:
                 if ".csv" in instance:
                     if station_type=="produced_gague" and virtual_gauge_name in instance:
                         instace_dict = self.parse_instances(instance,virtual_gauge_coo)
