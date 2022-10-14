@@ -182,14 +182,15 @@ class CellenmonDataset(BaseDataset):
             B = B.reshape(1, 256)
         else:
 
-            for a, b in zip(data_dict_A['metadata'], data_dict_B['metadata']):
+            A=A.reshape(256,4)
+            B=B.reshape(256,1)
+            for a, b in zip(data_dict_A['norm_metadata'], data_dict_B['norm_metadata']):
                 A, B = self.pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
 
-            A = A.repeat(1, 1).reshape(8, 256)
-            B = B.repeat(1, 1).reshape(8, 256)
+            A=A.T # (8,256)
+            B=B.T # (5,256)
 
-
-
+        B_rain_rate_max=np.array(list(self.dataset.ims.db[selected_gague]['data'].values())).max()
         return {
             'A': A,
             'B': B,
@@ -212,7 +213,7 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_max': self.dataset.metadata_long_max,
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
-            'rain_rate': self.func_fit(x=np.max(B.cpu().detach().numpy()), a=self.dataset.a, b=self.dataset.b,
+            'rain_rate': self.func_fit(x=B_rain_rate_max, a=self.dataset.a, b=self.dataset.b,
                                        c=self.dataset.c)
         }
 

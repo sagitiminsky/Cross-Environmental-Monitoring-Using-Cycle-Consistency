@@ -63,17 +63,18 @@ class Domain:
         if mmin == mmax:
             return 0
         else:
-            return (x - mmin) / (mmax - mmin)
+            return 2*((x - mmin) / (mmax - mmin))-1
 
     def normalizer(self, mat):
         min = mat.min()
         max = mat.max()
-        mat = 0 if max - min == 0 else (mat - min) / (max - min)
+        mat = 0 if max - min == 0 else 2*((mat - min) / (max - min))-1
         return max, min, mat
 
 
 class Extractor:
     def __init__(self, is_train=True):
+        self.export_type = config.export_type
         self.dme = Domain(self.load_dme(is_train=is_train),
                           db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
         self.ims = Domain(self.load_ims(is_train=is_train),
@@ -83,7 +84,7 @@ class Extractor:
         self.metadata_long_min = min(self.dme.metadata_long_min,self.ims.metadata_long_min)
         self.metadata_lat_max = max(self.dme.metadata_lat_max,self.ims.metadata_lat_max)
         self.metadata_lat_min = min(self.dme.metadata_lat_min,self.ims.metadata_lat_min)
-
+        
 
         if CROSS_DOMAIN_METADATA_NORMALIZATION:
             #dme
@@ -183,13 +184,19 @@ class Extractor:
 
     def get_ims_metadata(self, station_name):
         metadata = {}
-        station_name_splited = station_name.split('-')
-        metadata["logitude"] = station_name_splited[3]
-        metadata["latitude"] = station_name_splited[4].replace(".csv", "")
-        metadata["gauge_name"] = f"{station_name_splited[0]}-{station_name_splited[1]}-{station_name_splited[2]}"
-        metadata["vector"] = np.array(
-            [float(metadata['logitude']), float(metadata['latitude']), float(metadata['logitude']),
-             float(metadata['latitude'])])
+        try:
+            station_name_splited = station_name.split('_')
+            metadata["logitude"] = station_name_splited[1]
+            metadata["latitude"] = station_name_splited[2].replace(".csv", "")
+            metadata["gauge_name"] = f"{station_name_splited[0]}"
+            metadata["vector"] = np.array(
+                [float(metadata['logitude']), float(metadata['latitude']), float(metadata['logitude']),
+                 float(metadata['latitude'])])
+        
+        except IndexError:
+            print(f"File is not in correct format:{station_name}")
+            return 
+        
         return metadata
 
     def load_ims(self, is_train=False):
@@ -208,23 +215,28 @@ class Extractor:
             for index, station_file_name in enumerate(os.listdir(f'{config.ims_root_files}/raw')):
                 print("now processing gauge: {}".format(station_file_name))
                 try:
-                    df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
                     metadata = self.get_ims_metadata(f'{station_file_name}')
-                    ims_vec = np.array([])
-                    time = np.array([" ".join(t.split('+')[0].split('T')) for t in df.datetime])
+                    if metadata:
+                        df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
+                        
+                        if self.export_type=="israel":
+                            ims_vec = np.array([])
+                            time = np.array([" ".join(t.split('+')[0].split('T')) for t in df.datetime])
 
-                    if (ims_vec, df) is not (None, None):
-                        for row in list(df.channels):
-                            ims_vec = np.append(ims_vec,
-                                                np.array([self.get_entry(ast.literal_eval(row), type='Rain')['value']]))
-
-                        ims_matrix[metadata["gauge_name"]] = \
-                            {
-                                "metadata_len": len(metadata["vector"]),
-                                "data_len": len(ims_vec),
-                                "data": dict(zip(time, ims_vec)),
-                                "metadata": metadata["vector"]
-                            }
+                            if (ims_vec, df) is not (None, None):
+                                for row in list(df.channels):
+                                    ims_vec = np.append(ims_vec,
+                                                        np.array([self.get_entry(ast.literal_eval(row), type='Rain')['value']]))
+                        elif self.export_type=="dutch":
+                            time=df.Time.to_numpy()
+                            ims_vec=df["RainAmout[mm/h]"].to_numpy()
+                            ims_matrix[metadata["gauge_name"]] = \
+                                {
+                                    "metadata_len": len(metadata["vector"]),
+                                    "data_len": len(ims_vec),
+                                    "data": dict(zip(time, ims_vec)),
+                                    "metadata": metadata["vector"]
+                                }
 
                         data = {'Time': time, 'RainAmout[mm/h]': ims_vec}
                         pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{station_file_name}", index=False)
@@ -242,18 +254,22 @@ class Extractor:
 
     def get_dme_metadata(self, link_file_name):
         metadata = {}
-        link_file_name_splited = link_file_name.split('-')
-        metadata["source"] = f'{link_file_name_splited[0]}'
-        metadata["sink"] = f'{link_file_name_splited[3]}'
-        metadata["link_name"] = f'{metadata["source"]}-{metadata["sink"]}'
-        metadata["tx_longitude"] = link_file_name_splited[1]
-        metadata["tx_latitude"] = link_file_name_splited[2]
-        metadata["rx_longitude"] = link_file_name_splited[4]
-        metadata["rx_latitude"] = link_file_name_splited[5].replace(".csv", "")
-        metadata["vector"] = np.array([float(metadata["tx_longitude"]),
-                                       float(metadata["tx_latitude"]),
-                                       float(metadata["rx_longitude"]),
-                                       float(metadata["rx_latitude"])])
+        link_file_name_splited = link_file_name.split('_')
+        try:
+            metadata["source"] = f'{link_file_name_splited[0]}'
+            metadata["sink"] = f'{link_file_name_splited[3]}'
+            metadata["link_name"] = f'{metadata["source"]}-{metadata["sink"]}'
+            metadata["tx_longitude"] = link_file_name_splited[1]
+            metadata["tx_latitude"] = link_file_name_splited[2]
+            metadata["rx_longitude"] = link_file_name_splited[4]
+            metadata["rx_latitude"] = link_file_name_splited[5].replace(".csv", "")
+            metadata["vector"] = np.array([float(metadata["tx_longitude"]),
+                                           float(metadata["tx_latitude"]),
+                                           float(metadata["rx_longitude"]),
+                                           float(metadata["rx_latitude"])])
+        except IndexError:
+            print(f"File is not in correct format:{link_file_name}")
+            return
 
         return metadata
 
@@ -276,25 +292,18 @@ class Extractor:
             for link_file_name in os.listdir(f'{config.dme_root_files}/raw'):
 
                 metadata = self.get_dme_metadata(link_file_name)
-                print(f"preprocessing: now processing link: {metadata['link_name']}")
+                
+                if metadata:
+                    print(f"preprocessing: now processing link: {metadata['link_name']}")
 
-                df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
-                df = df[df.Interval == 15]
-
-                if len(list(df['Time'])) < valid_row_number:
-                    print(
-                        f'Number of rows for link: {metadata["link_name"]} is wrong: {len(list(df["Time"]))}<{valid_row_number}')
-
-                else:
-                    # if 'RFInputPower' in df:
-                    #     stack = [link_metadata["vector"] + x for x in [df.RFInputPower, df.RFOutputPower]]
-                    if 'PowerTLTMmax' in df and 'PowerTLTMmin' in df and 'PowerRLTMmax' in df and 'PowerRLTMmax' in df:
+                    df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
+                    if 'PowerTLTMmax[dBm]' in df and 'PowerTLTMmin[dBm]' in df and 'PowerRLTMmax[dBm]' in df and 'PowerRLTMmax[dBm]' in df:
                         try:
-                            PowerTLTMmax = np.array(df[~df.PowerTLTMmax.isnull()].PowerTLTMmax.astype(int))
-                            PowerTLTMmin = np.array(df[~df.PowerTLTMmin.isnull()].PowerTLTMmin.astype(int))
-                            PowerRLTMmax = np.array(df[~df.PowerRLTMmax.isnull()].PowerRLTMmax.astype(int))
-                            PowerRLTMmin = np.array(df[~df.PowerRLTMmin.isnull()].PowerRLTMmin.astype(int))
-                            Time = np.array(df[~df.PowerRLTMmin.isnull()].Time)
+                            PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]"].isnull()]["PowerTLTMmax[dBm]"].astype(int))
+                            PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]"].isnull()]["PowerTLTMmin[dBm]"].astype(int))
+                            PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]"].isnull()]["PowerRLTMmax[dBm]"].astype(int))
+                            PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()]["PowerRLTMmin[dBm]"].astype(int))
+                            Time = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()].Time)
                             data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T
 
                             dme_matrix[metadata["link_name"]] = {
