@@ -34,17 +34,17 @@ def add_days_to_date(date, delta_days=0):
 #09062011_13082011 dutch
 #01012013_01022013 israel
 
-export_type="israel"
+export_type="dutch"
 date = {
     'value': {
-        'dd': '01',
-        'mm': '01',
-        'yyyy': '2013'
+        'dd': '09',
+        'mm': '06',
+        'yyyy': '2011'
     },
     'value_range': {
-        'dd': '01',
-        'mm': '02',
-        'yyyy': '2013'
+        'dd': '13',
+        'mm': '08',
+        'yyyy': '2011'
     }
 }
 

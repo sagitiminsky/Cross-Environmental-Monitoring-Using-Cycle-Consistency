@@ -241,7 +241,7 @@ class Extractor:
                         }
 
                 
-                        data = {'Time': time, 'RainAmout[mm/h]': ims_vec}
+                        data = {'Time': time, 'RR[mm/h]': ims_vec}
                         pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{station_file_name}", index=False)
 
                 except FileNotFoundError:
