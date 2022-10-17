@@ -73,6 +73,7 @@ class CellenmonDataset(BaseDataset):
         return A, B
 
     def calc_dist_and_center_point(self, x1_longitude, x1_latitude, x2_longitude, x2_latitude) -> dict:
+        
         lon1 = radians(x1_longitude)
         lon2 = radians(x1_latitude)
         lat1 = radians(x2_longitude)
@@ -88,7 +89,7 @@ class CellenmonDataset(BaseDataset):
         # Radius of earth in kilometers (6371). Use 3956 for miles. We use 1 because it is normalized
         r = 1
         return {
-            "dist": c * r,
+            "dist": c * r / 1000.0, #in km
             "center": {
                 "longitude": (x1_longitude + x2_longitude) / 2,
                 "latitude": (x1_latitude + x2_latitude) / 2

@@ -9,6 +9,7 @@ import pandas as pd
 import json
 import vincent
 import CellEnMon.config as config
+from math import radians, cos, sin, asin, sqrt
 
 class Visualizer:
     '''Create a Folium interactive map of cmls:
@@ -40,12 +41,41 @@ class Visualizer:
             os.makedirs(self.out_path)
 
         self.virtual_gagues={}
+        self.real_gagues={}
         self.color_of_links = 'red'
         self.color_of_gauges = 'blue'
         self.color_of_produced_gauges = 'green'
         self.gridlines_on = False
         self.num_of_gridlines = 30
+    
+    def calculate_matric_for_real_and_fake_gauge(self,path_to_real_gauge,path_to_fake_gauge):
+        real_df=pd.read_csv(path_to_real_gauge, sep=",", index_col=False)
+        fake_df=pd.read_csv(path_to_fake_gauge, sep=",", index_col=False)
+        df_merged=pd.merge(real_df, fake_df, how='inner', on=['Time'])
+        return sum((df_merged["RR[mm/h]_x"]-df_merged["RR[mm/h]_y"])**2)
+        
+        
+    def is_within_radius(self,gauges,radius):
+        fake_longitude= radians(float(gauges["fake_longitude"]))
+        fake_latitude=radians(float(gauges["fake_latitude"]))
+        real_longitutde=radians(float(gauges["real_longitude"]))
+        real_latitude=radians(float(gauges["real_latitude"]))
+        
+        #1: fake
+        #2: real
+        
 
+        # Haversine formula
+        dlon = real_longitutde - fake_longitude
+        dlat = real_latitude - fake_latitude
+        a = sin(dlat / 2) ** 2 + cos(fake_latitude) * cos(real_latitude) * sin(dlon / 2) ** 2
+
+        c = 2 * asin(sqrt(a))
+
+        # Radius of earth in kilometers (6371). Use 3956 for miles
+        r = 6371
+        return c*r < radius #in km
+    
 
     def parse_instances(self, instance,virtual_gauge_coo):
         instance_arr = instance.split("_")
@@ -60,16 +90,42 @@ class Visualizer:
 
             }
         elif len(instance_arr)==3:
-            # dutch
-            return {
-                "ID": f"{instance_arr[0]}",
-                "Tx Site Longitude": float(instance_arr[2].replace(".csv", "")),
-                "Tx Site Latitude": float(instance_arr[1]),
-                "Rx Site Longitude": float(instance_arr[2].replace(".csv", "")),
-                "Rx Site Latitude": float(instance_arr[1])
+            # dutch gauges (including virtual)
+                        
+            ID = f"{instance_arr[0]}"
+            Tx_Site_Longitude = instance_arr[2].replace(".csv", "")
+            Tx_Site_Latitude = instance_arr[1]
+            Rx_Site_Longitude = instance_arr[2].replace(".csv", "")
+            Rx_Site_Latitude = instance_arr[1]
+            
+            self.real_gagues[ID]={
+                "Longitude": Tx_Site_Longitude,
+                "Latitude": Tx_Site_Latitude
             }
+            
+            
+            return {
+                "ID": f"{ID}",
+                "Tx Site Longitude": Tx_Site_Longitude,
+                "Tx Site Latitude": Tx_Site_Latitude,
+                "Rx Site Longitude": Rx_Site_Longitude,
+                "Rx Site Latitude": Rx_Site_Latitude
+            }
+        
         elif len(instance_arr) == 5:
-            # ims or produeced ims in only dynamic experiment
+            # israel gauges(including virtual)
+            
+            ID = f"{instance_arr[2]}"
+            Tx_Site_Longitude = instance_arr[3]
+            Tx_Site_Latitude = instance_arr[4].replace(".csv", "")
+            Rx_Site_Longitude = instance_arr[3]
+            Rx_Site_Latitude = instance_arr[4].replace(".csv", "")
+            
+            self.real_gagues[ID]={
+                "Longitude": Tx_Site_Longitude,
+                "Latitude": Tx_Site_Latitude
+            }
+            
             return {
                 "ID": f"{instance_arr[2]}",
                 "Tx Site Longitude": float(instance_arr[3]),
@@ -135,6 +191,7 @@ class Visualizer:
                         instace_dict = self.parse_instances(instance,virtual_gauge_coo)
                     else:
                         instace_dict = self.parse_instances(instance, virtual_gauge_coo=None)
+
                     lat_min = min(lat_min, float(instace_dict["Tx Site Latitude"]),
                                   float(instace_dict["Rx Site Latitude"]))
                     lon_min = min(lon_min, float(instace_dict["Tx Site Longitude"]),
