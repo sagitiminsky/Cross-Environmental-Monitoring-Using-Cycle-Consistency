@@ -52,7 +52,7 @@ def min_max_inv_transform(x, mmin, mmax):
 
 if __name__ == '__main__':
     real_fake_gauge_metric={}
-    datetime_format='%Y-%m-%d %H:%M:%S' if config.export_type=="israel" else '%d-%m-%Y %H:%M:%S'
+    datetime_format='%Y-%m-%d %H:%M' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
     experiment_name = "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
@@ -147,7 +147,7 @@ if __name__ == '__main__':
                         N = 8 if 'A' in key else 5
 
                     # Plot Data
-                    data = visuals[key][0].reshape(256, N).cpu().detach().numpy() if train_opt.is_only_dynamic else visuals[key][0].T.cpu().detach().numpy()
+                    data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy() if train_opt.is_only_dynamic else visuals[key][0].T.cpu().detach().numpy()
                     for i in range(1, 5):
                         if 'A' in key:
                             mmin = model.data_transformation['link']['min'][0].numpy()
@@ -208,7 +208,7 @@ if __name__ == '__main__':
                         file_path = f'{produced_gauge_folder}/PRODUCED_{model.link[0]}-{model.gague[0]}.csv'
                         with open(file_path, "w") as file:
                             a=np.array([t[0] for t in model.t]).reshape(train_opt.slice_dist,1)
-                            b=min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax).reshape(256,1)
+                            b=min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax).reshape(train_opt.slice_dist,1)
                             headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
                             c=np.hstack((a,b))
                             fmt = ",".join(["%s"]*(c.shape[1]))
@@ -228,13 +228,18 @@ if __name__ == '__main__':
                                 "fake_latitude":f'{float(metadata[1]):.3f}',
                                 "real_longitude":real_gauge_longitude,
                                 "real_latitude":real_gauge_latitude},
-                                radius=10):
+                                radius=30):
                                 
                                 counter+=1
                                 tested_with_array.append(real_gauge)
 
                                 path_to_real_gauge=f"{real_gauge_folder}/{real_gauge}_{real_gauge_latitude}_{real_gauge_longitude}.csv"   
-                                real_fake_gauge_metric+= v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge=path_to_real_gauge,path_to_fake_gauge=file_path)
+                                to_add=v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge=path_to_real_gauge,path_to_fake_gauge=file_path)
+                                
+                                if to_add:
+                                    real_fake_gauge_metric+=to_add
+                                else:
+                                    counter-=1
                         
                         if tested_with_array:
                             print(f"👀   {model.link[0]}-{model.gague[0]} is validated with {tested_with_array}   👀")
@@ -249,7 +254,7 @@ if __name__ == '__main__':
                 
                 
                 path_to_html = f"{v.out_path}/{v.map_name}"
-                wandb.log({**validation_losses, **training_losses, **{f"{model.link[0]}-{model.gague[0]}": real_fake_gauge_metric/counter if counter!=0 else -10}})
+                wandb.log({**validation_losses, **training_losses, **{f"RMSE:{model.link[0]}-{model.gague[0]}": real_fake_gauge_metric**0.5 if counter!=0 else -10}})
                 # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
                 wandb.log({title: plt})
                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})

@@ -52,7 +52,10 @@ class Visualizer:
         real_df=pd.read_csv(path_to_real_gauge, sep=",", index_col=False)
         fake_df=pd.read_csv(path_to_fake_gauge, sep=",", index_col=False)
         df_merged=pd.merge(real_df, fake_df, how='inner', on=['Time'])
-        return sum((df_merged["RR[mm/h]_x"]-df_merged["RR[mm/h]_y"])**2)
+        if len(df_merged):
+            return sum((df_merged["RR[mm/h]_x"]-df_merged["RR[mm/h]_y"])**2)/len(df_merged)
+        else:
+            return None
         
         
     def is_within_radius(self,gauges,radius):
@@ -212,7 +215,7 @@ class Visualizer:
                     ## create json of each cml timeseries for plotting
 
                     df_ts = pd.read_csv(data_path.joinpath(str(instance)))
-                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d-%m-%Y %H:%M:%S' if config.export_type=="dutch" else '%Y-%m-%d %H:%M:%S')
+                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d-%m-%Y %H:%M' if config.export_type=="dutch" else '%Y-%m-%d %H:%M')
                     df_ts.set_index('Time', inplace=True, drop=True)
                     timeseries = vincent.Scatter(
                         df_ts,
