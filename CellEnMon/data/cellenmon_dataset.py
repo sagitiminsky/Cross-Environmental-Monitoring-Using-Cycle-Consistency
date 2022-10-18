@@ -73,6 +73,7 @@ class CellenmonDataset(BaseDataset):
         return A, B
 
     def calc_dist_and_center_point(self, x1_longitude, x1_latitude, x2_longitude, x2_latitude) -> dict:
+        
         lon1 = radians(x1_longitude)
         lon2 = radians(x1_latitude)
         lat1 = radians(x2_longitude)
@@ -88,7 +89,7 @@ class CellenmonDataset(BaseDataset):
         # Radius of earth in kilometers (6371). Use 3956 for miles. We use 1 because it is normalized
         r = 1
         return {
-            "dist": c * r,
+            "dist": c * r / 1000.0, #in km
             "center": {
                 "longitude": (x1_longitude + x2_longitude) / 2,
                 "latitude": (x1_latitude + x2_latitude) / 2
@@ -165,9 +166,12 @@ class CellenmonDataset(BaseDataset):
             # go fetch
             slice_start_A = random.randint(0, dme_vec_len - 1)
             time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
-
-            if time_stamp_A_start_time in data_dict_B['data']:
-                slice_start_B = list(data_dict_B['data'].keys()).index(time_stamp_A_start_time)
+            
+            if time_stamp_A_start_time[:13] in [x[:13] for x in data_dict_B['data']]: # x[:13] is: dd-mm-yyyy hh
+                for l in data_dict_B['data'].keys():
+                    if l.startswith(time_stamp_A_start_time[:13]):
+                        slice_start_B=list(data_dict_B['data'].keys()).index(l)
+                        break
 
                 filter_cond = slice_start_A + slice_dist > dme_vec_len \
                               or slice_start_B + slice_dist > ims_vec_len
@@ -178,12 +182,12 @@ class CellenmonDataset(BaseDataset):
         B = torch.Tensor(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]))
 
         if self.opt.is_only_dynamic:
-            A = A.reshape(4, 256)
-            B = B.reshape(1, 256)
+            A = A.reshape(4, self.opt.slice_dist)
+            B = B.reshape(1, self.opt.slice_dist)
         else:
 
-            A=A.reshape(256,4)
-            B=B.reshape(256,1)
+            A=A.reshape(self.opt.slice_dist,4)
+            B=B.reshape(self.opt.slice_dist,1)
             for a, b in zip(data_dict_A['norm_metadata'], data_dict_B['norm_metadata']):
                 A, B = self.pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
 
