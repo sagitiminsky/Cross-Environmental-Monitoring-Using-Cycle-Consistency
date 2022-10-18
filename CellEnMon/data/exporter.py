@@ -241,7 +241,7 @@ class Extractor:
                         }
 
                 
-                        data = {'Time': time, 'RainAmout[mm/h]': ims_vec}
+                        data = {'Time': time, 'RR[mm/h]': ims_vec}
                         pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{station_file_name}", index=False)
 
                 except FileNotFoundError:
@@ -276,9 +276,13 @@ class Extractor:
             return
 
         return metadata
-
+    
+    def smoothing(self, arr, n):
+        return np.nanmean(np.pad(arr.astype(float), (0, n - arr.size%n), mode='constant', constant_values=arr[0]).reshape(-1, n), axis=1)
+    
     def load_dme(self, is_train=False):
         dataset_type_str = "train" if is_train else "validation"
+        smoothing_n=config.smoothing_dme
         temp_str = f'{config.dme_root_files}/processed'
         try:
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'rb') as f:
@@ -302,14 +306,25 @@ class Extractor:
 
                     df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
                     if 'PowerTLTMmax[dBm]' in df and 'PowerTLTMmin[dBm]' in df and 'PowerRLTMmax[dBm]' in df and 'PowerRLTMmax[dBm]' in df:
-                        try:
-                            PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]"].isnull()]["PowerTLTMmax[dBm]"].astype(int))
-                            PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]"].isnull()]["PowerTLTMmin[dBm]"].astype(int))
-                            PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]"].isnull()]["PowerRLTMmax[dBm]"].astype(int))
-                            PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()]["PowerRLTMmin[dBm]"].astype(int))
-                            Time = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()].Time)
-                            data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T
 
+                        PowerTLTMmax = self.smoothing(np.array(df[~df["PowerTLTMmax[dBm]"].isnull()]["PowerTLTMmax[dBm]"].astype(float)),n=smoothing_n)
+
+                        PowerTLTMmin = self.smoothing(np.array(df[~df["PowerTLTMmin[dBm]"].isnull()]["PowerTLTMmin[dBm]"].astype(float)), n=smoothing_n)
+
+                        PowerRLTMmax = self.smoothing(np.array(df[~df["PowerRLTMmax[dBm]"].isnull()]["PowerRLTMmax[dBm]"].astype(float)), n=smoothing_n)
+
+                        PowerRLTMmin = self.smoothing(np.array(df[~df["PowerRLTMmin[dBm]"].isnull()]["PowerRLTMmin[dBm]"].astype(float)), n=smoothing_n)
+
+                        
+                        
+
+                        Time = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()].Time)[:len(PowerTLTMmax)*smoothing_n:smoothing_n]
+                        data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T
+                          
+                        
+                        
+                        if len(PowerTLTMmax)==len(PowerTLTMmin) and len(PowerTLTMmin)==len(PowerRLTMmax) and len(PowerRLTMmax)==len(PowerRLTMmin) and len(PowerRLTMmin)==len(Time):
+                          
                             dme_matrix[metadata["link_name"]] = {
                                 'metadata_len': len(metadata["vector"]),
                                 'data_len': len(PowerRLTMmin),
@@ -321,9 +336,7 @@ class Extractor:
                                     'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin}
                             pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{link_file_name}", index=False)
 
-                        except ValueError:
-                            print(
-                                f"link's:{metadata['link_name']} dim are not compatible: PowerTLTMmax:{len(PowerTLTMmax)} | PowerTLTMmin:{len(PowerTLTMmin)} | PowerRLTMmax:{len(PowerRLTMmax)} | PowerRLTMmin:{len(PowerRLTMmin)}")
+
 
                     else:
                         print(
