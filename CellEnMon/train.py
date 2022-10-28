@@ -228,7 +228,7 @@ if __name__ == '__main__':
                                 "fake_latitude":f'{float(metadata[1]):.3f}',
                                 "real_longitude":real_gauge_longitude,
                                 "real_latitude":real_gauge_latitude},
-                                radius=30):
+                                radius=config.RADIUS):
                                 
                                 counter+=1
                                 tested_with_array.append(real_gauge)
