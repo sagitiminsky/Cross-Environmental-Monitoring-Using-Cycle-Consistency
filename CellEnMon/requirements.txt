@@ -41,5 +41,3 @@ torch
 torchvision
 plotly
 
-
-html

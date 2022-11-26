@@ -25,12 +25,12 @@ GROUPS = {
     "Dymanic and Static 4x1 <-> 1x4": {0: "first try"},
     "Dynamic only": {0: "first try"},
     "Dynamic and Static": {0: "first try", 1:"play around with configurations"},
-    "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations", 2:"real fake gauge metric"},
+    "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations", 2:"real fake gauge metric", 3:"make sure that fake gague is not too far from real link, and not too far from real gauge for validation"},
     "Dynamic and Static Israel": {0: "first try", 1:"play around with configurations"}
 }
 
 SELECTED_GROUP_NAME = "Dynamic and Static Dutch"
-SELECT_JOB = 2
+SELECT_JOB = 3
 
 
 
@@ -223,24 +223,30 @@ if __name__ == '__main__':
                             real_gauge_longitude=v.real_gagues[real_gauge]['Longitude']
                             real_gauge_latitude=v.real_gagues[real_gauge]['Latitude']
 
-                            if v.is_within_radius(gauges={
+                            if v.is_within_radius(stations={
+                                "fake_longitude":f'{float(metadata[0]):.3f}', 
+                                "fake_latitude":f'{float(metadata[1]):.3f}',
+                                "real_longitude": model.link_center_metadata['longitude'],
+                                "real_latitude": model.link_center_metadata['latitude']},
+                                radius=config.RADIUS) \
+                            and v.is_within_radius(stations={
                                 "fake_longitude":f'{float(metadata[0]):.3f}', 
                                 "fake_latitude":f'{float(metadata[1]):.3f}',
                                 "real_longitude":real_gauge_longitude,
                                 "real_latitude":real_gauge_latitude},
-                                radius=config.RADIUS):
-                                
+                                radius=config.RADIUS): 
+
                                 counter+=1
                                 tested_with_array.append(real_gauge)
 
                                 path_to_real_gauge=f"{real_gauge_folder}/{real_gauge}_{real_gauge_latitude}_{real_gauge_longitude}.csv"   
                                 to_add=v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge=path_to_real_gauge,path_to_fake_gauge=file_path)
-                                
+
                                 if to_add:
                                     real_fake_gauge_metric+=to_add
                                 else:
                                     counter-=1
-                        
+
                         if tested_with_array:
                             print(f"👀   {model.link[0]}-{model.gague[0]} is validated with {tested_with_array}   👀")
                               
