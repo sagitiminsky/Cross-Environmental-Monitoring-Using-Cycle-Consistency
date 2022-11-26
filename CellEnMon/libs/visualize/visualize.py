@@ -42,6 +42,7 @@ class Visualizer:
 
         self.virtual_gagues={}
         self.real_gagues={}
+        self.real_links={}
         self.color_of_links = 'red'
         self.color_of_gauges = 'blue'
         self.color_of_produced_gauges = 'green'
@@ -58,11 +59,11 @@ class Visualizer:
             return None
         
         
-    def is_within_radius(self,gauges,radius):
-        fake_longitude= radians(float(gauges["fake_longitude"]))
-        fake_latitude=radians(float(gauges["fake_latitude"]))
-        real_longitutde=radians(float(gauges["real_longitude"]))
-        real_latitude=radians(float(gauges["real_latitude"]))
+    def is_within_radius(self,stations,radius):
+        fake_longitude= radians(float(stations["fake_longitude"]))
+        fake_latitude=radians(float(stations["fake_latitude"]))
+        real_longitutde=radians(float(stations["real_longitude"]))
+        real_latitude=radians(float(stations["real_latitude"]))
         
         #1: fake
         #2: real
@@ -83,9 +84,16 @@ class Visualizer:
     def parse_instances(self, instance,virtual_gauge_coo):
         instance_arr = instance.split("_")
         if len(instance_arr) == 6:
-            # dme
+            # Real links
+            
+            ID=f"{instance_arr[0]}_{instance_arr[3]}"
+            self.real_links[ID]={
+                "Longitude": (float(instance_arr[1]) + float(instance_arr[4])) / 2,
+                "Latitude": (float(instance_arr[2]) + float(instance_arr[5].replace(".csv", ""))) / 2
+            }
+            
             return {
-                "ID": f"{instance_arr[0]}_{instance_arr[3]}",
+                "ID": ID,
                 "Tx Site Longitude": float(instance_arr[1]),
                 "Tx Site Latitude": float(instance_arr[2]),
                 "Rx Site Longitude": float(instance_arr[4]),
