@@ -25,7 +25,7 @@ GROUPS = {
     "Dymanic and Static 4x1 <-> 1x4": {0: "first try"},
     "Dynamic only": {0: "first try"},
     "Dynamic and Static": {0: "first try", 1:"play around with configurations"},
-    "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations", 2:"real fake gauge metric", 3:"make sure that fake gague is not too far from real link, and not too far from real gauge for validation"},
+    "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations", 2:"real fake gauge metric", 3:"fake gague is not too positioning"},
     "Dynamic and Static Israel": {0: "first try", 1:"play around with configurations"}
 }
 
@@ -236,19 +236,10 @@ if __name__ == '__main__':
                                 "real_latitude":real_gauge_latitude},
                                 radius=config.RADIUS): 
 
-                                counter+=1
-                                tested_with_array.append(real_gauge)
-
                                 path_to_real_gauge=f"{real_gauge_folder}/{real_gauge}_{real_gauge_latitude}_{real_gauge_longitude}.csv"   
                                 to_add=v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge=path_to_real_gauge,path_to_fake_gauge=file_path)
 
-                                if to_add:
-                                    real_fake_gauge_metric+=to_add
-                                else:
-                                    counter-=1
 
-                        if tested_with_array:
-                            print(f"👀   {model.link[0]}-{model.gague[0]} is validated with {tested_with_array}   👀")
                               
                                     
                             
