@@ -105,7 +105,7 @@ class CycleGANModel(BaseModel):
         self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
         self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
         self.inv_distance = 1 / input['distance'].to(self.device)
-        self.rain_rate_prob = 1 - input['rain_rate'].to(self.device)
+        self.rain_rate_prob = 1 / input['rain_rate'].to(self.device)
         self.t = input['Time']
 
         self.link = input['link']
