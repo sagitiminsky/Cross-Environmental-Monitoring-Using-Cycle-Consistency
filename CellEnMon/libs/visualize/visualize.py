@@ -56,7 +56,7 @@ class Visualizer:
         if len(df_merged):
             return sum((df_merged["RR[mm/h]_x"]-df_merged["RR[mm/h]_y"])**2)/len(df_merged)
         else:
-            return None
+            return 0
         
         
     def is_within_radius(self,stations,radius):

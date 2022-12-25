@@ -215,29 +215,42 @@ if __name__ == '__main__':
                             np.savetxt(file, c, fmt=fmt, header=headers, comments='')
                             
                         # calculate metric for test gauges
-                        real_fake_gauge_metric=0
+                        real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]=None
                         counter=0
+                        to_add=0
                         tested_with_array=[]
                         for real_gauge in v.real_gagues:
 
                             real_gauge_longitude=v.real_gagues[real_gauge]['Longitude']
                             real_gauge_latitude=v.real_gagues[real_gauge]['Latitude']
-
-                            if v.is_within_radius(stations={
+                            
+                            
+                            is_virtual_gauge_within_radius_with_link=v.is_within_radius(stations={
                                 "fake_longitude":f'{float(metadata[0]):.3f}', 
                                 "fake_latitude":f'{float(metadata[1]):.3f}',
                                 "real_longitude": model.link_center_metadata['longitude'],
                                 "real_latitude": model.link_center_metadata['latitude']},
-                                radius=config.RADIUS) \
-                            and v.is_within_radius(stations={
+                                radius=config.RADIUS)
+                            is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
                                 "fake_longitude":f'{float(metadata[0]):.3f}', 
                                 "fake_latitude":f'{float(metadata[1]):.3f}',
                                 "real_longitude":real_gauge_longitude,
                                 "real_latitude":real_gauge_latitude},
-                                radius=config.RADIUS): 
-
+                                radius=config.RADIUS)
+                                
+                            print(f"is_virtual_gauge_within_radius_with_link:{is_virtual_gauge_within_radius_with_link}")
+                            print(f"is_virtual_gauge_within_radius_with_real_gauge:{is_virtual_gauge_within_radius_with_real_gauge}")
+                            
+                            if  is_virtual_gauge_within_radius_with_link and is_virtual_gauge_within_radius_with_real_gauge:
                                 path_to_real_gauge=f"{real_gauge_folder}/{real_gauge}_{real_gauge_latitude}_{real_gauge_longitude}.csv"   
+                            
+                            
                                 to_add=v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge=path_to_real_gauge,path_to_fake_gauge=file_path)
+                                try:
+                                    real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]+=to_add
+                                except TypeError:
+                                    real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]=to_add
+                                
 
 
                               
@@ -251,7 +264,7 @@ if __name__ == '__main__':
                 
                 
                 path_to_html = f"{v.out_path}/{v.map_name}"
-                wandb.log({**validation_losses, **training_losses, **{f"RMSE:{model.link[0]}-{model.gague[0]}": real_fake_gauge_metric**0.5 if counter!=0 else -10}})
+                wandb.log({**validation_losses, **training_losses, **real_fake_gauge_metric})
                 # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
                 wandb.log({title: plt})
                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
