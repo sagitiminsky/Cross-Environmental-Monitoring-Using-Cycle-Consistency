@@ -307,13 +307,13 @@ class Extractor:
                     df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
                     if 'PowerTLTMmax[dBm]' in df and 'PowerTLTMmin[dBm]' in df and 'PowerRLTMmax[dBm]' in df and 'PowerRLTMmax[dBm]' in df:
 
-                        PowerTLTMmax = self.smoothing(np.array(df[~df["PowerTLTMmax[dBm]"].isnull()]["PowerTLTMmax[dBm]"].astype(float)),n=smoothing_n)
+                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]"].isnull()]["PowerTLTMmax[dBm]"].astype(float))
 
-                        PowerTLTMmin = self.smoothing(np.array(df[~df["PowerTLTMmin[dBm]"].isnull()]["PowerTLTMmin[dBm]"].astype(float)), n=smoothing_n)
+                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]"].isnull()]["PowerTLTMmin[dBm]"].astype(float))
 
-                        PowerRLTMmax = self.smoothing(np.array(df[~df["PowerRLTMmax[dBm]"].isnull()]["PowerRLTMmax[dBm]"].astype(float)), n=smoothing_n)
+                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]"].isnull()]["PowerRLTMmax[dBm]"].astype(float))
 
-                        PowerRLTMmin = self.smoothing(np.array(df[~df["PowerRLTMmin[dBm]"].isnull()]["PowerRLTMmin[dBm]"].astype(float)), n=smoothing_n)
+                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()]["PowerRLTMmin[dBm]"].astype(float))
 
                         
                         

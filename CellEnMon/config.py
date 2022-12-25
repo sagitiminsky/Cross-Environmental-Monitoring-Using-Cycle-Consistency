@@ -33,10 +33,10 @@ def add_days_to_date(date, delta_days=0):
 
 #09062011_13082011 dutch
 #01012013_01022013 israel
-smoothing_dme=4
+smoothing_dme=1
 smoothing_ims="xx" # not used yet
 
-RADIUS=15
+RADIUS=50
 
 export_type="dutch"
 date = {
