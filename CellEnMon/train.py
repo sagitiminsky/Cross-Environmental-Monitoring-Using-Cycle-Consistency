@@ -3,7 +3,7 @@ import os.path
 import time
 
 import pandas as pd
-
+import glob
 from options.train_options import TrainOptions
 from options.test_options import TestOptions
 import data
@@ -112,7 +112,7 @@ if __name__ == '__main__':
             epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
 
         if epoch % 5 == 0:
-            # Validation losses
+            print("Validation in progress...")
             agg_validation_mse_A, agg_validation_mse_B = 0, 0
             for val_data in validation_dataset:
                 model.set_input(val_data)
@@ -123,148 +123,152 @@ if __name__ == '__main__':
                 
                 
 
-            # agg fix
-            validation_losses['Validation/rmse_A'] = math.sqrt(agg_validation_mse_A / len(validation_dataset))
-            validation_losses['Validation/rmse_B'] = math.sqrt(agg_validation_mse_B / len(validation_dataset))
-            training_losses['Train/rmse_A'] = math.sqrt(agg_train_mse_A / len(train_dataset))
-            training_losses['Train/rmse_B'] = math.sqrt(agg_train_mse_B / len(train_dataset))
+                # agg fix
+                validation_losses['Validation/rmse_A'] = math.sqrt(agg_validation_mse_A / len(validation_dataset))
+                validation_losses['Validation/rmse_B'] = math.sqrt(agg_validation_mse_B / len(validation_dataset))
+                training_losses['Train/rmse_A'] = math.sqrt(agg_train_mse_A / len(train_dataset))
+                training_losses['Train/rmse_B'] = math.sqrt(agg_train_mse_B / len(train_dataset))
 
-            if ENABLE_WANDB:
-                # Visualize
-                plt.clf()
-                metadata=[0]*4
-                visuals = model.get_current_visuals()
-                fig, axs = plt.subplots(2, 3, figsize=(15, 15))
-                title = f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}'
+                if ENABLE_WANDB:
+                    # Visualize
+                    plt.clf()
+                    metadata=[0]*4
+                    visuals = model.get_current_visuals()
+                    fig, axs = plt.subplots(2, 3, figsize=(15, 15))
+                    title = f'{model.link}<->{model.gague}' if train_opt.is_only_dynamic else f'{model.link}<->{model.gague}'
 
-                plt.title(title)
+                    plt.title(title)
 
-                for ax, key in zip(axs.flatten(), visuals):
+                    for ax, key in zip(axs.flatten(), visuals):
 
-                    if train_opt.is_only_dynamic:
-                        N = 4 if 'A' in key else 1
-                    else:
-                        N = 8 if 'A' in key else 5
-
-                    # Plot Data
-                    data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy() if train_opt.is_only_dynamic else visuals[key][0].T.cpu().detach().numpy()
-                    for i in range(1, 5):
-                        if 'A' in key:
-                            mmin = model.data_transformation['link']['min'][0].numpy()
-                            mmax = model.data_transformation['link']['max'][0].numpy()
-                            label = DME_KEYS[i]
-                            data_vector = data[:, i - 1]
+                        if train_opt.is_only_dynamic:
+                            N = 4 if 'A' in key else 1
                         else:
-                            mmin = model.data_transformation['gague']['min'][0].numpy()
-                            mmax = model.data_transformation['gague']['max'][0].numpy()
-                            label = IMS_KEYS[1]
-                            data_vector = data.T[0]
+                            N = 8 if 'A' in key else 5
+
+                        # Plot Data
+                        data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy() if train_opt.is_only_dynamic else visuals[key][0].T.cpu().detach().numpy()
+                        for i in range(1, 5):
+                            if 'A' in key:
+                                mmin = model.data_transformation['link']['min'][0].numpy()
+                                mmax = model.data_transformation['link']['max'][0].numpy()
+                                label = DME_KEYS[i]
+                                data_vector = data[:, i - 1]
+                            else:
+                                mmin = model.data_transformation['gague']['min'][0].numpy()
+                                mmax = model.data_transformation['gague']['max'][0].numpy()
+                                label = IMS_KEYS[1]
+                                data_vector = data.T[0]
 
 
-                        metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
-                        metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
-                        metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
-                        metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
+                            metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
+                            metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
+                            metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
+                            metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
 
-                        metadata_inv_zip = [
-                            (metadata_long_max, metadata_long_min),
-                            (metadata_lat_max, metadata_lat_min),
-                            (metadata_long_max, metadata_long_min),
-                            (metadata_lat_max, metadata_lat_min)
-                        ]
-                        metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
-                                    (mmin, mmax), x in
-                                    zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
+                            metadata_inv_zip = [
+                                (metadata_long_max, metadata_long_min),
+                                (metadata_lat_max, metadata_lat_min),
+                                (metadata_long_max, metadata_long_min),
+                                (metadata_lat_max, metadata_lat_min)
+                            ]
+                            metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
+                                        (mmin, mmax), x in
+                                        zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
 
-                        ax.plot([mpl_dates.date2num(datetime.strptime(t[0], datetime_format)) for t in model.t],
-                                min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
-                                marker='o',
-                                linestyle='dashed',
-                                linewidth=0.0,
-                                markersize=4,
-                                label=label
-                                )
+                            ax.plot([mpl_dates.date2num(datetime.strptime(t[0], datetime_format)) for t in model.t],
+                                    min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
+                                    marker='o',
+                                    linestyle='dashed',
+                                    linewidth=0.0,
+                                    markersize=4,
+                                    label=label
+                                    )
 
-                        ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
-                                                                           f' {metadata}', y=0.75, fontdict={'fontsize':6})
+                            ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
+                                                                               f' {metadata}', y=0.75, fontdict={'fontsize':6})
 
-                    # Formatting Date
-                    date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
-                    ax.xaxis.set_major_formatter(date_format)
+                        # Formatting Date
+                        date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
+                        ax.xaxis.set_major_formatter(date_format)
 
-                    # save in predict directory for generated data
-                    start_date = config.start_date_str_rep_ddmmyyyy
-                    end_date = config.end_date_str_rep_ddmmyyyy
-                    produced_gauge_folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict/{experiment_name}' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict/{experiment_name}'
-                    real_gauge_folder=f'CellEnMon/datasets/ims/{start_date}_{end_date}/processed'
+                        # save in predict directory for generated data
+                        start_date = config.start_date_str_rep_ddmmyyyy
+                        end_date = config.end_date_str_rep_ddmmyyyy
+                        produced_gauge_folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict/{experiment_name}' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict/{experiment_name}'
+                        real_gauge_folder=f'CellEnMon/datasets/ims/{start_date}_{end_date}/processed'
 
-                    if not os.path.exists(produced_gauge_folder):
-                        os.makedirs(produced_gauge_folder)
-                        
-                    if not os.path.exists(real_gauge_folder):
-                        os.makedirs(real_gauge_folder)
+                        if not os.path.exists(produced_gauge_folder):
+                            os.makedirs(produced_gauge_folder)
 
-                    if 'fake_B' == key:
-                        file_path = f'{produced_gauge_folder}/PRODUCED_{model.link[0]}-{model.gague[0]}.csv'
-                        with open(file_path, "w") as file:
-                            a=np.array([t[0] for t in model.t]).reshape(train_opt.slice_dist,1)
-                            b=min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax).reshape(train_opt.slice_dist,1)
-                            headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
-                            c=np.hstack((a,b))
-                            fmt = ",".join(["%s"]*(c.shape[1]))
-                            np.savetxt(file, c, fmt=fmt, header=headers, comments='')
-                            
-                        # calculate metric for test gauges
-                        real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]=None
-                        counter=0
-                        to_add=0
-                        tested_with_array=[]
-                        for real_gauge in v.real_gagues:
+                        if not os.path.exists(real_gauge_folder):
+                            os.makedirs(real_gauge_folder)
 
-                            real_gauge_longitude=v.real_gagues[real_gauge]['Longitude']
-                            real_gauge_latitude=v.real_gagues[real_gauge]['Latitude']
-                            
-                            
-                            is_virtual_gauge_within_radius_with_link=v.is_within_radius(stations={
-                                "fake_longitude":f'{float(metadata[0]):.3f}', 
-                                "fake_latitude":f'{float(metadata[1]):.3f}',
-                                "real_longitude": model.link_center_metadata['longitude'],
-                                "real_latitude": model.link_center_metadata['latitude']},
-                                radius=config.RADIUS)
-                            is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
-                                "fake_longitude":f'{float(metadata[0]):.3f}', 
-                                "fake_latitude":f'{float(metadata[1]):.3f}',
-                                "real_longitude":real_gauge_longitude,
-                                "real_latitude":real_gauge_latitude},
-                                radius=config.RADIUS)
-                                
-                            print(f"is_virtual_gauge_within_radius_with_link:{is_virtual_gauge_within_radius_with_link}")
-                            print(f"is_virtual_gauge_within_radius_with_real_gauge:{is_virtual_gauge_within_radius_with_real_gauge}")
-                            
-                            if  is_virtual_gauge_within_radius_with_link and is_virtual_gauge_within_radius_with_real_gauge:
-                                path_to_real_gauge=f"{real_gauge_folder}/{real_gauge}_{real_gauge_latitude}_{real_gauge_longitude}.csv"   
-                            
-                            
-                                to_add=v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge=path_to_real_gauge,path_to_fake_gauge=file_path)
+                        if 'fake_B' == key:
+                            file_path = f'{produced_gauge_folder}/{model.link[0]}-{model.gague[0]}_{metadata[1]}_{metadata[0]}.csv'
+                            for file_path in glob.glob(f'{produced_gauge_folder}/{model.link[0]}_*.csv',recursive=True): 
                                 try:
-                                    real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]+=to_add
-                                except TypeError:
-                                    real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]=to_add
+                                    os.remove(file_path)
+                                except OSError:
+                                    print("OSError or file does not exist")
                                 
+                            with open(file_path, "w") as file:
+                                a=np.array([t[0] for t in model.t]).reshape(train_opt.slice_dist,1)
+                                b=min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax).reshape(train_opt.slice_dist,1)
+                                headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
+                                c=np.hstack((a,b))
+                                fmt = ",".join(["%s"]*(c.shape[1]))
+                                np.savetxt(file, c, fmt=fmt, header=headers, comments='')
+
+                            # calculate metric for test gauges
+                            real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]=None
+                            counter=0
+                            to_add=0
+                            tested_with_array=[]
+                            for real_gauge in v.real_gagues:
+
+                                real_gauge_longitude=v.real_gagues[real_gauge]['Longitude']
+                                real_gauge_latitude=v.real_gagues[real_gauge]['Latitude']
 
 
-                              
-                                    
-                            
+                                is_virtual_gauge_within_radius_with_link=v.is_within_radius(stations={
+                                    "fake_longitude":f'{float(metadata[0]):.3f}', 
+                                    "fake_latitude":f'{float(metadata[1]):.3f}',
+                                    "real_longitude": model.link_center_metadata['longitude'],
+                                    "real_latitude": model.link_center_metadata['latitude']},
+                                    radius=config.RADIUS)
+                                is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
+                                    "fake_longitude":f'{float(metadata[0]):.3f}', 
+                                    "fake_latitude":f'{float(metadata[1]):.3f}',
+                                    "real_longitude":real_gauge_longitude,
+                                    "real_latitude":real_gauge_latitude},
+                                    radius=config.RADIUS)
 
-                v.draw_cml_map(virtual_gauge_name=f'PRODUCED_{model.link[0]}-{model.gague[0]}.csv',virtual_gauge_coo={
-                    "longitude": f'{model.link_center_metadata["longitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[0]):.3f}',
-                    "latitude": f'{model.link_center_metadata["latitude"][0]:.3f}' if train_opt.is_only_dynamic else f'{float(metadata[1]):.3f}'
-                })
-                
-                
-                path_to_html = f"{v.out_path}/{v.map_name}"
-                wandb.log({**validation_losses, **training_losses, **real_fake_gauge_metric})
-                # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
-                wandb.log({title: plt})
-                wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
+                                if  is_virtual_gauge_within_radius_with_link and is_virtual_gauge_within_radius_with_real_gauge:
+                                    path_to_real_gauge=f"{real_gauge_folder}/{real_gauge}_{real_gauge_latitude}_{real_gauge_longitude}.csv"   
+
+
+                                    to_add=v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge=path_to_real_gauge,path_to_fake_gauge=file_path)
+                                    try:
+                                        real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]+=to_add
+                                    except TypeError:
+                                        real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]=to_add
+
+                            if real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]: #report only if found something
+                                wandb.log(real_fake_gauge_metric)
+
+
+
+
+
+
+
+
+
+
+                    # wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
+                    wandb.log({title: plt})
+            path_to_html = f"{v.out_path}/{v.map_name}"
+            wandb.log({**validation_losses, **training_losses})        
+            v.draw_cml_map()
+            wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})

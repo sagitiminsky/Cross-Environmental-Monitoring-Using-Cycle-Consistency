@@ -21,7 +21,7 @@ class BaseOptions():
         # basic parameters
         is_only_dynamic=False
         parser.add_argument('--is_only_dynamic', default=is_only_dynamic, help='indicated if the dataest constain only dynamic data or both dynamic and static dadta')
-        parser.add_argument('--slice_dist', type=int, default=64, #do not change
+        parser.add_argument('--slice_dist', type=int, default=128, #do not change
                             help='Number of samples taken for ims and dme data in a single dataload')
         parser.add_argument('--dataroot', required=False, help='supported by the data/exporter class')
         parser.add_argument('--name', type=str, default='CellEnMon_CycleGan',

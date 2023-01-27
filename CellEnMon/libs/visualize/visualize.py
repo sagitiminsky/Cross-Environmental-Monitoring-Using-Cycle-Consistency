@@ -81,7 +81,7 @@ class Visualizer:
         return c*r < radius #in km
     
 
-    def parse_instances(self, instance,virtual_gauge_coo):
+    def parse_instances(self, instance):
         instance_arr = instance.split("_")
         if len(instance_arr) == 6:
             # Real links
@@ -144,32 +144,11 @@ class Visualizer:
                 "Rx Site Longitude": float(instance_arr[3]),
                 "Rx Site Latitude": float(instance_arr[4].replace(".csv", "")),
             }
-        else:
-            instance_name = instance_arr[1].replace(".csv", "")
-            if virtual_gauge_coo:
-                # produced ims in dynamic and static experiment
-                self.virtual_gagues[instance_name]={
-                    "longitude": virtual_gauge_coo["longitude"],
-                    "latitude": virtual_gauge_coo["latitude"]
-                }
 
-            elif instance_name not in self.virtual_gagues:
-                self.virtual_gagues[instance_name]={
-                    "longitude": 32.251,
-                    "latitude": 35.154
-                }
-            return {
-                "ID": f"{instance_arr[1]}",
-                "Tx Site Longitude": float(self.virtual_gagues[instance_name]["longitude"]),
-                "Tx Site Latitude": float(self.virtual_gagues[instance_name]["latitude"]),
-                "Rx Site Longitude": float(self.virtual_gagues[instance_name]["longitude"]),
-                "Rx Site Latitude": float(self.virtual_gagues[instance_name]["latitude"]),
-            }
-
-    def draw_cml_map(self,virtual_gauge_name=None, virtual_gauge_coo=None):
+    def draw_cml_map(self):
         num_links_map = len([file for file in os.listdir(self.data_path_dme) if ".csv" in file])
         num_gagues_map = len([file for file in os.listdir(self.data_path_ims) if ".csv" in file])
-        num_produced_gagues_map = len(self.virtual_gagues)
+        num_produced_gagues_map = len([file for file in os.listdir(self.data_path_produced_ims) if ".csv" in file])
 
         station_types = {
             "link": self.data_path_dme,
@@ -185,7 +164,7 @@ class Visualizer:
 
         grid = []
 
-        map_1 = folium.Map(location=[32, 35],
+        map_1 = folium.Map(location=[51.978162, 5.079183],
                            zoom_start=8,
                            tiles='Stamen Terrain',
                            control_scale=True)
@@ -198,10 +177,10 @@ class Visualizer:
         for station_type, data_path in station_types.items():
             for instance in os.listdir(data_path):
                 if ".csv" in instance:
-                    if station_type=="produced_gague" and virtual_gauge_name in instance:
-                        instace_dict = self.parse_instances(instance,virtual_gauge_coo)
-                    else:
-                        instace_dict = self.parse_instances(instance, virtual_gauge_coo=None)
+                    
+
+                    instace_dict = self.parse_instances(instance)
+
 
                     lat_min = min(lat_min, float(instace_dict["Tx Site Latitude"]),
                                   float(instace_dict["Rx Site Latitude"]))
