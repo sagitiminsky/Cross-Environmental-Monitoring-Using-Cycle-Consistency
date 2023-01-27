@@ -109,11 +109,6 @@ class Visualizer:
             Rx_Site_Longitude = instance_arr[2].replace(".csv", "")
             Rx_Site_Latitude = instance_arr[1]
             
-            self.real_gagues[ID]={
-                "Longitude": Tx_Site_Longitude,
-                "Latitude": Tx_Site_Latitude
-            }
-            
             
             return {
                 "ID": f"{ID}",

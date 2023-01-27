@@ -9,6 +9,7 @@ from options.test_options import TestOptions
 import data
 import models
 import wandb
+from pathlib import Path
 import matplotlib.pyplot as plt
 from datetime import datetime
 import matplotlib.dates as mpl_dates
@@ -52,6 +53,7 @@ def min_max_inv_transform(x, mmin, mmax):
 
 if __name__ == '__main__':
     real_fake_gauge_metric={}
+    dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
     datetime_format='%Y-%m-%d %H:%M' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
@@ -206,7 +208,7 @@ if __name__ == '__main__':
 
                         if 'fake_B' == key:
                             file_path = f'{produced_gauge_folder}/{model.link[0]}-{model.gague[0]}_{metadata[1]}_{metadata[0]}.csv'
-                            for file_path in glob.glob(f'{produced_gauge_folder}/{model.link[0]}_*.csv',recursive=True): 
+                            for file_path in glob.glob(f'{produced_gauge_folder}/{model.link[0]}-{model.gague[0]}_*.csv',recursive=True): 
                                 try:
                                     os.remove(file_path)
                                 except OSError:
@@ -225,10 +227,10 @@ if __name__ == '__main__':
                             counter=0
                             to_add=0
                             tested_with_array=[]
-                            for real_gauge in v.real_gagues:
+                            for real_gauge in [file for file in os.listdir(Path(f"./CellEnMon/datasets/ims/{dates_range}/processed")) if ".csv" in file]:
 
-                                real_gauge_longitude=v.real_gagues[real_gauge]['Longitude']
-                                real_gauge_latitude=v.real_gagues[real_gauge]['Latitude']
+                                real_gauge_longitude=real_gauge.split("_")[0].replace(".csv", "")
+                                real_gauge_latitude=real_gauge.split("_")[1].replace(".csv", "")
 
 
                                 is_virtual_gauge_within_radius_with_link=v.is_within_radius(stations={
