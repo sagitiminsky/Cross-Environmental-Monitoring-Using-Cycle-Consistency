@@ -27,11 +27,12 @@ GROUPS = {
     "Dynamic only": {0: "first try"},
     "Dynamic and Static": {0: "first try", 1:"play around with configurations"},
     "Dynamic and Static Dutch": {0: "first try", 1:"play around with configurations", 2:"real fake gauge metric", 3:"fake gague is not too positioning"},
-    "Dynamic and Static Israel": {0: "first try", 1:"play around with configurations"}
+    "Dynamic and Static Israel": {0: "first try", 1:"play around with configurations"},
+    "Dynamic Dutch": {0:"first try"}
 }
 
-SELECTED_GROUP_NAME = "Dynamic and Static Dutch"
-SELECT_JOB = 3
+SELECTED_GROUP_NAME = "Dynamic Dutch"
+SELECT_JOB = 0
 
 
 
@@ -207,7 +208,14 @@ if __name__ == '__main__':
                             os.makedirs(real_gauge_folder)
 
                         if 'fake_B' == key:
-                            file_path = f'{produced_gauge_folder}/{model.link[0]}-{model.gague[0]}_{metadata[1]}_{metadata[0]}.csv'
+                            if experiment_name=="only_dynamic":
+                                virtual_gauge_lat=f"{float(model.link_center_metadata['latitude']):.3f}"
+                                virtual_gauge_long=f"{float(model.link_center_metadata['longitude']):.3f}"
+                            else:
+                                virtual_gauge_lat=metadata[1]
+                                virtual_gauge_long=metadata[0]
+                                
+                            file_path = f'{produced_gauge_folder}/{model.link[0]}-{model.gague[0]}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
                             for file_path in glob.glob(f'{produced_gauge_folder}/{model.link[0]}-{model.gague[0]}_*.csv',recursive=True): 
                                 try:
                                     os.remove(file_path)
@@ -229,28 +237,29 @@ if __name__ == '__main__':
                             tested_with_array=[]
                             for real_gauge in [file for file in os.listdir(Path(f"./CellEnMon/datasets/ims/{dates_range}/processed")) if ".csv" in file]:
 
-                                real_gauge_longitude=real_gauge.split("_")[0].replace(".csv", "")
+                                
                                 real_gauge_latitude=real_gauge.split("_")[1].replace(".csv", "")
+                                real_gauge_longitude=real_gauge.split("_")[2].replace(".csv", "")
 
 
                                 is_virtual_gauge_within_radius_with_link=v.is_within_radius(stations={
-                                    "fake_longitude":f'{float(metadata[0]):.3f}', 
-                                    "fake_latitude":f'{float(metadata[1]):.3f}',
+                                    "fake_longitude":virtual_gauge_long, 
+                                    "fake_latitude":virtual_gauge_lat,
                                     "real_longitude": model.link_center_metadata['longitude'],
                                     "real_latitude": model.link_center_metadata['latitude']},
                                     radius=config.RADIUS)
                                 is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
-                                    "fake_longitude":f'{float(metadata[0]):.3f}', 
-                                    "fake_latitude":f'{float(metadata[1]):.3f}',
+                                    "fake_longitude":virtual_gauge_long, 
+                                    "fake_latitude":virtual_gauge_lat,
                                     "real_longitude":real_gauge_longitude,
                                     "real_latitude":real_gauge_latitude},
                                     radius=config.RADIUS)
 
                                 if  is_virtual_gauge_within_radius_with_link and is_virtual_gauge_within_radius_with_real_gauge:
-                                    path_to_real_gauge=f"{real_gauge_folder}/{real_gauge}_{real_gauge_latitude}_{real_gauge_longitude}.csv"   
-
-
-                                    to_add=v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge=path_to_real_gauge,path_to_fake_gauge=file_path)
+                                    path_to_real_gauge=f"{real_gauge_folder}/{real_gauge}"   
+                                    
+                                    
+                                    to_add=v.calculate_matric_for_real_and_fake_gauge(path_to_real_gauge,file_path)
                                     try:
                                         real_fake_gauge_metric[f"{model.link[0]}-{model.gague[0]}"]+=to_add
                                     except TypeError:
