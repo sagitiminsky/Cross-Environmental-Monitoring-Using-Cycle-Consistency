@@ -36,7 +36,8 @@ def add_days_to_date(date, delta_days=0):
 smoothing_dme=1
 smoothing_ims="xx" # not used yet
 
-RADIUS=50
+TRAIN_RADIUS=15
+VALIDATION_RADIUS=6
 
 export_type="dutch"
 date = {
