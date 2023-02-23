@@ -248,8 +248,8 @@ class Extractor:
                     print("data does not exist in {}".format(station_file_name))
 
             s = pd.Series(ims_matrix)
-            print(f"ims_matrix:{s}")
-            training_data, validation_data = [i.to_dict() for i in train_test_split(s, train_size=0.7)]
+
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=False)]
             dataset = training_data if is_train else validation_data
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
                 pickle.dump(dataset, f)
@@ -353,7 +353,7 @@ class Extractor:
 
 if __name__ == "__main__":
     dataset = Extractor(is_train=IS_TRAIN)
-    dataset.stats()
+    #dataset.stats()
     # dataset.visualize_dme(link_name='a459-6879')
     # dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
     plt.show()
