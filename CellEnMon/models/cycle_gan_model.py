@@ -91,7 +91,7 @@ class CycleGANModel(BaseModel):
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
 
-    def set_input(self, input, direction='AtoB'):
+    def set_input(self, input, direction='AtoB', isTrain=True):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
@@ -100,27 +100,29 @@ class CycleGANModel(BaseModel):
         The option 'direction' can be used to swap domain A and domain B.
         """
         AtoB = self.opt.direction == 'AtoB'
-        self.real_A = input['A' if AtoB else 'B'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device)
-        self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
-        self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
-        self.inv_distance = 1 / input['distance'].to(self.device)
-        self.rain_rate_prob = 1 / input['rain_rate'].to(self.device)
-        self.t = input['Time']
+        self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample"].to(self.device)
+        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input["rain_rate_sample"].to(self.device)
+        
+        if isTrain:
+            self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
+            self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
+            self.special_inv_distance = input['distance'].to(self.device) if input['distance'].to(self.device)< 1 else (1-1/input['distance'].to(self.device))
+            self.rain_rate_prob = 10*(1 - input['rain_rate'].to(self.device))
+            self.t = input['Time']
 
-        self.link = input['link']
-        self.link_norm_metadata=input['link_norm_metadata']
-        self.link_metadata=input['link_metadata']
-        self.link_full_name=input['link_full_name'][0]
-        self.link_center_metadata=input['link_center_metadata']
+            self.link = input['link']
+            self.link_norm_metadata=input['link_norm_metadata']
+            self.link_metadata=input['link_metadata']
+            self.link_full_name=input['link_full_name'][0]
+            self.link_center_metadata=input['link_center_metadata']
 
-        self.gague = input['gague']
-        self.gague_norm_metadata=input['gague_norm_metadata']
-        self.gague_metadata=input['gague_metadata']
-        self.gague_full_name=input['gague_full_name'][0]
+            self.gague = input['gague']
+            self.gague_norm_metadata=input['gague_norm_metadata']
+            self.gague_metadata=input['gague_metadata']
+            self.gague_full_name=input['gague_full_name'][0]
 
-        self.data_transformation = input['data_transformation']
-        self.metadata_transformation = input['metadata_transformation']
+            self.data_transformation = input['data_transformation']
+            self.metadata_transformation = input['metadata_transformation']
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
