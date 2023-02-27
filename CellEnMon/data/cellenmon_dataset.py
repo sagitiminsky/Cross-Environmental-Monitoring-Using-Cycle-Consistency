@@ -171,7 +171,7 @@ class CellenmonDataset(BaseDataset):
             
             if time_stamp_A_start_time[:13] in [x[:13] for x in data_dict_B['data']]: # x[:13] is: dd-mm-yyyy hh
                 for l in data_dict_B['data'].keys():
-                    if l.startswith(time_stamp_A_start_time[:13]) and config.RADOIS >= dist:
+                    if l.startswith(time_stamp_A_start_time[:13]) and config.TRAIN_RADIUS >= dist:
                         slice_start_B=list(data_dict_B['data'].keys()).index(l)
                         break
 
