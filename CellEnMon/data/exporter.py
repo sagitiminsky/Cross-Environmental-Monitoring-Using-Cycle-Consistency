@@ -305,20 +305,20 @@ class Extractor:
                     print(f"preprocessing: now processing link: {metadata['link_name']}")
 
                     df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
-                    if 'PowerTLTMmax[dBm]' in df and 'PowerTLTMmin[dBm]' in df and 'PowerRLTMmax[dBm]' in df and 'PowerRLTMmax[dBm]' in df:
+                    if 'PowerTLTMmax[dBm]_baseline' in df and 'PowerTLTMmin[dBm]_baseline' in df and 'PowerRLTMmax[dBm]_baseline' in df and 'PowerRLTMmax[dBm]_baseline' in df:
 
-                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]"].isnull()]["PowerTLTMmax[dBm]"].astype(float))
+                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]_baseline"].isnull()]["PowerTLTMmax[dBm]_baseline"].astype(float))
 
-                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]"].isnull()]["PowerTLTMmin[dBm]"].astype(float))
+                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]_baseline"].isnull()]["PowerTLTMmin[dBm]_baseline"].astype(float))
 
-                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]"].isnull()]["PowerRLTMmax[dBm]"].astype(float))
+                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]_baseline"].isnull()]["PowerRLTMmax[dBm]_baseline"].astype(float))
 
-                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()]["PowerRLTMmin[dBm]"].astype(float))
+                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]_baseline"].isnull()]["PowerRLTMmin[dBm]_baseline"].astype(float))
 
                         
                         
 
-                        Time = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()].Time)[:len(PowerTLTMmax)*smoothing_n:smoothing_n]
+                        Time = np.array(df[~df["PowerRLTMmin[dBm]_baseline"].isnull()].Time)[:len(PowerTLTMmax)*smoothing_n:smoothing_n]
                         data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T
                           
                         

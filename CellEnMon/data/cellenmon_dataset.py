@@ -196,7 +196,9 @@ class CellenmonDataset(BaseDataset):
             A=A.T # (8,256)
             B=B.T # (5,256)
 
+        A_attenuation_max=np.array(list(self.dataset.dme.db[selected_link]['data'].values())).max()
         B_rain_rate_max=np.array(list(self.dataset.ims.db[selected_gague]['data'].values())).max()
+        
         return {
             'A': A,
             'B': B,
@@ -220,7 +222,12 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
             'rain_rate': self.func_fit(x=B_rain_rate_max, a=self.dataset.a, b=self.dataset.b,
-                                       c=self.dataset.c)
+                                       c=self.dataset.c),
+            'attenuation': self.func_fit(x=A_attenuation_max, a=self.dataset.a, b=self.dataset.b,
+                                       c=self.dataset.c),
+            'a_rain': self.dataset.a,
+            'b_rain': self.dataset.b,
+            'c_rain': self.dataset.c
         }
 
     def func_fit(self, x, a, b, c):
