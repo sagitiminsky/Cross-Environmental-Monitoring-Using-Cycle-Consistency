@@ -3,6 +3,7 @@ import itertools
 from .base_model import BaseModel
 from CellEnMon.util.image_pool import SignalPool
 from .networks import define_G, define_D, GANLoss
+import numpy as np
 
 
 class CycleGANModel(BaseModel):
@@ -124,6 +125,10 @@ class CycleGANModel(BaseModel):
 
             self.data_transformation = input['data_transformation']
             self.metadata_transformation = input['metadata_transformation']
+            self.a_rain=torch.Tensor(input['a_rain']).cuda()
+            self.b_rain=torch.Tensor(input['b_rain']).cuda()
+            self.c_rain=torch.Tensor(input['c_rain']).cuda()
+            
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
@@ -187,9 +192,12 @@ class CycleGANModel(BaseModel):
         self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
         # Forward cycle loss || G_B(G_A(A)) - A||
         
-        mmin=self.data_transformation['link']['min']
-        mmax=self.data_transformation['link']['mmax']
-        fake_B_unnormalized=self.min_max_inv_transform(x=torch.max(self.fake_B).to(self.device),mmin=mmin,mmax=mmax)
+
+        mmin=torch.Tensor(self.data_transformation['link']['min']).cuda()
+        mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
+        fake_B_max=torch.max(self.fake_B)
+        fake_B_unnormalized=self.min_max_inv_transform(x=fake_B_max,mmin=mmin,mmax=mmax)
+
         
         self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A * (self.alpha + 1 -self.func_fit(x=fake_B_unnormalized,a=self.a_rain, b=self.b_rain,c=self.c_rain))
         # Backward cycle loss || G_A(G_B(B)) - B||
@@ -201,10 +209,11 @@ class CycleGANModel(BaseModel):
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)
    
     
-    def min_max_inv_transform(x, mmin, mmax):
+    def min_max_inv_transform(self,x, mmin, mmax):
         return (x+1) * (mmax - mmin) * 0.5 + mmin
+    
     def func_fit(self, x, a, b, c):
-        return a * np.exp(-b * x) + c
+        return a * torch.exp(-b * x) + c
     
     def optimize_parameters(self, is_train=True):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""

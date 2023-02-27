@@ -19,7 +19,7 @@ import numpy as np
 from libs.visualize.visualize import Visualizer
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 
-ENABLE_WANDB = True
+ENABLE_WANDB = False
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
