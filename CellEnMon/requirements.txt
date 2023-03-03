@@ -1,6 +1,6 @@
 matplotlib==3.2.1
 tensorflow
-wandb==0.12.11
+wandb==0.13.10
 Keras==2.3.1
 pytest==5.4.1
 onnxruntime==1.2.0
