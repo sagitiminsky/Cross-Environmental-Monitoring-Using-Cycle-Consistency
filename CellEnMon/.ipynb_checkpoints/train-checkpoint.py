@@ -141,11 +141,8 @@ if __name__ == '__main__':
             data_A=validation_dataset.dataset.dataset.dme
             validation_gauge_full = torch.Tensor(np.array(list(data_norm_B['data'].values())))
             k=train_opt.slice_dist
-            validation_links=data_A.db_normalized.keys()
-            rain_fig, rain_axs = plt.subplots(2, len(validation_links)//2+1, figsize=(15, 15))
-            rain_axs=rain_axs.flatten()
-            print(f"Validation links:{validation_links}")
-            for link_counter,link in enumerate(validation_links):
+            
+            for link in data_A.db_normalized:
 #                 print(f"links:{validation_dataset.dataset.dataset.dme.db_normalized.keys()}")
                 real_fake_gauge_metric[f"{link}-{'260'}"]=0
                 seq_len=0
@@ -187,12 +184,13 @@ if __name__ == '__main__':
 
                     if ENABLE_WANDB:
                         # Visualize
+                        plt.clf()
                         metadata=[0]*4
                         visuals = model.get_current_visuals()
                         fig, axs = plt.subplots(2, 3, figsize=(15, 15))
                         title = f'{link}<->{260}'
 
-                        #plt.title(title)
+                        plt.title(title)
 
                         for ax, key in zip(axs.flatten(), visuals):
 
@@ -306,7 +304,9 @@ if __name__ == '__main__':
                                     real_rain_add=min_max_inv_transform(rain_slice, mmin=mmin, mmax=mmax).cpu().detach().numpy()
                                     fake_rain_add=b
                                 
-                                    cond=np.array([True if c >= 0.5 else False for c in abs(real_rain_add-fake_rain_add)])
+                                    cond=np.array([True if c >= 2 else False for c in abs(real_rain_add-fake_rain_add)])
+                                    
+                                    
                                     to_add=np.sum((real_rain_add-fake_rain_add)[cond]**2)
                                     
                                     #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
@@ -314,43 +314,33 @@ if __name__ == '__main__':
                                     print(f"to add:{to_add}")
                                     real_fake_gauge_metric[f"{link}-{'260'}"]+=to_add
                                     seq_len+=len(cond)
-                                    real_gauge_vec=np.append(real_gauge_vec,real_rain_add)
-                                    fake_gauge_vec=np.append(fake_gauge_vec,fake_rain_add)
-                                    T=np.append(T,np.array([mpl_dates.date2num(datetime.strptime(t[0], datetime_format)) for t in model.t]))
-                                    
+                                    real_gauge_vec=np.append(real_gauge_vec,real_rain_add[cond])
+                                    fake_gauge_vec=np.append(fake_gauge_vec,fake_rain_add[cond])
+                                    T=np.append(T,a[cond])
                                     
                                     
                                     
 
 
-
-                    if epoch%100==0:
-                        wandb.log({title: fig})
-                        #wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
+                    wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
+                    wandb.log({title: plt})
                     
                 #visualization of line plots of fake and real rain
 
 
                 if f"{link}-{'260'}" in real_fake_gauge_metric and real_fake_gauge_metric[f"{link}-{'260'}"]:
+                    print(f"len T:{len(T)}")
+                    print(f"len real_gauge_vec:{len(real_gauge_vec)}")
+                    print(f"len fake_gauge_vec:{len(fake_gauge_vec)}")
                     wandb.log({f"RMSE-{link}-{'260'}":np.sqrt(real_fake_gauge_metric[f"{link}-{'260'}"]/seq_len)})
-                    rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
-                    rain_axs[link_counter].plot(T, fake_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Fake")
-                    rain_axs[link_counter].set_title(f"{link}-{'260'}")
-                    rain_axs[link_counter].xaxis.set_major_formatter(date_format)
-                    print(f"Done Provessing Link #{link_counter+1}/{len(validation_links)}")
-                    
-                    
-                    
-                    
-                    
-#                     wandb.log({f"{link}-{'260'}" : wandb.plot.line_series(xs=range(len(T)), ys=[real_gauge_vec, fake_gauge_vec],keys=["real", "fake"],title=f"{link}-{'260'}",xname="Timestamp")})
+                    wandb.log({f"{link}-{'260'}" : wandb.plot.line_series(xs=range(len(T)), ys=[real_gauge_vec, fake_gauge_vec],keys=["real", "fake"],title=f"{link}-{'260'}",xname="Timestamp")})
             
 
             
             
 
 
-            wandb.log({"Real vs Fake": rain_fig})
+            
             wandb.log({**validation_losses, **training_losses})      
             path_to_html = f"{v.out_path}/{v.map_name}"
 #             v.draw_cml_map()
