@@ -260,11 +260,11 @@ class Extractor:
 
                 except FileNotFoundError:
                     print("data does not exist in {}".format(station_file_name))
-
+            
             s = pd.Series(ims_matrix)
 
             training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=False)]
-            dataset = training_data if is_train else validation_data
+            dataset = training_data if is_train else validation_data  
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
                 pickle.dump(dataset, f)
 
@@ -360,7 +360,7 @@ class Extractor:
                             f"Not all fields [PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
 
             s = pd.Series(dme_matrix)
-            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=False)]
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=True)]
             dataset = training_data if is_train else validation_data
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
                 pickle.dump(dataset, f)
