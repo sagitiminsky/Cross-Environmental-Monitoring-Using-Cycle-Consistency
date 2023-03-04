@@ -3,6 +3,7 @@ import itertools
 from .base_model import BaseModel
 from CellEnMon.util.image_pool import SignalPool
 from .networks import define_G, define_D, GANLoss
+import numpy as np
 
 
 class CycleGANModel(BaseModel):
@@ -102,27 +103,31 @@ class CycleGANModel(BaseModel):
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample"].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input["rain_rate_sample"].to(self.device)
+        self.gague = input['gague']
+        self.link = input['link']
+        self.t = input['Time']
         
         if isTrain:
+            self.alpha=0.2
             self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
             self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
-            self.special_inv_distance = input['distance'].to(self.device) if input['distance'].to(self.device)< 1 else (1-1/input['distance'].to(self.device))
-            self.rain_rate_prob = 10*(1 - input['rain_rate'].to(self.device))
-            self.t = input['Time']
+            self.rain_rate_prob = self.alpha + 1 - input['rain_rate'].to(self.device)
+            self.attenuation_prob = self.alpha + 1 - input['attenuation'].to(self.device)
 
-            self.link = input['link']
+            
             self.link_norm_metadata=input['link_norm_metadata']
             self.link_metadata=input['link_metadata']
             self.link_full_name=input['link_full_name'][0]
             self.link_center_metadata=input['link_center_metadata']
 
-            self.gague = input['gague']
+
             self.gague_norm_metadata=input['gague_norm_metadata']
             self.gague_metadata=input['gague_metadata']
             self.gague_full_name=input['gague_full_name'][0]
 
             self.data_transformation = input['data_transformation']
             self.metadata_transformation = input['metadata_transformation']
+            
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
@@ -166,8 +171,8 @@ class CycleGANModel(BaseModel):
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
         lambda_idt = self.opt.lambda_identity
-        lambda_A = self.opt.lambda_A
-        lambda_B = self.opt.lambda_B
+        lambda_A = 10
+        lambda_B = 10
         # Identity loss
         if lambda_idt > 0:
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
@@ -185,15 +190,31 @@ class CycleGANModel(BaseModel):
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
         # Forward cycle loss || G_B(G_A(A)) - A||
-        self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
+        
+
+        mmin=torch.Tensor(self.data_transformation['link']['min']).cuda()
+        mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
+        fake_B_max=torch.max(self.fake_B)
+        fake_B_unnormalized=self.min_max_inv_transform(x=fake_B_max,mmin=mmin,mmax=mmax)
+
+        
+        self.loss_cycle_A = lambda_A *(self.criterionCycle(self.rec_A, self.real_A) * self.attenuation_prob)
+        #(self.alpha + 1 -self.func_fit(x=fake_B_unnormalized,a=self.a_rain, b=self.b_rain,c=self.c_rain))
         # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
+        self.loss_cycle_B = lambda_B *(self.criterionCycle(self.rec_B, self.real_B) * self.rain_rate_prob)
         # combined loss and calculate gradients
-        self.loss_G = (self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B) + self.rain_rate_prob
+        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)
-
+   
+    
+    def min_max_inv_transform(self,x, mmin, mmax):
+        return (x+1) * (mmax - mmin) * 0.5 + mmin
+    
+    def func_fit(self, x, a, b, c):
+        return a * torch.exp(-b * x) + c
+    
     def optimize_parameters(self, is_train=True):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # forward
