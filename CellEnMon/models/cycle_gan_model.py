@@ -105,6 +105,7 @@ class CycleGANModel(BaseModel):
         self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input["rain_rate_sample"].to(self.device)
         self.gague = input['gague']
         self.link = input['link']
+        self.t = input['Time']
         
         if isTrain:
             self.alpha=0.2
@@ -112,7 +113,6 @@ class CycleGANModel(BaseModel):
             self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
             self.rain_rate_prob = self.alpha + 1 - input['rain_rate'].to(self.device)
             self.attenuation_prob = self.alpha + 1 - input['attenuation'].to(self.device)
-            self.t = input['Time']
 
             
             self.link_norm_metadata=input['link_norm_metadata']
