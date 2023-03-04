@@ -103,9 +103,12 @@ class Extractor:
         self.ims.metadata_normalization()
 
         # a * np.exp(-b * x) + c
-        self.a = None
-        self.b = None
-        self.c = None
+        self.rain_a = None
+        self.rain_b = None
+        self.rain_c = None
+        self.attenuation_a = None
+        self.attenuation_b = None
+        self.attenuation_c = None
 
     def visualize_ims(self, gauge_name=None):
         if gauge_name in self.ims.db:
@@ -143,30 +146,41 @@ class Extractor:
 
     def calculate_wet_events_histogram(self):
         return np.array([y for x in self.ims.db for y in list(self.ims.db[x]['data'].values())])
+    
+    def calculate_attenuation_events_histogram(self):
+        return np.array([y for x in self.dme.db for y in list(self.dme.db[x]['data'].values())])[:,-1]
 
     def func_fit(self, x, a, b, c):
         return a * np.exp(-b * x) + c
 
     def stats(self):
+        #rain
         wet_events_hist = self.calculate_wet_events_histogram()
         wet_events_precentage = len(wet_events_hist[wet_events_hist > 0]) / len(wet_events_hist)
 
         counts, bins = np.histogram(wet_events_hist)
         counts = [x / sum(counts) for x in counts]
-        plt.hist(bins[:-1], bins, weights=counts, rwidth=0.7, label="Rain Rate Histogram")
+#         plt.hist(bins[:-1], bins, weights=counts, rwidth=0.7, label="Rain Rate Histogram")
 
-        plt.title("Rain Rate All of Israel")
-        plt.xlabel("Rain Rate [mm/h]")
-        plt.ylabel("$f_{RR}(r)$")
-        plt.grid(color='gray', linestyle='-', linewidth=0.5)
+#         plt.title("Rain Rate All of Israel")
+#         plt.xlabel("Rain Rate [mm/h]")
+#         plt.ylabel("$f_{RR}(r)$")
+#         plt.grid(color='gray', linestyle='-', linewidth=0.5)
         # Plotting exp. fit
         popt, pcov = curve_fit(self.func_fit, bins[:-1], counts / sum(counts))
-        self.a, self.b, self.c = popt
-        plt.plot(bins, self.func_fit(bins, *popt), 'r-',
-                 label='fit[a * exp(-b * x) + c]: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
-        plt.yscale("log")
-        plt.legend()
-
+        self.rain_a, self.rain_b, self.rain_c = popt
+#         plt.plot(bins, self.func_fit(bins, *popt), 'r-',
+#                  label='fit[a * exp(-b * x) + c]: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
+#         plt.yscale("log")
+#         plt.legend()
+        
+        #attenuation
+        attenuation_events_hist=self.calculate_attenuation_events_histogram()
+        attenuation_events_precentage=len(attenuation_events_hist[attenuation_events_hist>0])/len(attenuation_events_hist)
+        counts, bins = np.histogram(attenuation_events_hist)
+        counts = [x / sum(counts) for x in counts]
+        self.attenuation_a, self.attenuation_b, self.attenuation_c = popt
+    
         print(
             f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
             f"🖇️ Links: {len(self.dme.station_names_vec)} 🖇️\n" \
@@ -300,30 +314,34 @@ class Extractor:
             for link_file_name in os.listdir(f'{config.dme_root_files}/raw'):
 
                 metadata = self.get_dme_metadata(link_file_name)
-                
+                print(f"metadata:{metadata}")
                 if metadata:
-                    print(f"preprocessing: now processing link: {metadata['link_name']}")
+                    #print(f"preprocessing: now processing link: {metadata['link_name']}")
 
                     df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
-                    if 'PowerTLTMmax[dBm]' in df and 'PowerTLTMmin[dBm]' in df and 'PowerRLTMmax[dBm]' in df and 'PowerRLTMmax[dBm]' in df:
+                    #print(f"df:{df.head()}")
+                    if 'PowerRLTMmax[dBm]_baseline' in df and 'PowerRLTMmin[dBm]_baseline' in df :
+                        
 
-                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]"].isnull()]["PowerTLTMmax[dBm]"].astype(float))
+                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]_baseline"].isnull()]["PowerTLTMmax[dBm]_baseline"].astype(float))
 
-                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]"].isnull()]["PowerTLTMmin[dBm]"].astype(float))
+                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]_baseline"].isnull()]["PowerTLTMmin[dBm]_baseline"].astype(float))
 
-                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]"].isnull()]["PowerRLTMmax[dBm]"].astype(float))
+                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]_baseline"].isnull()]["PowerRLTMmax[dBm]_baseline"].astype(float))
 
-                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()]["PowerRLTMmin[dBm]"].astype(float))
+                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]_baseline"].isnull()]["PowerRLTMmin[dBm]_baseline"].astype(float))
 
                         
                         
 
-                        Time = np.array(df[~df["PowerRLTMmin[dBm]"].isnull()].Time)[:len(PowerTLTMmax)*smoothing_n:smoothing_n]
-                        data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T
+                        Time = np.array(df[~df["PowerRLTMmin[dBm]_baseline"].isnull()].Time)[:len(PowerTLTMmax)*smoothing_n:smoothing_n]
+                        data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T #
                           
                         
+                        #print(f"data:{data}")
                         
-                        if len(PowerTLTMmax)==len(PowerTLTMmin) and len(PowerTLTMmin)==len(PowerRLTMmax) and len(PowerRLTMmax)==len(PowerRLTMmin) and len(PowerRLTMmin)==len(Time):
+                        if len(PowerRLTMmax)==len(PowerRLTMmin) and len(PowerRLTMmin)==len(Time):
+                            #len(PowerTLTMmax)==len(PowerTLTMmin) and len(PowerTLTMmin)==len(PowerRLTMmax) and len(PowerRLTMmax)==len(PowerRLTMmin) and
                           
                             dme_matrix[metadata["link_name"]] = {
                                 'metadata_len': len(metadata["vector"]),
@@ -332,18 +350,17 @@ class Extractor:
                                 "metadata": metadata["vector"]
                             }
 
-                            data = {'Time': Time, 'PowerTLTMmax[dBm]': PowerTLTMmax, 'PowerTLTMmin[dBm]': PowerTLTMmin,
-                                    'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin}
+                            data = {'Time': Time, 'PowerTLTMmax[dBm]': PowerTLTMmax, 'PowerTLTMmin[dBm]': PowerTLTMmin, 'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin} ,
                             pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{link_file_name}", index=False)
 
 
 
                     else:
                         print(
-                            f"Not all fields [PowerTLTMmax | PowerTLTMmin | PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
+                            f"Not all fields [PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
 
             s = pd.Series(dme_matrix)
-            training_data, validation_data = [i.to_dict() for i in train_test_split(s, train_size=0.7)]
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=False)]
             dataset = training_data if is_train else validation_data
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
                 pickle.dump(dataset, f)

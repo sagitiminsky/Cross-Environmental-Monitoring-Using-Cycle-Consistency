@@ -49,12 +49,14 @@ class Visualizer:
         self.gridlines_on = False
         self.num_of_gridlines = 30
     
-    def calculate_matric_for_real_and_fake_gauge(self,path_to_real_gauge,path_to_fake_gauge):
+    def real_and_fake_metric(self,path_to_real_gauge,path_to_fake_gauge):
         real_df=pd.read_csv(path_to_real_gauge, sep=",", index_col=False)
         fake_df=pd.read_csv(path_to_fake_gauge, sep=",", index_col=False)
-        df_merged=pd.merge(real_df, fake_df, how='inner', on=['Time'])
+        
+        df_merged=pd.merge(real_df,fake_df, how='inner', on=['Time'])
+        df_merged.to_csv(f'./CellEnMon/datasets/dme/{self.dates_range}/merged/merged.csv')
         if len(df_merged):
-            return sum((df_merged["RR[mm/h]_x"]-df_merged["RR[mm/h]_y"])**2)/len(df_merged)
+            return sum((df_merged["RR[mm/h]_x"]-df_merged["RR[mm/h]_y"])**2),len(df_merged),df_merged["RR[mm/h]_x"].to_numpy(),df_merged["RR[mm/h]_y"].to_numpy(),df_merged["Time"].tolist()
         else:
             return None
         

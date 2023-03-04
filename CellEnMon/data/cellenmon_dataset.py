@@ -171,7 +171,7 @@ class CellenmonDataset(BaseDataset):
             
             if time_stamp_A_start_time[:13] in [x[:13] for x in data_dict_B['data']]: # x[:13] is: dd-mm-yyyy hh
                 for l in data_dict_B['data'].keys():
-                    if l.startswith(time_stamp_A_start_time[:13]) and config.RADOIS >= dist:
+                    if l.startswith(time_stamp_A_start_time[:13]) and config.TRAIN_RADIUS >= dist:
                         slice_start_B=list(data_dict_B['data'].keys()).index(l)
                         break
 
@@ -196,7 +196,9 @@ class CellenmonDataset(BaseDataset):
             A=A.T # (8,256)
             B=B.T # (5,256)
 
+        A_attenuation_max=np.array(list(self.dataset.dme.db[selected_link]['data'].values())).max()
         B_rain_rate_max=np.array(list(self.dataset.ims.db[selected_gague]['data'].values())).max()
+        
         return {
             'A': A,
             'B': B,
@@ -219,8 +221,15 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_max': self.dataset.metadata_long_max,
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
-            'rain_rate': self.func_fit(x=B_rain_rate_max, a=self.dataset.a, b=self.dataset.b,
-                                       c=self.dataset.c)
+            
+            'attenuation': self.func_fit(x=A_attenuation_max, a=self.dataset.rain_a, b=self.dataset.rain_b,
+                                       c=self.dataset.rain_c),
+            'rain_rate': self.func_fit(x=B_rain_rate_max, a=self.dataset.attenuation_a, b=self.dataset.attenuation_b,
+                                       c=self.dataset.attenuation_c),
+            
+#             'a_rain': self.dataset.a,
+#             'b_rain': self.dataset.b,
+#             'c_rain': self.dataset.c
         }
 
     def func_fit(self, x, a, b, c):
