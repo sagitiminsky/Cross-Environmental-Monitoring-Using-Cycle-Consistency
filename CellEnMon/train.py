@@ -86,7 +86,7 @@ if __name__ == '__main__':
     
     print(f'\n\n👀Validation👀')
     validation_dataset = data.create_dataset(
-        validation_opt)  # create a train dataset given opt.dataset_mode and other options
+        validation_opt)  # create a validation dataset given opt.dataset_mode and other options
     
     print(f"gauges in validation dataset:{validation_dataset.dataset.dataset.ims.db.keys()}")
     print(f"links in validation dataset:{validation_dataset.dataset.dataset.dme.db.keys()}")
@@ -144,6 +144,9 @@ if __name__ == '__main__':
             validation_links=data_A.db_normalized.keys()
             rain_fig, rain_axs = plt.subplots(2, len(validation_links)//2+1, figsize=(15, 15))
             rain_axs=rain_axs.flatten()
+            
+            
+            
             print(f"Validation links:{validation_links}")
             for link_counter,link in enumerate(validation_links):
 #                 print(f"links:{validation_dataset.dataset.dataset.dme.db_normalized.keys()}")
@@ -155,19 +158,21 @@ if __name__ == '__main__':
                 
                 # calculate metric for test gauges
                 to_add=0
-                
+                A_delay=191
+                B_delay=4905
+                num_samples=537+14
                 data_norm_A=data_A.db_normalized[link]
                 validation_link_full=torch.Tensor(np.array(list(data_norm_A['data'].values())))
-                for i in range(0, len(validation_link_full), k):
+                for i in range(0, num_samples, k): #len(validation_gauge_full)
                     
                     
                     print(f"link:{link}:{i}/{len(validation_link_full)}")
                     print(f"gauge:{260}:{i}/{len(validation_gauge_full)}")
                     
                     try:
-                        A=validation_link_full[i:i+k].reshape(k,4)
-                        B=validation_gauge_full[i:i+k].reshape(k,1)
-                        slice_time=data_norm_A['time'][i:i+k]
+                        A=validation_link_full[A_delay + i : A_delay + i + k].reshape(k,4)
+                        B=validation_gauge_full[B_delay + i : B_delay + i + k].reshape(k,1)
+                        slice_time=data_norm_B['time'][B_delay + i: B_delay + i + k]
                         rain_slice=B
                     
                     except RuntimeError:
@@ -214,6 +219,8 @@ if __name__ == '__main__':
                                 else:
                                     mmin = model.data_transformation['gague']['min'][0].numpy()
                                     mmax = model.data_transformation['gague']['max'][0].numpy()
+                                    mmin_B=mmin
+                                    mmax_B=mmax
                                     label = IMS_KEYS[1]
                                     data_vector = data.T[0]
 
@@ -279,7 +286,7 @@ if __name__ == '__main__':
 
                                 with open(file_path, "w") as file:
                                     a=np.array([t[0] for t in model.t]).reshape(train_opt.slice_dist,1)
-                                    b=min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax).reshape(train_opt.slice_dist,1)
+                                    b=min_max_inv_transform(data_vector, mmin=mmin_B, mmax=mmax_B).reshape(train_opt.slice_dist,1)
                                     headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
                                     c=np.hstack((a,b))
                                     fmt = ",".join(["%s"]*(c.shape[1]))
@@ -305,12 +312,12 @@ if __name__ == '__main__':
                                 if is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
                                     print("Link is in range with real gauge...")
                                     path_to_real_gauge=f"{real_gauge_folder}/{'260_5.180_52.097.csv'}"  
-                                    real_rain_add=min_max_inv_transform(rain_slice, mmin=mmin, mmax=mmax).cpu().detach().numpy().flatten()
+                                    real_rain_add=min_max_inv_transform(rain_slice, mmin=0, mmax=27).cpu().detach().numpy().flatten()
                                     fake_rain_add=b.flatten()
                                 
                                     assert(len(real_rain_add)==len(fake_rain_add))
                                 
-                                    cond=np.array([True if r >= 2 or f >=2 else False for r,f in zip(real_rain_add,fake_rain_add)])
+                                    cond=np.array([True if r >= 1 or f >=0.5 else False for r,f in zip(real_rain_add,fake_rain_add)])
                                     to_add=np.sum((real_rain_add-fake_rain_add)[cond]**2)
                                     
                                     #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
