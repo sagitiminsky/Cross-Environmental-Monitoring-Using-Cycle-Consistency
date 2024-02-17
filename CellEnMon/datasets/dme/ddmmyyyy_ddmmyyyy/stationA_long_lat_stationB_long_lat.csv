@@ -1,1 +1,5 @@
+EXAMPLE:
+
+
 Time,PowerTLTMmax[dBm],PowerTLTMmin[dBm],PowerRLTMmax[dBm],PowerRLTMmin[dBm]
+2013-01-01 00:00:00,6,5,-48,-50
