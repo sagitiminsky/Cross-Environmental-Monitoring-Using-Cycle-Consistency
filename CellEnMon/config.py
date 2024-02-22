@@ -39,17 +39,17 @@ smoothing_ims="xx" # not used yet
 TRAIN_RADIUS=30
 VALIDATION_RADIUS=10
 
-export_type="dutch"
+export_type="israel"
 date = {
     'value': {
-        'dd': '09',
-        'mm': '06',
-        'yyyy': '2011'
+        'dd': '01',
+        'mm': '01',
+        'yyyy': '2013'
     },
     'value_range': {
-        'dd': '13',
-        'mm': '08',
-        'yyyy': '2011'
+        'dd': '01',
+        'mm': '02',
+        'yyyy': '2013'
     }
 }
 

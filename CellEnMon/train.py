@@ -19,7 +19,7 @@ import numpy as np
 from libs.visualize.visualize import Visualizer
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 
-ENABLE_WANDB = True
+ENABLE_WANDB = False
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
@@ -31,17 +31,18 @@ GROUPS = {
     "Dynamic and Static Israel": {0: "first try", 1:"play around with configurations"},
     "Dynamic Dutch": {0:"first try"},
     "Real Validation": {0:"last try", 1:"last last try"},
-    "Last Try":{0:"last last try"}
+    "Last Try":{0:"last last try"},
+    "Frontiers":{0:"first try"}
 }
 
-SELECTED_GROUP_NAME = "Last Try"
+SELECTED_GROUP_NAME = "Frontiers"
 SELECT_JOB = 0
 
 
 
 
-DME_KEYS = {1: 'TMmax[dBm]', 2: 'TMmin[dBm]', 3: 'RMmax[dBm]', 4: 'RMmin[dBm]'}
-IMS_KEYS = {1: 'RR[mm/h]'}
+DME_KEYS = {1: 'PowerTLTMmax[dBm]', 2: 'PowerTLTMmin[dBm]', 3: 'PowerRLTMmax[dBm]', 4: 'PowerRLTMmin[dBm]'}
+IMS_KEYS = {1: 'RainAmout[mm/h]'}
 
 
 def toggle(t):
