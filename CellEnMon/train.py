@@ -19,7 +19,7 @@ import numpy as np
 from libs.visualize.visualize import Visualizer
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 
-ENABLE_WANDB = False
+ENABLE_WANDB = True
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
@@ -39,7 +39,8 @@ SELECTED_GROUP_NAME = "Frontiers"
 SELECT_JOB = 0
 
 
-
+#Formatting Date
+date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
 
 DME_KEYS = {1: 'PowerTLTMmax[dBm]', 2: 'PowerTLTMmin[dBm]', 3: 'PowerRLTMmax[dBm]', 4: 'PowerRLTMmin[dBm]'}
 IMS_KEYS = {1: 'RainAmout[mm/h]'}
@@ -71,7 +72,7 @@ def pad_with_respect_to_direction( A, B, dir, value_a, value_b):
 if __name__ == '__main__':
     real_fake_gauge_metric={}
     dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
-    datetime_format='%Y-%m-%d %H:%M' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
+    datetime_format='%Y-%m-%d %H:%M:%S' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
     experiment_name = "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
@@ -138,7 +139,7 @@ if __name__ == '__main__':
         if epoch % 100 == 0:
             print("Validation in progress...")
             data_B= validation_dataset.dataset.dataset.ims
-            data_norm_B = data_B.db_normalized["260"]
+            data_norm_B = data_B.db_normalized["PARAN"]
             data_A=validation_dataset.dataset.dataset.dme
             validation_gauge_full = torch.Tensor(np.array(list(data_norm_B['data'].values())))
             k=train_opt.slice_dist
@@ -151,7 +152,7 @@ if __name__ == '__main__':
             print(f"Validation links:{validation_links}")
             for link_counter,link in enumerate(validation_links):
 #                 print(f"links:{validation_dataset.dataset.dataset.dme.db_normalized.keys()}")
-                real_fake_gauge_metric[f"{link}-{'260'}"]=0
+                real_fake_gauge_metric[f"{link}-{'PARAN'}"]=0
                 seq_len=0
                 real_gauge_vec=np.array([])
                 fake_gauge_vec=np.array([])
@@ -159,16 +160,16 @@ if __name__ == '__main__':
                 
                 # calculate metric for test gauges
                 to_add=0
-                A_delay=191
-                B_delay=4905
-                num_samples=537+14
+                A_delay=0
+                B_delay=0
+                num_samples=len(validation_gauge_full)
                 data_norm_A=data_A.db_normalized[link]
                 validation_link_full=torch.Tensor(np.array(list(data_norm_A['data'].values())))
                 for i in range(0, num_samples, k): #len(validation_gauge_full)
                     
                     
                     print(f"link:{link}:{i}/{len(validation_link_full)}")
-                    print(f"gauge:{260}:{i}/{len(validation_gauge_full)}")
+                    print(f"gauge:{'PARAN'}:{i}/{len(validation_gauge_full)}")
                     
                     try:
                         A=validation_link_full[A_delay + i : A_delay + i + k].reshape(k,4)
@@ -182,7 +183,7 @@ if __name__ == '__main__':
                     for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
                         A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
                         
-                    input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":"260", "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
+                    input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":"PARAN", "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
                     
                                        
                     model.set_input(input,isTrain=False)
@@ -198,7 +199,7 @@ if __name__ == '__main__':
                         metadata=[0]*4
                         visuals = model.get_current_visuals()
                         fig, axs = plt.subplots(2, 3, figsize=(15, 15))
-                        title = f'{link}<->{260}'
+                        title = f'{link}<->{"PARAN"}'
 
                         #plt.title(title)
 
@@ -240,7 +241,7 @@ if __name__ == '__main__':
                                 metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
                                             (mmin, mmax), x in
                                             zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
-
+                                
                                 ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t],
                                         min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                         marker='o',
@@ -253,8 +254,7 @@ if __name__ == '__main__':
                                 ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
                                                                                    f' {metadata}', y=0.75, fontdict={'fontsize':6})
 
-                            #Formatting Date
-                            date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
+
                             ax.xaxis.set_major_formatter(date_format)
 
                             # save in predict directory for generated data
@@ -278,8 +278,8 @@ if __name__ == '__main__':
                                 virtual_gauge_lat=data_A.db[link]["metadata"][0]
                                 virtual_gauge_long=data_A.db[link]["metadata"][1]
 
-                                file_path = f'{produced_gauge_folder}/{link}-{"260"}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
-#                                 for file_path in glob.glob(f'{produced_gauge_folder}/{link}-{"260"}_*.csv',recursive=True): 
+                                file_path = f'{produced_gauge_folder}/{link}-{"PARAN"}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
+#                                 for file_path in glob.glob(f'{produced_gauge_folder}/{link}-{"PARAN"}_*.csv',recursive=True): 
 #                                     try:
 #                                         os.remove(file_path)
 #                                     except OSError:
@@ -312,7 +312,7 @@ if __name__ == '__main__':
 
                                 if is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
                                     print("Link is in range with real gauge...")
-                                    path_to_real_gauge=f"{real_gauge_folder}/{'260_5.180_52.097.csv'}"  
+                                    path_to_real_gauge=f"{real_gauge_folder}/{'PARAN_30.367_35.148.csv'}"  
                                     real_rain_add=min_max_inv_transform(rain_slice, mmin=0, mmax=27).cpu().detach().numpy().flatten()
                                     fake_rain_add=b.flatten()
                                 
@@ -324,7 +324,7 @@ if __name__ == '__main__':
                                     #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
                             
                                     print(f"to add:{to_add}")
-                                    real_fake_gauge_metric[f"{link}-{'260'}"]+=to_add
+                                    real_fake_gauge_metric[f"{link}-{'PARAN'}"]+=to_add
                                     seq_len+=len(cond)
                                     real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
                                     fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
@@ -335,22 +335,24 @@ if __name__ == '__main__':
                                     
 
 
-
-                if epoch%100==0:
-                    wandb.log({title: fig})
-                    #wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
-
-            
                 assert(len(T)==len(real_gauge_vec.flatten()))
                 assert(len(T)==len(fake_gauge_vec.flatten()))
                 
+                
+                if epoch%100==0 and ENABLE_WANDB:
+                    wandb.log({f'{link}<->{"PARAN"}': fig})
+                    #wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
+
+            
+
+                
                 if seq_len:
-                    wandb.log({f"RMSE-{link}-{'260'}":np.sqrt(real_fake_gauge_metric[f"{link}-{'260'}"]/seq_len)})
+                    wandb.log({f"RMSE-{link}-{'PARAN'}":np.sqrt(real_fake_gauge_metric[f"{link}-{'PARAN'}"]/seq_len)})
                 rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
                 rain_axs[link_counter].plot(T, fake_gauge_vec, marker='x',linestyle='dashed',linewidth=0.0,markersize=2,label="Fake")
-                rain_axs[link_counter].set_title(f"{link}-{'260'}")
+                rain_axs[link_counter].set_title(f"{link}-{'PARAN'}")
                 rain_axs[link_counter].xaxis.set_major_formatter(date_format)
-                print(f"Done Provessing Link #{link_counter+1}/{len(validation_links)}")
+                print(f"Done Preprocessing Link #{link_counter+1}/{len(validation_links)}")
 
                     
 #                     wandb.log({f"{link}-{'260'}" : wandb.plot.line_series(xs=range(len(T)), ys=[real_gauge_vec, fake_gauge_vec],keys=["real", "fake"],title=f"{link}-{'260'}",xname="Timestamp")})
@@ -359,9 +361,9 @@ if __name__ == '__main__':
             
             
 
-
-            wandb.log({"Real vs Fake": rain_fig})
-            wandb.log({**validation_losses, **training_losses})      
-            path_to_html = f"{v.out_path}/{v.map_name}"
-#             v.draw_cml_map()
-#             wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
+            if ENABLE_WANDB:
+                wandb.log({"Real vs Fake": rain_fig})
+                wandb.log({**validation_losses, **training_losses})      
+                path_to_html = f"{v.out_path}/{v.map_name}"
+#                 v.draw_cml_map()
+#                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
