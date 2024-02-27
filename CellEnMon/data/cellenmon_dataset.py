@@ -167,23 +167,25 @@ class CellenmonDataset(BaseDataset):
         while filter_cond:
             # go fetch
             print("go fetch")
-            slice_start = random.randint(0, dme_vec_len - 1)
-#             time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
+            slice_start_A = random.randint(0, dme_vec_len - 1)
+            time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
             
-#             if time_stamp_A_start_time[:10] in [x[:10] for x in data_dict_B['data']]: # 13:dutch | 10:israel
-#                 for l in data_dict_B['data'].keys():
-#                     if l.startswith(time_stamp_A_start_time[:10]):# and config.TRAIN_RADIUS >= dist:
-#                         slice_start_B=list(data_dict_B['data'].keys()).index(l)
-#                         break
+            if time_stamp_A_start_time[:10] in [x[:10] for x in data_dict_B['data']]: # 13:dutch | 10:israel
+                for l in data_dict_B['data'].keys():
+                    if l.startswith(time_stamp_A_start_time[:10]) and config.TRAIN_RADIUS >= dist:
+                        slice_start_B=list(data_dict_B['data'].keys()).index(l)
+                        break
 
-            filter_cond = slice_start + slice_dist > dme_vec_len \
-                          or slice_start + slice_dist > ims_vec_len
+            filter_cond = slice_start_A + slice_dist > dme_vec_len \
+                          or slice_start_B + slice_dist > ims_vec_len
         
-        slice_end_A = slice_start + slice_dist
-        slice_end_B = slice_start + slice_dist
+        slice_end_A = slice_start_A + slice_dist
+        slice_end_B = slice_start_B + slice_dist
+        
+        print(f"Selected Index is: {slice_end_A}")
 
-        A = torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start:slice_end_A]))
-        B = torch.Tensor(np.array(list(data_dict_B['data'].values())[slice_start:slice_end_B]))
+        A = torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A]))
+        B = torch.Tensor(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]))
         
         if self.opt.is_only_dynamic:
             A = A.reshape(4, self.opt.slice_dist)

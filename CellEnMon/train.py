@@ -164,7 +164,7 @@ if __name__ == '__main__':
                 num_samples=len(validation_gauge_full)
                 data_norm_A=data_A.db_normalized[link]
                 validation_link_full=torch.Tensor(np.array(list(data_norm_A['data'].values())))
-                for i in range(0, num_samples, k): #len(validation_gauge_full)
+                for batch_counter,i in enumerate(range(0, num_samples, k)): #len(validation_gauge_full)
                     
                     
                     print(f"link:{link}:{i}/{len(validation_link_full)}")
@@ -183,8 +183,8 @@ if __name__ == '__main__':
                         A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
                         
                     input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":"PARAN", "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
-                    
-                    
+                        
+
                     
                     model.set_input(input,isTrain=False)
                     
@@ -254,7 +254,7 @@ if __name__ == '__main__':
                                 ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
                                                                                    f' {metadata}', y=0.75, fontdict={'fontsize':6})
 
-
+                            
                             ax.xaxis.set_major_formatter(date_format)
 
                             # save in predict directory for generated data
@@ -278,7 +278,7 @@ if __name__ == '__main__':
                                 virtual_gauge_lat=data_A.db[link]["metadata"][0]
                                 virtual_gauge_long=data_A.db[link]["metadata"][1]
 
-                                file_path = f'{produced_gauge_folder}/{link}-{"PARAN"}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
+                                file_path = f'{produced_gauge_folder}/{batch_counter}-{link}-{"PARAN"}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
 #                                 for file_path in glob.glob(f'{produced_gauge_folder}/{link}-{"PARAN"}_*.csv',recursive=True): 
 #                                     try:
 #                                         os.remove(file_path)
@@ -286,7 +286,7 @@ if __name__ == '__main__':
 #                                         print("OSError or file does not exist")
 
                                 with open(file_path, "w") as file:
-                                    a=np.array([t[0] for t in model.t]).reshape(train_opt.slice_dist,1)
+                                    a=np.array(model.t).reshape(train_opt.slice_dist,1)                    
                                     b=min_max_inv_transform(data_vector, mmin=mmin_B, mmax=mmax_B).reshape(train_opt.slice_dist,1)
                                     headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
                                     c=np.hstack((a,b))
