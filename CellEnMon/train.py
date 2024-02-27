@@ -32,11 +32,11 @@ GROUPS = {
     "Dynamic Dutch": {0:"first try"},
     "Real Validation": {0:"last try", 1:"last last try"},
     "Last Try":{0:"last last try"},
-    "Frontiers":{0:"first try"}
+    "Frontiers":{0:"first try", 1:"start training on Israel data"}
 }
 
 SELECTED_GROUP_NAME = "Frontiers"
-SELECT_JOB = 0
+SELECT_JOB = 1
 
 
 #Formatting Date
@@ -135,7 +135,7 @@ if __name__ == '__main__':
         print('End of epoch %d / %d \t Time Taken: %d sec' % (
             epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
 
-        if epoch % 100 == 0:
+        if epoch % 1000 == 0:
             print("Validation in progress...")
             data_B= validation_dataset.dataset.dataset.ims
             data_norm_B = data_B.db_normalized["PARAN"]
@@ -199,7 +199,7 @@ if __name__ == '__main__':
                         metadata=[0]*4
                         visuals = model.get_current_visuals()
                         fig, axs = plt.subplots(2, 3, figsize=(15, 15))
-                        title = f'{link}<->{"PARAN"}'
+                        title = f'{batch_counter}:{link}<->{"PARAN"}'
 
                         #plt.title(title)
 
@@ -256,6 +256,8 @@ if __name__ == '__main__':
 
                             
                             ax.xaxis.set_major_formatter(date_format)
+                            
+                            wandb.log({title: fig})
 
                             # save in predict directory for generated data
                             start_date = config.start_date_str_rep_ddmmyyyy
@@ -337,21 +339,15 @@ if __name__ == '__main__':
 
                 assert(len(T)==len(real_gauge_vec.flatten()))
                 assert(len(T)==len(fake_gauge_vec.flatten()))
-                
-                
-                if epoch%100==0 and ENABLE_WANDB:
-                    wandb.log({f'{link}<->{"PARAN"}': fig})
-                    #wandb.log({"Images": [wandb.Image(visuals[key], caption=key) for key in visuals]})
-
             
 
                 
                 if seq_len:
                     wandb.log({f"RMSE-{link}-{'PARAN'}":np.sqrt(real_fake_gauge_metric[f"{link}-{'PARAN'}"]/seq_len)})
-                rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
-                rain_axs[link_counter].plot(T, fake_gauge_vec, marker='x',linestyle='dashed',linewidth=0.0,markersize=2,label="Fake")
-                rain_axs[link_counter].set_title(f"{link}-{'PARAN'}")
-                rain_axs[link_counter].xaxis.set_major_formatter(date_format)
+#                 rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
+#                 rain_axs[link_counter].plot(T, fake_gauge_vec, marker='x',linestyle='dashed',linewidth=0.0,markersize=2,label="Fake")
+#                 rain_axs[link_counter].set_title(f"{link}-{'PARAN'}")
+#                 rain_axs[link_counter].xaxis.set_major_formatter(date_format)
                 print(f"Done Preprocessing Link #{link_counter+1}/{len(validation_links)}")
 
                     
@@ -362,7 +358,7 @@ if __name__ == '__main__':
             
 
             if ENABLE_WANDB:
-                wandb.log({"Real vs Fake": rain_fig})
+#                 wandb.log({"Real vs Fake": rain_fig})
                 wandb.log({**validation_losses, **training_losses})      
                 path_to_html = f"{v.out_path}/{v.map_name}"
 #                 v.draw_cml_map()
