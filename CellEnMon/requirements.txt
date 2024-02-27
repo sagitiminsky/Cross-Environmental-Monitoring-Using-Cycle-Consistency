@@ -1,24 +1,18 @@
 matplotlib==3.5.1
-tensorflow
 wandb==0.13.10
-Keras==2.3.1
 pytest==5.4.1
-onnxruntime==1.2.0
+#onnxruntime==1.2.0
 keras2onnx==1.6.1
 bs4==0.0.1
-lxml==4.5.0
 Pillow==7.1.2
 numpy
-onnxruntime==1.2.0
-keras2onnx==1.6.1
+#keras2onnx==1.6.1
 pandas
 selenium
-sklearn
 pyproj
 ansible==2.4.0.0
 ansible_vault==1.1.2
 scikit-learn
-numpy==1.19.5
 
 #visualize
 folium
