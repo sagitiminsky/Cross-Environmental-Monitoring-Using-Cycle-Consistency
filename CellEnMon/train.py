@@ -72,7 +72,7 @@ def pad_with_respect_to_direction( A, B, dir, value_a, value_b):
 if __name__ == '__main__':
     real_fake_gauge_metric={}
     dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
-    datetime_format='%Y-%m-%d %H:%M:%S' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
+    datetime_format='%m/%d/%Y %H:%M' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
     experiment_name = "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
@@ -113,7 +113,6 @@ if __name__ == '__main__':
 
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
-            
             
             
             model.set_input(data)  # unpack data from dataset and apply preprocessing
@@ -185,7 +184,8 @@ if __name__ == '__main__':
                         
                     input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":"PARAN", "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
                     
-                                       
+                    
+                    
                     model.set_input(input,isTrain=False)
                     
 #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
@@ -306,13 +306,13 @@ if __name__ == '__main__':
                                 is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
                                     "fake_longitude":virtual_gauge_long, 
                                     "fake_latitude":virtual_gauge_lat,
-                                    "real_longitude":"5.180",
-                                    "real_latitude":"52.097"},
+                                    "real_longitude":"30.367",
+                                    "real_latitude":"35.148"},
                                     radius=config.VALIDATION_RADIUS)
 
                                 if is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
-                                    print("Link is in range with real gauge...")
-                                    path_to_real_gauge=f"{real_gauge_folder}/{'PARAN_30.367_35.148.csv'}"  
+                                    print("Virtual link is in range with real gauge...")
+                                    path_to_real_gauge=f"{real_gauge_folder}/{'62_207_PARAN_30.367_35.148.csv'}"  
                                     real_rain_add=min_max_inv_transform(rain_slice, mmin=0, mmax=27).cpu().detach().numpy().flatten()
                                     fake_rain_add=b.flatten()
                                 

@@ -200,9 +200,9 @@ class Extractor:
         metadata = {}
         try:
             station_name_splited = station_name.split('_')
-            metadata["logitude"] = station_name_splited[1] if config.export_type=="dutch" else station_name_splited[3]
-            metadata["latitude"] = station_name_splited[2].replace(".csv", "") if config.export_type=="dutch" else station_name_splited[4].replace(".csv", "")
-            metadata["gauge_name"] = f"{station_name_splited[0]}" if config.export_type=="dutch" else f"{station_name_splited[2]}"
+            metadata["logitude"] = station_name_splited[1]
+            metadata["latitude"] = station_name_splited[2].replace(".csv", "")
+            metadata["gauge_name"] = f"{station_name_splited[0]}"
             metadata["vector"] = np.array(
                 [float(metadata['logitude']), float(metadata['latitude']), float(metadata['logitude']),
                  float(metadata['latitude'])])
@@ -233,17 +233,8 @@ class Extractor:
                     if metadata:
                         df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
                         
-                        if self.export_type=="israel":
-                            ims_vec = np.array([])
-                            time = np.array([" ".join(t.split('+')[0].split('T')) for t in df.datetime])
-                            if (ims_vec, df) is not (None, None):
-                                for row in list(df.channels):
-                                    ims_vec = np.append(ims_vec,
-                                                        np.array([self.get_entry(ast.literal_eval(row), type='Rain')['value']]))
-                            
-                        elif self.export_type=="dutch":
-                            time=df.Time.to_numpy()
-                            ims_vec=df["RainAmout[mm/h]"].to_numpy()
+                        time=df.Time.to_numpy()
+                        ims_vec=df["RainAmout[mm/h]"].to_numpy()
                             
                         
                         ims_matrix[metadata["gauge_name"]] = \
@@ -334,7 +325,7 @@ class Extractor:
                         
                         
 
-                        Time = np.array(df[~df["PowerRLTMmin[dBm]_baseline"].isnull()].Time)[:len(PowerTLTMmax)*smoothing_n:smoothing_n]
+                        Time = df.Time.to_numpy()
                         data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T #
                           
                         
@@ -350,7 +341,7 @@ class Extractor:
                                 "metadata": metadata["vector"]
                             }
 
-                            data = {'Time': Time, 'PowerTLTMmax[dBm]': PowerTLTMmax, 'PowerTLTMmin[dBm]': PowerTLTMmin, 'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin} ,
+                            data = {'Time': Time, 'PowerTLTMmax[dBm]': PowerTLTMmax, 'PowerTLTMmin[dBm]': PowerTLTMmin, 'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin}
                             pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{link_file_name}", index=False)
 
 

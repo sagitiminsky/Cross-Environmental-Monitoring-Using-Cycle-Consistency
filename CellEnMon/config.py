@@ -36,7 +36,7 @@ def add_days_to_date(date, delta_days=0):
 smoothing_dme=1
 smoothing_ims="xx" # not used yet
 
-TRAIN_RADIUS=30
+TRAIN_RADIUS=100
 VALIDATION_RADIUS=10
 
 export_type="israel"
