@@ -178,9 +178,9 @@ if __name__ == '__main__':
                     
                     except RuntimeError:
                         continue
-                    
-                    for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
-                        A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
+                    if not train_opt.is_only_dynamic:
+                        for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
+                            A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
                         
                     input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":"PARAN", "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
                         
