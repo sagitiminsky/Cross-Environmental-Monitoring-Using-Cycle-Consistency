@@ -57,15 +57,18 @@ class IMS_Scrapper_obj:
             print("station id: {} , data response: {}".format(self.station_id, data_response.status_code))
 
         elif self.station_location['latitude'] and self.station_location['longitude']:
-            data = json.loads(data_response.text.encode('utf8'))
+            try:
+                data = json.loads(data_response.text.encode('utf8'))
 
-            file_name = "{}_{}_{}_{}_{}.csv".format(self.index, self.station_id, self.station_name,
-                                                    self.station_location['longitude'],
-                                                    self.station_location['latitude'])
-            if not os.path.exists(self.root):
-                os.makedirs(f'{self.root}/raw')
+                file_name = "{}_{}_{}_{}_{}.csv".format(self.index, self.station_id, self.station_name,
+                                                        self.station_location['longitude'],
+                                                        self.station_location['latitude'])
+                if not os.path.exists(self.root):
+                    os.makedirs(f'{self.root}/raw')
 
-            pd.DataFrame(data['data']).to_csv(f'{self.root}/raw/{file_name}', index=False)
+                pd.DataFrame(data['data']).to_csv(f'{self.root}/raw/{file_name}', index=False)
+            except json.decoder.JSONDecodeError:
+                print("station id: {} , data response: {}".format(self.station_id, "JSONDecodeError"))
 
 
 #
