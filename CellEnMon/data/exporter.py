@@ -75,8 +75,8 @@ class Domain:
 class Extractor:
     def __init__(self, is_train=True):
         self.export_type = config.export_type
-        self.dme = Domain(self.load_dme(is_train=is_train),
-                          db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
+#         self.dme = Domain(self.load_dme(is_train=is_train),
+#                           db_type="dme")  # 1 day is 96 = 24*4 data samples + 7 metadata samples
         self.ims = Domain(self.load_ims(is_train=is_train),
                           db_type="ims")  # 1 day is 144 = 24*6 data samples + 2 metadata samples
 
@@ -362,6 +362,6 @@ class Extractor:
 if __name__ == "__main__":
     dataset = Extractor(is_train=IS_TRAIN)
     #dataset.stats()
-    # dataset.visualize_dme(link_name='a459-6879')
-    # dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
-    plt.show()
+    #dataset.visualize_dme(link_name='a459-6879')
+    #dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
+    #plt.show()
