@@ -39,6 +39,14 @@ SELECTED_GROUP_NAME = "Frontiers"
 SELECT_JOB = 1
 
 
+
+# Validation Matching
+validation_link_to_gauge_matching ={
+    "":[],
+}
+
+
+
 #Formatting Date
 date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
 
@@ -72,7 +80,7 @@ def pad_with_respect_to_direction( A, B, dir, value_a, value_b):
 if __name__ == '__main__':
     real_fake_gauge_metric={}
     dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
-    datetime_format='%m/%d/%Y %H:%M' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
+    datetime_format='%Y-%m-%d %H:%M:%S' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
     experiment_name = "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
@@ -137,229 +145,229 @@ if __name__ == '__main__':
 
         if epoch % 1000 == 0:
             print("Validation in progress...")
-            data_B= validation_dataset.dataset.dataset.ims
-            data_norm_B = data_B.db_normalized["PARAN"]
             data_A=validation_dataset.dataset.dataset.dme
-            validation_gauge_full = torch.Tensor(np.array(list(data_norm_B['data'].values())))
+            data_B= validation_dataset.dataset.dataset.ims
             k=train_opt.slice_dist
             validation_links=data_A.db_normalized.keys()
             rain_fig, rain_axs = plt.subplots(2, len(validation_links)//2+1, figsize=(15, 15))
             rain_axs=rain_axs.flatten()
             
             
-            
             print(f"Validation links:{validation_links}")
             for link_counter,link in enumerate(validation_links):
-#                 print(f"links:{validation_dataset.dataset.dataset.dme.db_normalized.keys()}")
-                real_fake_gauge_metric[f"{link}-{'PARAN'}"]=0
-                seq_len=0
-                real_gauge_vec=np.array([])
-                fake_gauge_vec=np.array([])
-                T=np.array([])
-                
-                # calculate metric for test gauges
-                to_add=0
-                A_delay=0
-                B_delay=0
-                num_samples=len(validation_gauge_full)
-                data_norm_A=data_A.db_normalized[link]
-                validation_link_full=torch.Tensor(np.array(list(data_norm_A['data'].values())))
-                for batch_counter,i in enumerate(range(0, num_samples, k)): #len(validation_gauge_full)
-                    
-                    
-                    print(f"link:{link}:{i}/{len(validation_link_full)}")
-                    print(f"gauge:{'PARAN'}:{i}/{len(validation_gauge_full)}")
-                    
-                    try:
-                        A=validation_link_full[A_delay + i : A_delay + i + k].reshape(k,4)
-                        B=validation_gauge_full[B_delay + i : B_delay + i + k].reshape(k,1)
-                        slice_time=data_norm_B['time'][B_delay + i: B_delay + i + k]
-                        rain_slice=B
-                    
-                    except RuntimeError:
-                        continue
-                    if not train_opt.is_only_dynamic:
-                        for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
-                            A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
-                        
-                    input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":"PARAN", "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
-                        
+                for gauge in validation_link_to_gauge_matching[link]:
+                    data_norm_B = data_B.db_normalized[gauge]:
+                    validation_gauge_full = torch.Tensor(np.array(list(data_norm_B['data'].values())))
+    #                 print(f"links:{validation_dataset.dataset.dataset.dme.db_normalized.keys()}")
+                    real_fake_gauge_metric[f"{link}-{gauge}"]=0
+                    seq_len=0
+                    real_gauge_vec=np.array([])
+                    fake_gauge_vec=np.array([])
+                    T=np.array([])
 
-                    
-                    model.set_input(input,isTrain=False)
-                    
-#                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
-#                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
-                    model.optimize_parameters(is_train=False)  # calculate loss functions
-                    validation_losses = model.get_current_losses(is_train=False)
-                    
-            
-                    if ENABLE_WANDB:
-                        # Visualize
-                        metadata=[0]*4
-                        visuals = model.get_current_visuals()
-                        fig, axs = plt.subplots(2, 3, figsize=(15, 15))
-                        title = f'{batch_counter}:{link}<->{"PARAN"}'
+                    # calculate metric for test gauges
+                    to_add=0
+                    A_delay=0
+                    B_delay=0
+                    num_samples=len(validation_gauge_full)
+                    data_norm_A=data_A.db_normalized[link]
+                    validation_link_full=torch.Tensor(np.array(list(data_norm_A['data'].values())))
+                    for batch_counter,i in enumerate(range(0, num_samples, k)): #len(validation_gauge_full)
 
-                        #plt.title(title)
 
-                        for ax, key in zip(axs.flatten(), visuals):
+                        print(f"link:{link}:{i}/{len(validation_link_full)}")
+                        print(f"gauge:{gauge}:{i}/{len(validation_gauge_full)}")
 
-                            if train_opt.is_only_dynamic:
-                                N = 4 if 'A' in key else 1
-                            else:
-                                N = 8 if 'A' in key else 5
+                        try:
+                            A=validation_link_full[A_delay + i : A_delay + i + k].reshape(k,4)
+                            B=validation_gauge_full[B_delay + i : B_delay + i + k].reshape(k,1)
+                            slice_time=data_norm_B['time'][B_delay + i: B_delay + i + k]
+                            rain_slice=B
 
-                            # Plot Data
-                            data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy() if train_opt.is_only_dynamic else visuals[key][0].T.cpu().detach().numpy()
-                            for i in range(1, 5):
-                                if 'A' in key:
-                                    mmin = model.data_transformation['link']['min'][0].numpy()
-                                    mmax = model.data_transformation['link']['max'][0].numpy()
-                                    label = DME_KEYS[i]
-                                    data_vector = data[:, i - 1]
+                        except RuntimeError:
+                            continue
+                        if not train_opt.is_only_dynamic:
+                            for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
+                                A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
+
+                        input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":"PARAN", "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
+
+
+
+                        model.set_input(input,isTrain=False)
+
+    #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
+    #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
+                        model.optimize_parameters(is_train=False)  # calculate loss functions
+                        validation_losses = model.get_current_losses(is_train=False)
+
+
+                        if ENABLE_WANDB:
+                            # Visualize
+                            metadata=[0]*4
+                            visuals = model.get_current_visuals()
+                            fig, axs = plt.subplots(2, 3, figsize=(15, 15))
+                            title = f'{batch_counter}:{link}<->{gauge}'
+
+                            #plt.title(title)
+
+                            for ax, key in zip(axs.flatten(), visuals):
+
+                                if train_opt.is_only_dynamic:
+                                    N = 4 if 'A' in key else 1
                                 else:
-                                    mmin = model.data_transformation['gague']['min'][0].numpy()
-                                    mmax = model.data_transformation['gague']['max'][0].numpy()
-                                    mmin_B=mmin
-                                    mmax_B=mmax
-                                    label = IMS_KEYS[1]
-                                    data_vector = data.T[0]
+                                    N = 8 if 'A' in key else 5
+
+                                # Plot Data
+                                data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy() if train_opt.is_only_dynamic else visuals[key][0].T.cpu().detach().numpy()
+                                for i in range(1, 5):
+                                    if 'A' in key:
+                                        mmin = model.data_transformation['link']['min'][0].numpy()
+                                        mmax = model.data_transformation['link']['max'][0].numpy()
+                                        label = DME_KEYS[i]
+                                        data_vector = data[:, i - 1]
+                                    else:
+                                        mmin = model.data_transformation['gague']['min'][0].numpy()
+                                        mmax = model.data_transformation['gague']['max'][0].numpy()
+                                        mmin_B=mmin
+                                        mmax_B=mmax
+                                        label = IMS_KEYS[1]
+                                        data_vector = data.T[0]
 
 
-                                metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
-                                metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
-                                metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
-                                metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
+                                    metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
+                                    metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
+                                    metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
+                                    metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
 
-                                metadata_inv_zip = [
-                                    (metadata_long_max, metadata_long_min),
-                                    (metadata_lat_max, metadata_lat_min),
-                                    (metadata_long_max, metadata_long_min),
-                                    (metadata_lat_max, metadata_lat_min)
-                                ]
-                                metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
-                                            (mmin, mmax), x in
-                                            zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
-                                
-                                ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t],
-                                        min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
-                                        marker='o',
-                                        linestyle='dashed',
-                                        linewidth=0.0,
-                                        markersize=4,
-                                        label=label
-                                        )
+                                    metadata_inv_zip = [
+                                        (metadata_long_max, metadata_long_min),
+                                        (metadata_lat_max, metadata_lat_min),
+                                        (metadata_long_max, metadata_long_min),
+                                        (metadata_lat_max, metadata_lat_min)
+                                    ]
+                                    metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
+                                                (mmin, mmax), x in
+                                                zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
 
-                                ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
-                                                                                   f' {metadata}', y=0.75, fontdict={'fontsize':6})
+                                    ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t],
+                                            min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
+                                            marker='o',
+                                            linestyle='dashed',
+                                            linewidth=0.0,
+                                            markersize=4,
+                                            label=label
+                                            )
 
-                            
-                            ax.xaxis.set_major_formatter(date_format)
-                            
-                            wandb.log({title: fig})
-
-                            # save in predict directory for generated data
-                            start_date = config.start_date_str_rep_ddmmyyyy
-                            end_date = config.end_date_str_rep_ddmmyyyy
-                            produced_gauge_folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict/{experiment_name}' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict/{experiment_name}'
-                            real_gauge_folder=f'CellEnMon/datasets/ims/{start_date}_{end_date}/processed'
-
-                            if not os.path.exists(produced_gauge_folder):
-                                os.makedirs(produced_gauge_folder)
-
-                            if not os.path.exists(real_gauge_folder):
-                                os.makedirs(real_gauge_folder)
-
-                            if 'fake_B' == key:
-    #                             if experiment_name=="only_dynamic":
-    #                                 virtual_gauge_lat=f"{float(model.link_center_metadata['latitude']):.3f}"
-    #                                 virtual_gauge_long=f"{float(model.link_center_metadata['longitude']):.3f}"
-    #                             else:
-
-                                virtual_gauge_lat=data_A.db[link]["metadata"][0]
-                                virtual_gauge_long=data_A.db[link]["metadata"][1]
-
-                                file_path = f'{produced_gauge_folder}/{batch_counter}-{link}-{"PARAN"}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
-#                                 for file_path in glob.glob(f'{produced_gauge_folder}/{link}-{"PARAN"}_*.csv',recursive=True): 
-#                                     try:
-#                                         os.remove(file_path)
-#                                     except OSError:
-#                                         print("OSError or file does not exist")
-
-                                with open(file_path, "w") as file:
-                                    a=np.array(model.t).reshape(train_opt.slice_dist,1)                    
-                                    b=min_max_inv_transform(data_vector, mmin=mmin_B, mmax=mmax_B).reshape(train_opt.slice_dist,1)
-                                    headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
-                                    c=np.hstack((a,b))
-                                    fmt = ",".join(["%s"]*(c.shape[1]))
-                                    np.savetxt(file, c, fmt=fmt, header=headers, comments='')
+                                    ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
+                                                                                       f' {metadata}', y=0.75, fontdict={'fontsize':6})
 
 
+                                ax.xaxis.set_major_formatter(date_format)
 
-    #                                 is_virtual_gauge_within_radius_with_link=v.is_within_radius(stations={
-    #                                     "fake_longitude":virtual_gauge_long, 
-    #                                     "fake_latitude":virtual_gauge_lat,
-    #                                     "real_longitude": model.link_center_metadata['longitude'],
-    #                                     "real_latitude": model.link_center_metadata['latitude']},
-    #                                     radius=config.VALIDATION_RADIUS)
-    
+                                wandb.log({title: fig})
 
-                                is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
-                                    "fake_longitude":virtual_gauge_long, 
-                                    "fake_latitude":virtual_gauge_lat,
-                                    "real_longitude":"30.367",
-                                    "real_latitude":"35.148"},
-                                    radius=config.VALIDATION_RADIUS)
+                                # save in predict directory for generated data
+                                start_date = config.start_date_str_rep_ddmmyyyy
+                                end_date = config.end_date_str_rep_ddmmyyyy
+                                produced_gauge_folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict/{experiment_name}' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict/{experiment_name}'
+                                real_gauge_folder=f'CellEnMon/datasets/ims/{start_date}_{end_date}/processed'
 
-                                if is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
-                                    print("Virtual link is in range with real gauge...")
-                                    path_to_real_gauge=f"{real_gauge_folder}/{'62_207_PARAN_30.367_35.148.csv'}"  
-                                    real_rain_add=min_max_inv_transform(rain_slice, mmin=0, mmax=27).cpu().detach().numpy().flatten()
-                                    fake_rain_add=b.flatten()
-                                
-                                    assert(len(real_rain_add)==len(fake_rain_add))
-                                
-                                    cond=np.array([True if r >= 1 or f >=0.5 else False for r,f in zip(real_rain_add,fake_rain_add)])
-                                    to_add=np.sum((real_rain_add-fake_rain_add)[cond]**2)
-                                    
-                                    #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
-                            
-                                    print(f"to add:{to_add}")
-                                    real_fake_gauge_metric[f"{link}-{'PARAN'}"]+=to_add
-                                    seq_len+=len(cond)
-                                    real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
-                                    fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
-                                    T=np.append(T,np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t]))
-                                    
-                                    
-                                    
-                                    
+                                if not os.path.exists(produced_gauge_folder):
+                                    os.makedirs(produced_gauge_folder)
+
+                                if not os.path.exists(real_gauge_folder):
+                                    os.makedirs(real_gauge_folder)
+
+                                if 'fake_B' == key:
+        #                             if experiment_name=="only_dynamic":
+        #                                 virtual_gauge_lat=f"{float(model.link_center_metadata['latitude']):.3f}"
+        #                                 virtual_gauge_long=f"{float(model.link_center_metadata['longitude']):.3f}"
+        #                             else:
+
+                                    virtual_gauge_lat=data_A.db[link]["metadata"][0]
+                                    virtual_gauge_long=data_A.db[link]["metadata"][1]
+
+                                    file_path = f'{produced_gauge_folder}/{batch_counter}-{link}-{gauge}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
+    #                                 for file_path in glob.glob(f'{produced_gauge_folder}/{link}-{"PARAN"}_*.csv',recursive=True): 
+    #                                     try:
+    #                                         os.remove(file_path)
+    #                                     except OSError:
+    #                                         print("OSError or file does not exist")
+
+                                    with open(file_path, "w") as file:
+                                        a=np.array(model.t).reshape(train_opt.slice_dist,1)                    
+                                        b=min_max_inv_transform(data_vector, mmin=mmin_B, mmax=mmax_B).reshape(train_opt.slice_dist,1)
+                                        headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
+                                        c=np.hstack((a,b))
+                                        fmt = ",".join(["%s"]*(c.shape[1]))
+                                        np.savetxt(file, c, fmt=fmt, header=headers, comments='')
 
 
-                assert(len(T)==len(real_gauge_vec.flatten()))
-                assert(len(T)==len(fake_gauge_vec.flatten()))
-            
 
-                
-                if seq_len:
-                    wandb.log({f"RMSE-{link}-{'PARAN'}":np.sqrt(real_fake_gauge_metric[f"{link}-{'PARAN'}"]/seq_len)})
-#                 rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
-#                 rain_axs[link_counter].plot(T, fake_gauge_vec, marker='x',linestyle='dashed',linewidth=0.0,markersize=2,label="Fake")
-#                 rain_axs[link_counter].set_title(f"{link}-{'PARAN'}")
-#                 rain_axs[link_counter].xaxis.set_major_formatter(date_format)
-                print(f"Done Preprocessing Link #{link_counter+1}/{len(validation_links)}")
+        #                                 is_virtual_gauge_within_radius_with_link=v.is_within_radius(stations={
+        #                                     "fake_longitude":virtual_gauge_long, 
+        #                                     "fake_latitude":virtual_gauge_lat,
+        #                                     "real_longitude": model.link_center_metadata['longitude'],
+        #                                     "real_latitude": model.link_center_metadata['latitude']},
+        #                                     radius=config.VALIDATION_RADIUS)
 
-                    
-#                     wandb.log({f"{link}-{'260'}" : wandb.plot.line_series(xs=range(len(T)), ys=[real_gauge_vec, fake_gauge_vec],keys=["real", "fake"],title=f"{link}-{'260'}",xname="Timestamp")})
-            
 
-            
-            
+                                    is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
+                                        "fake_longitude":virtual_gauge_long, 
+                                        "fake_latitude":virtual_gauge_lat,
+                                        "real_longitude":model.gauge_metadata[0],
+                                        "real_latitude":model.gauge_metadata[1]},
+                                        radius=config.VALIDATION_RADIUS)
 
-            if ENABLE_WANDB:
-#                 wandb.log({"Real vs Fake": rain_fig})
-                wandb.log({**validation_losses, **training_losses})      
-                path_to_html = f"{v.out_path}/{v.map_name}"
-#                 v.draw_cml_map()
-#                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
+                                    if is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
+                                        print("Virtual link is in range with real gauge...")
+                                        path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{model.gauge_metadata[0]}_{model.gauge_metadata[1]}.csv'}"  
+                                        real_rain_add=min_max_inv_transform(rain_slice, mmin=0, mmax=27).cpu().detach().numpy().flatten()
+                                        fake_rain_add=b.flatten()
+
+                                        assert(len(real_rain_add)==len(fake_rain_add))
+
+                                        cond=np.array([True if r >= 1 or f >=0.5 else False for r,f in zip(real_rain_add,fake_rain_add)])
+                                        to_add=np.sum((real_rain_add-fake_rain_add)[cond]**2)
+
+                                        #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
+
+                                        print(f"to add:{to_add}")
+                                        real_fake_gauge_metric[f"{link}-{gauge}"]+=to_add
+                                        seq_len+=len(cond)
+                                        real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
+                                        fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
+                                        T=np.append(T,np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t]))
+
+
+
+
+
+
+                    assert(len(T)==len(real_gauge_vec.flatten()))
+                    assert(len(T)==len(fake_gauge_vec.flatten()))
+
+
+
+                    if seq_len:
+                        wandb.log({f"RMSE-{link}-{gauge}":np.sqrt(real_fake_gauge_metric[f"{link}-{gauge}"]/seq_len)})
+                    rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
+                    rain_axs[link_counter].plot(T, fake_gauge_vec, marker='x',linestyle='dashed',linewidth=0.0,markersize=2,label="Fake")
+                    rain_axs[link_counter].set_title(f"{link}-{gauge}")
+                    rain_axs[link_counter].xaxis.set_major_formatter(date_format)
+                    print(f"Done Preprocessing Link #{link_counter+1}/{len(validation_links)}")
+
+
+    #                     wandb.log({f"{link}-{'260'}" : wandb.plot.line_series(xs=range(len(T)), ys=[real_gauge_vec, fake_gauge_vec],keys=["real", "fake"],title=f"{link}-{'260'}",xname="Timestamp")})
+
+
+
+
+
+                if ENABLE_WANDB:
+    #                 wandb.log({"Real vs Fake": rain_fig})
+                    wandb.log({**validation_losses, **training_losses})      
+                    path_to_html = f"{v.out_path}/{v.map_name}"
+    #                 v.draw_cml_map()
+    #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
