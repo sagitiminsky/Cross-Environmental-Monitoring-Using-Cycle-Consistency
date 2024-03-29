@@ -176,7 +176,7 @@ class Visualizer:
         station_types = {
             "link": self.data_path_dme,
             "gauge": self.data_path_ims,
-            "produced_gague": self.data_path_produced_ims
+#             "produced_gague": self.data_path_produced_ims
         }
         num_stations_map = num_gagues_map + num_links_map
 
@@ -189,7 +189,7 @@ class Visualizer:
 
         map_1 = folium.Map(location=[32, 35],
                            zoom_start=8,
-                           tiles='Stamen Terrain',
+#                            tiles='Stamen Terrain',
                            control_scale=True)
 
         lat_min = sys.maxsize
