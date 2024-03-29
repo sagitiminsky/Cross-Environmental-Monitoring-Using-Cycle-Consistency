@@ -82,7 +82,7 @@ class IMS_Scrapper_obj:
                         ims_vec = np.append(ims_vec, np.array([row[0]['value']]))
 
                 
-                    data = {'Time': time, 'RR[mm/h]': ims_vec}
+                    data = {'Time': time, 'RainAmout[mm/h]': ims_vec}
                     pd.DataFrame.from_dict(data).to_csv(f'{self.root}/raw/{file_name}', index=False)
                 
             except (json.decoder.JSONDecodeError):
