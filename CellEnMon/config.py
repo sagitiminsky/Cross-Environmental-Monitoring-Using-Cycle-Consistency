@@ -37,7 +37,7 @@ smoothing_dme=1
 smoothing_ims="xx" # not used yet
 
 TRAIN_RADIUS=100
-VALIDATION_RADIUS=10
+VALIDATION_RADIUS=100
 
 export_type="israel"
 date = {
