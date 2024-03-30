@@ -220,11 +220,12 @@ if __name__ == '__main__':
 
                         except RuntimeError:
                             continue
-                        if not train_opt.is_only_dynamic:
-                            for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
-                                A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
+                        
+#                         if not train_opt.is_only_dynamic:
+#                             for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
+#                                 A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
 
-                        input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":"PARAN", "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
+                        input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":gauge, "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
 
 
 
@@ -399,9 +400,9 @@ if __name__ == '__main__':
 
 
 
-                if ENABLE_WANDB:
-    #                 wandb.log({"Real vs Fake": rain_fig})
-                    wandb.log({**validation_losses, **training_losses})      
-                    path_to_html = f"{v.out_path}/{v.map_name}"
-    #                 v.draw_cml_map()
-    #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
+            if ENABLE_WANDB and epoch>0:
+#                 wandb.log({"Real vs Fake": rain_fig})
+                wandb.log({**validation_losses, **training_losses})      
+                path_to_html = f"{v.out_path}/{v.map_name}"
+#                 v.draw_cml_map()
+#                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
