@@ -41,7 +41,7 @@ SELECT_JOB = 1
 
 
 # Validation Matching
-validation_link_to_gauge_matching ={
+all_link_to_gauge_matching ={
     "a479-b477": ["NEOT SMADAR","PARAN"],
     "a477-b379": ["NEOT SMADAR","PARAN"],
     "b459-a690": ["NEOT SMADAR","PARAN"],
@@ -62,6 +62,19 @@ validation_link_to_gauge_matching ={
     "d063-c409": ["LAHAV", "NEVATIM", "BEER SHEVA", "SHANI" "ZOMET HANEGEV", "ZOVA"],
     
     "j033-261c": ["NEGBA", "ASHQELON PORT", "NIZZAN"]
+}
+
+
+#(['a479-b477', 'b412-c349', '462d-c088', 'f483-ts05', 'a063-b349', 'b394-ts04']
+#(['NEGBA', 'PARAN', 'ZOVA', 'NEVATIM'])
+validation_link_to_gauge_matching ={
+    "f483-ts05": ["NEVATIM"], #, "ZOVA"],  too far away
+    "a063-b349": ["ZOVA"], # "NEVATIM", too far away
+    "b394-ts04": ["NEVATIM"], #,"ZOVA"], too far away
+    "a479-b477": [], # ["PARAN"], too far away
+    "b412-c349": [], #["NEVATIM","ZOVA"],
+    "462d-c088": [],
+
 }
 
 
@@ -174,8 +187,10 @@ if __name__ == '__main__':
             
             print(f"Validation links:{validation_links}")
             for link_counter,link in enumerate(validation_links):
+                print(f"Now validating link:{link}")
                 for gauge in validation_link_to_gauge_matching[link]:
-                    data_norm_B = data_B.db_normalized[gauge]:
+                    print(f"with gauge: {gauge}")
+                    data_norm_B = data_B.db_normalized[gauge]
                     validation_gauge_full = torch.Tensor(np.array(list(data_norm_B['data'].values())))
     #                 print(f"links:{validation_dataset.dataset.dataset.dme.db_normalized.keys()}")
                     real_fake_gauge_metric[f"{link}-{gauge}"]=0
@@ -331,17 +346,17 @@ if __name__ == '__main__':
         #                                     "real_latitude": model.link_center_metadata['latitude']},
         #                                     radius=config.VALIDATION_RADIUS)
 
-
+                                    gague_metadata=model.gague_metadata.tolist()[0]
                                     is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
                                         "fake_longitude":virtual_gauge_long, 
                                         "fake_latitude":virtual_gauge_lat,
-                                        "real_longitude":model.gauge_metadata[0],
-                                        "real_latitude":model.gauge_metadata[1]},
+                                        "real_longitude":gague_metadata[0],
+                                        "real_latitude":gague_metadata[1]},
                                         radius=config.VALIDATION_RADIUS)
 
                                     if is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
                                         print("Virtual link is in range with real gauge...")
-                                        path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{model.gauge_metadata[0]}_{model.gauge_metadata[1]}.csv'}"  
+                                        path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{gague_metadata[0]}_{gague_metadata[1]}.csv'}"  
                                         real_rain_add=min_max_inv_transform(rain_slice, mmin=0, mmax=27).cpu().detach().numpy().flatten()
                                         fake_rain_add=b.flatten()
 
