@@ -64,16 +64,25 @@ all_link_to_gauge_matching ={
     "j033-261c": ["NEGBA", "ASHQELON PORT", "NIZZAN"]
 }
 
+# gauges in validation dataset:dict_keys(['NEGBA', 'PARAN', 'ZOVA', 'NEVATIM'])
+# links in validation dataset:dict_keys(['b394-ts04', 'b480-a458', 'j033-261c', 'c078-d088', '462d-c088', 'b459-a690'])
 
-#(['a479-b477', 'b412-c349', '462d-c088', 'f483-ts05', 'a063-b349', 'b394-ts04']
-#(['NEGBA', 'PARAN', 'ZOVA', 'NEVATIM'])
 validation_link_to_gauge_matching ={
-    "f483-ts05": ["NEVATIM"], #, "ZOVA"],  too far away
-    "a063-b349": ["ZOVA"], # "NEVATIM", too far away
-    "b394-ts04": ["NEVATIM"], #,"ZOVA"], too far away
-    "a479-b477": [], # ["PARAN"], too far away
-    "b412-c349": [], #["NEVATIM","ZOVA"],
+    "b394-ts04": [], #,"NEVATIM","ZOVA"], too far away
+    "b480-a458": ["PARAN"],
+    "j033-261c": ["NEGBA"],
+    "c078-d088": [],
     "462d-c088": [],
+    "b459-a690": []
+    
+    
+#     "f483-ts05": ["NEVATIM"], #, "ZOVA"],  too far away
+#     "a063-b349": ["ZOVA"], # "NEVATIM", too far away
+    
+#     "a479-b477": [], # ["PARAN"], too far away
+#     "b412-c349": [], #["NEVATIM","ZOVA"],
+
+    
 
 }
 
@@ -137,8 +146,10 @@ if __name__ == '__main__':
     model = models.create_model(train_opt)  # create a model given opt.model and other options
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
-    direction = train_opt.direction
-    for epoch in range(train_opt.n_epochs + train_opt.n_epochs_decay + 1):  # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
+    
+    for epoch in range(train_opt.n_epochs_decay):
+        
+        direction = "AtoB" if epoch%2==0 else "BtoA"
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
@@ -155,7 +166,7 @@ if __name__ == '__main__':
             epoch_iter += train_opt.batch_size
             
             
-            model.set_input(data)  # unpack data from dataset and apply preprocessing
+            model.set_input(data,direction=direction)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
             
             # Training losses
@@ -172,10 +183,9 @@ if __name__ == '__main__':
 
             iter_data_time = time.time()
 
-        print('End of epoch %d / %d \t Time Taken: %d sec' % (
-            epoch, train_opt.n_epochs + train_opt.n_epochs_decay, time.time() - epoch_start_time))
+        print(f'End of epoch:{epoch}')
 
-        if epoch % 1000 == 0:
+        if epoch % 1000 == 0 and epoch>0:
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
