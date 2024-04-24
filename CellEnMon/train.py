@@ -147,9 +147,9 @@ if __name__ == '__main__':
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
     
-    for epoch in range(train_opt.n_epochs_decay):
+    for epoch in range(train_opt.n_epochs + train_opt.n_epochs_decay):
         
-        direction = "AtoB" if epoch%2==0 else "BtoA"
+        direction = "AtoB" if (epoch // 10) % 2 == 0 else "BtoA"
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
