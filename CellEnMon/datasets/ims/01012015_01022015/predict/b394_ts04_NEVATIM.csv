@@ -1,1 +1,1 @@
-Time,RainAmoutPredicted[mm/h],RainAmoutGT[mm/h]
+Time,RainAmoutPredicted[mm/h],RainAmoutGT[mm/h],RainAmoutPredictedCumSum,RainAmoutGTCumSum

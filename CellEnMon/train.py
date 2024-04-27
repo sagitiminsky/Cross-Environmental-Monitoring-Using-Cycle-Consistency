@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
         print(f'End of epoch:{epoch}')
 
-        if epoch % 1000 == 0 and epoch>0:
+        if epoch % 1000 == 0:# and epoch>0:
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
@@ -223,13 +223,13 @@ if __name__ == '__main__':
                         print(f"gauge:{gauge}:{i}/{len(validation_gauge_full)}")
 
                         try:
-                            A=validation_link_full[A_delay + i : A_delay + i + k].reshape(k,4)
-                            B=validation_gauge_full[B_delay + i : B_delay + i + k].reshape(k,1)
-                            slice_time=data_norm_B['time'][B_delay + i: B_delay + i + k]
+                            A=validation_link_full[i :  i + k].reshape(k,4)
+                            B=validation_gauge_full[i : i + k].reshape(k,1)
+                            slice_time=data_norm_B['time'][i: i + k]
                             rain_slice=B
 
                         except RuntimeError:
-                            continue
+                            break
                         
 #                         if not train_opt.is_only_dynamic:
 #                             for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
