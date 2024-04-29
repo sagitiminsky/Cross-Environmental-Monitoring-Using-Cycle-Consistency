@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
         print(f'End of epoch:{epoch}')
 
-        if epoch % 1000 == 0:# and epoch>0:
+        if epoch % 100 == 0:# and epoch>0:
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
@@ -222,22 +222,25 @@ if __name__ == '__main__':
                             B=validation_gauge_full[i : i + k].reshape(k,1)
                             slice_time=data_norm_B['time'][i: i + k]
                             rain_slice=B
-
+                    
                         except RuntimeError:
                             break
                         
 #                         if not train_opt.is_only_dynamic:
 #                             for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
 #                                 A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
-
+                    
                         input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":gauge, "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
-
-#                         print(input)
+                        
+#                         print("rain_rate_sample")
+#                         print(torch.unsqueeze(B.T,0))
 
                         model.set_input(input,direction=direction,isTrain=False)
 
     #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
     #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
+                        
+        
                         model.test()
                         model.optimize_parameters(is_train=False)  # calculate loss functions
                         validation_losses = model.get_current_losses(is_train=False)
@@ -251,16 +254,24 @@ if __name__ == '__main__':
                             title = f'{batch_counter}:{link}<->{gauge}'
 
                             #plt.title(title)
-
+                            
                             for ax, key in zip(axs.flatten(), visuals):
-
-                                if train_opt.is_only_dynamic:
-                                    N = 4 if 'A' in key else 1
-                                else:
-                                    N = 8 if 'A' in key else 5
+                                N = 4 if 'A' in key else 1
+                                
+#                                 if train_opt.is_only_dynamic:
+#                                     N = 4 if 'A' in key else 1
+#                                 else:
+#                                     N = 8 if 'A' in key else 5
 
                                 # Plot Data
                                 data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy()
+                                
+                
+
+                                if 'fake_B' in key:
+                                    print(f"{key}")
+                                    print(data)
+                            
                                 for i in range(1, 5):
                                     if 'A' in key:
                                         mmin = model.data_transformation['link']['min'][0].numpy()
