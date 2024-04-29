@@ -363,7 +363,7 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
         model += [nn.ReflectionPad1d(3)]
         model += [nn.Conv1d(ngf, output_nc, kernel_size=7, padding=0)]
-        model += [nn.Tanh()] #if direction == "AtoB" else [nn.Tanh()]
+        model += [nn.LeakyReLU()] #if direction == "AtoB" else [nn.Tanh()]
 
         self.model = nn.Sequential(*model)
 
