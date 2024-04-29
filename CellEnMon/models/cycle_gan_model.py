@@ -111,8 +111,8 @@ class CycleGANModel(BaseModel):
             self.alpha=0.2
             self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
             self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
-            self.rain_rate_prob = self.alpha + 1 - input['rain_rate'].to(self.device)
-            self.attenuation_prob = self.alpha + 1 - input['attenuation'].to(self.device)
+            self.rain_rate_prob = 1 - input['rain_rate'].to(self.device)
+            self.attenuation_prob = 1 - input['attenuation'].to(self.device)
 
             
             self.link_norm_metadata=input['link_norm_metadata']
@@ -186,9 +186,9 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True) 
         # GAN loss D_B(G_B(B))
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True) 
         # Forward cycle loss || G_B(G_A(A)) - A||
         
 
@@ -198,10 +198,10 @@ class CycleGANModel(BaseModel):
         fake_B_unnormalized=self.min_max_inv_transform(x=fake_B_max,mmin=mmin,mmax=mmax)
 
         
-        self.loss_cycle_A = lambda_A *(self.criterionCycle(self.rec_A, self.real_A) * self.attenuation_prob)
+        self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A ) * lambda_A * self.attenuation_prob
         #(self.alpha + 1 -self.func_fit(x=fake_B_unnormalized,a=self.a_rain, b=self.b_rain,c=self.c_rain))
         # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = lambda_B *(self.criterionCycle(self.rec_B, self.real_B) * self.rain_rate_prob)
+        self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B * self.rain_rate_prob
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()

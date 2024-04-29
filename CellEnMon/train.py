@@ -69,7 +69,7 @@ all_link_to_gauge_matching ={
 
 validation_link_to_gauge_matching ={
     "b394-ts04": [], #,"NEVATIM","ZOVA"], too far away
-    "b480-a458": ["PARAN"],
+    "b480-a458": [], # PARAN - not enough rain
     "j033-261c": ["NEGBA"],
     "c078-d088": [],
     "462d-c088": [],
@@ -176,11 +176,6 @@ if __name__ == '__main__':
 
             t_comp = (time.time() - iter_start_time) / train_opt.batch_size
 
-            if total_iters % train_opt.save_latest_freq == 0:  # cache our latest model every <save_latest_freq> iterations
-                print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
-                save_suffix = 'iter_%d' % total_iters if train_opt.save_by_iter else 'latest'
-                # model.save_networks(save_suffix)
-
             iter_data_time = time.time()
 
         print(f'End of epoch:{epoch}')
@@ -237,12 +232,13 @@ if __name__ == '__main__':
 
                         input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":gauge, "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
 
+#                         print(input)
 
-
-                        model.set_input(input,isTrain=False)
+                        model.set_input(input,direction=direction,isTrain=False)
 
     #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
     #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
+                        model.test()
                         model.optimize_parameters(is_train=False)  # calculate loss functions
                         validation_losses = model.get_current_losses(is_train=False)
 
@@ -264,7 +260,7 @@ if __name__ == '__main__':
                                     N = 8 if 'A' in key else 5
 
                                 # Plot Data
-                                data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy() if train_opt.is_only_dynamic else visuals[key][0].T.cpu().detach().numpy()
+                                data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy()
                                 for i in range(1, 5):
                                     if 'A' in key:
                                         mmin = model.data_transformation['link']['min'][0].numpy()
@@ -272,8 +268,8 @@ if __name__ == '__main__':
                                         label = DME_KEYS[i]
                                         data_vector = data[:, i - 1]
                                     else:
-                                        mmin = model.data_transformation['gague']['min'][0].numpy()
-                                        mmax = model.data_transformation['gague']['max'][0].numpy()
+                                        mmin = 0 #model.data_transformation['gague']['min'][0].numpy()
+                                        mmax = 8.2 #model.data_transformation['gague']['max'][0].numpy()
                                         mmin_B=mmin
                                         mmax_B=mmax
                                         label = IMS_KEYS[1]
@@ -310,7 +306,6 @@ if __name__ == '__main__':
 
                                 ax.xaxis.set_major_formatter(date_format)
 
-                                wandb.log({title: fig})
 
                                 # save in predict directory for generated data
                                 start_date = config.start_date_str_rep_ddmmyyyy
@@ -356,7 +351,7 @@ if __name__ == '__main__':
         #                                     "real_longitude": model.link_center_metadata['longitude'],
         #                                     "real_latitude": model.link_center_metadata['latitude']},
         #                                     radius=config.VALIDATION_RADIUS)
-
+############################
                                     gague_metadata=model.gague_metadata.tolist()[0]
                                     is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
                                         "fake_longitude":virtual_gauge_long, 
@@ -368,7 +363,7 @@ if __name__ == '__main__':
                                     if is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
                                         print("Virtual link is in range with real gauge...")
                                         path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{gague_metadata[0]}_{gague_metadata[1]}.csv'}"  
-                                        real_rain_add=min_max_inv_transform(rain_slice, mmin=0, mmax=27).cpu().detach().numpy().flatten()
+                                        real_rain_add=min_max_inv_transform(rain_slice, mmin=mmin_B, mmax=mmax_B).cpu().detach().numpy().flatten()
                                         fake_rain_add=b.flatten()
 
                                         assert(len(real_rain_add)==len(fake_rain_add))
@@ -387,9 +382,10 @@ if __name__ == '__main__':
 
 
 
-
-
-
+############################
+                            wandb.log({title: fig})
+    
+    
                     assert(len(T)==len(real_gauge_vec.flatten()))
                     assert(len(T)==len(fake_gauge_vec.flatten()))
 
@@ -409,10 +405,15 @@ if __name__ == '__main__':
 
 
 
-
+                
+        
             if ENABLE_WANDB and epoch>0:
 #                 wandb.log({"Real vs Fake": rain_fig})
+                
                 wandb.log({**validation_losses, **training_losses})      
                 path_to_html = f"{v.out_path}/{v.map_name}"
 #                 v.draw_cml_map()
 #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
+
+
+    model.save_networks("latest")
