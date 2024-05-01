@@ -149,14 +149,14 @@ if __name__ == '__main__':
     
     for epoch in range(train_opt.n_epochs + train_opt.n_epochs_decay):
         
-        direction = "AtoB" if (epoch // 10) % 2 == 0 else "BtoA"
+#         direction = "AtoB" if (epoch // 10) % 2 == 0 else "BtoA"
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
         agg_train_mse_A, agg_train_mse_B = 0, 0
         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
 
-        print(f"Direction:{direction}")
+#         print(f"Direction:{direction}")
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
             if total_iters % train_opt.print_freq == 0:
@@ -166,7 +166,7 @@ if __name__ == '__main__':
             epoch_iter += train_opt.batch_size
             
             
-            model.set_input(data,direction=direction)  # unpack data from dataset and apply preprocessing
+            model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
             
             # Training losses
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
         print(f'End of epoch:{epoch}')
 
-        if epoch % 100 == 0:# and epoch>0:
+        if epoch % 1000 == 0:# and epoch>0:
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
@@ -192,7 +192,6 @@ if __name__ == '__main__':
             
             print(f"Validation links:{validation_links}")
             for link_counter,link in enumerate(validation_links):
-                print(f"Now validating link:{link}")
                 for gauge in validation_link_to_gauge_matching[link]:
                     print(f"with gauge: {gauge}")
                     data_norm_B = data_B.db_normalized[gauge]
@@ -235,14 +234,14 @@ if __name__ == '__main__':
 #                         print("rain_rate_sample")
 #                         print(torch.unsqueeze(B.T,0))
 
-                        model.set_input(input,direction=direction,isTrain=False)
+                        model.set_input(input,isTrain=False)
 
     #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
     #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
                         
         
                         model.test()
-                        model.optimize_parameters(is_train=False)  # calculate loss functions
+#                         model.optimize_parameters(is_train=False)  # calculate loss functions
                         validation_losses = model.get_current_losses(is_train=False)
 
 
@@ -268,9 +267,9 @@ if __name__ == '__main__':
                                 
                 
 
-                                if 'fake_B' in key:
-                                    print(f"{key}")
-                                    print(data)
+#                                 if 'fake_B' in key:
+#                                     print(f"{key}")
+#                                     print(data)
                             
                                 for i in range(1, 5):
                                     if 'A' in key:
