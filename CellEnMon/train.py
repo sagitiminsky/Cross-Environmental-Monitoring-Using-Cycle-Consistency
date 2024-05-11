@@ -17,6 +17,7 @@ import config
 import torch.nn.functional as F
 import numpy as np
 from libs.visualize.visualize import Visualizer
+from preprocess import Preprocess
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 
 ENABLE_WANDB = True
@@ -240,8 +241,8 @@ if __name__ == '__main__':
     #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
                         
         
-                        model.test()
-#                         model.optimize_parameters(is_train=False)  # calculate loss functions
+#                         model.test()
+                        model.optimize_parameters(is_train=False)  # calculate loss functions
                         validation_losses = model.get_current_losses(is_train=False)
 
 
@@ -393,9 +394,36 @@ if __name__ == '__main__':
 
 
 ############################
+                            
                             wandb.log({title: fig})
-    
-    
+        
+                    p=Preprocess()
+                    fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
+
+                    preprocessed_time=np.asarray(p.excel_data.Time)
+                    axs_preprocessed.plot(preprocessed_time, p.fake, label="CML")
+                    axs_preprocessed.plot(preprocessed_time, p.real, "--", label="Gauge")
+                    axs_preprocessed.grid()
+#                         axs_preprocessed.xlabel("Time")
+#                         axs_preprocessed.ylabel("Accumulated Rain Rate [mm]")
+                    fig_preprocessed.legend()
+                    fig_preprocessed.tight_layout()
+
+
+                    # Specify the number of ticks you want on the x-axis
+                    num_ticks = 10
+
+                    # Calculate the step size between ticks
+                    step_size = len(preprocessed_time) // num_ticks
+
+                    # Set the ticks on the x-axis
+                    axs_preprocessed.set_xticks(preprocessed_time[::step_size])  # Setting x-ticks
+                    axs_preprocessed.set_xticklabels(preprocessed_time[::step_size], rotation=45)  # Setting x-tick labels with rotation
+#                     axs_preprocessed.xaxis.set_major_formatter(date_format)
+
+                    wandb.log({"Virtual (CML) vs Real (Gauge)":fig_preprocessed})
+        
+                            
                     assert(len(T)==len(real_gauge_vec.flatten()))
                     assert(len(T)==len(fake_gauge_vec.flatten()))
 

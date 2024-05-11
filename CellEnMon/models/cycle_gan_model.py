@@ -32,8 +32,8 @@ class CycleGANModel(BaseModel):
         """
         parser.set_defaults(no_dropout=True)  # default CycleGAN did not use dropout
         if is_train:
-            parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
-            parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
+            parser.add_argument('--lambda_A', type=float, default=0.1, help='weight for cycle loss (A -> B -> A)')
+            parser.add_argument('--lambda_B', type=float, default=0.1, help='weight for cycle loss (B -> A -> B)')
             parser.add_argument('--lambda_identity', type=float, default=0.0,
                                 help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
 
@@ -198,10 +198,10 @@ class CycleGANModel(BaseModel):
         fake_B_unnormalized=self.min_max_inv_transform(x=fake_B_max,mmin=mmin,mmax=mmax)
 
         
-        self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A ) * lambda_A #* self.attenuation_prob
+        self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A ) * lambda_A * self.attenuation_prob
         #(self.alpha + 1 -self.func_fit(x=fake_B_unnormalized,a=self.a_rain, b=self.b_rain,c=self.c_rain))
         # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B #* self.rain_rate_prob
+        self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B * self.rain_rate_prob
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
