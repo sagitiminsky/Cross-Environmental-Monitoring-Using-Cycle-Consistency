@@ -18,6 +18,7 @@ import torch.nn.functional as F
 import numpy as np
 from libs.visualize.visualize import Visualizer
 from preprocess import Preprocess
+from collections import OrderedDict
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 
 ENABLE_WANDB = True
@@ -148,6 +149,7 @@ if __name__ == '__main__':
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
     total_iters = 0  # the total number of training iterations
     
+    
     for epoch in range(train_opt.n_epochs + train_opt.n_epochs_decay):
         
 #         direction = "AtoB" if (epoch // 10) % 2 == 0 else "BtoA"
@@ -178,9 +180,9 @@ if __name__ == '__main__':
             t_comp = (time.time() - iter_start_time) / train_opt.batch_size
 
             iter_data_time = time.time()
-
+        
         print(f'End of epoch:{epoch}')
-
+            
         if epoch % 1000 == 0:# and epoch>0:
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
@@ -211,6 +213,8 @@ if __name__ == '__main__':
                     num_samples=len(validation_gauge_full)
                     data_norm_A=data_A.db_normalized[link]
                     validation_link_full=torch.Tensor(np.array(list(data_norm_A['data'].values())))
+#                     model.setup(validation_opt,isTrain=False)
+                    
                     for batch_counter,i in enumerate(range(0, num_samples, k)): #len(validation_gauge_full)
 
 
@@ -230,26 +234,32 @@ if __name__ == '__main__':
 #                             for a, b in zip(data_norm_A['norm_metadata'], data_norm_B['norm_metadata']):
 #                                 A, B = pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
                     
-                        input={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":gauge, "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
+                        loader={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":gauge, "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}
                         
 #                         print("rain_rate_sample")
 #                         print(torch.unsqueeze(B.T,0))
-
-                        model.set_input(input,isTrain=False)
+                        
+ 
+                        model.set_input(loader,isTrain=False)
+#                         model.eval()
 
     #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
     #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
                         
-        
-#                         model.test()
-                        model.optimize_parameters(is_train=False)  # calculate loss functions
-                        validation_losses = model.get_current_losses(is_train=False)
+                        model.test()
+#                         model.optimize_parameters(is_train=False)  # calculate loss functions
+#                         validation_losses = model.get_current_losses(is_train=False)
 
 
                         if ENABLE_WANDB:
                             # Visualize
                             metadata=[0]*4
-                            visuals = model.get_current_visuals()
+#                             visuals = model.get_current_visuals()
+            
+                            with torch.no_grad():
+                                visuals = OrderedDict([('real_A', torch.unsqueeze(A.T,0)),('fake_B', model.fake_B),('rec_A', model.rec_A), ('real_B',torch.unsqueeze(B.T,0)),('fake_A', model.fake_A),('rec_B', model.rec_B)])
+            
+            
                             fig, axs = plt.subplots(2, 3, figsize=(15, 15))
                             title = f'{batch_counter}:{link}<->{gauge}'
 
@@ -400,9 +410,10 @@ if __name__ == '__main__':
                     p=Preprocess()
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
 
-                    preprocessed_time=np.asarray(p.excel_data.Time)
-                    axs_preprocessed.plot(preprocessed_time, p.fake, label="CML")
-                    axs_preprocessed.plot(preprocessed_time, p.real, "--", label="Gauge")
+                    preprocessed_time=np.asarray(p.excel_data.Time) #2015-01-06 20:30:00
+                    preprocessed_time_wanb=[mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in preprocessed_time]
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake, label="CML")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.real, "--", label="Gauge")
                     axs_preprocessed.grid()
 #                         axs_preprocessed.xlabel("Time")
 #                         axs_preprocessed.ylabel("Accumulated Rain Rate [mm]")
@@ -417,17 +428,18 @@ if __name__ == '__main__':
                     step_size = len(preprocessed_time) // num_ticks
 
                     # Set the ticks on the x-axis
-                    axs_preprocessed.set_xticks(preprocessed_time[::step_size])  # Setting x-ticks
-                    axs_preprocessed.set_xticklabels(preprocessed_time[::step_size], rotation=45)  # Setting x-tick labels with rotation
-#                     axs_preprocessed.xaxis.set_major_formatter(date_format)
+                    axs_preprocessed.set_xticks(preprocessed_time_wanb[::step_size])  # Setting x-ticks
+                    axs_preprocessed.set_xticklabels(preprocessed_time_wanb[::step_size], rotation=45)  # Setting x-tick labels with rotation
+                    axs_preprocessed.xaxis.set_major_formatter(date_format)
 
                     wandb.log({"Virtual (CML) vs Real (Gauge)":fig_preprocessed})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))
                     assert(len(T)==len(fake_gauge_vec.flatten()))
-
-
+                    
+                    
+                    model.setup(train_opt)  # get ready for regular train setup: load and print networks; create schedulers
 
                     if seq_len:
                         wandb.log({f"RMSE-{link}-{gauge}":np.sqrt(real_fake_gauge_metric[f"{link}-{gauge}"]/seq_len)})
@@ -448,7 +460,7 @@ if __name__ == '__main__':
             if ENABLE_WANDB and epoch>0:
 #                 wandb.log({"Real vs Fake": rain_fig})
                 
-                wandb.log({**validation_losses, **training_losses})      
+                wandb.log({**validation_losses,**training_losses})      
                 path_to_html = f"{v.out_path}/{v.map_name}"
 #                 v.draw_cml_map()
 #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
