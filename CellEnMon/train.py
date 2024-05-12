@@ -183,7 +183,7 @@ if __name__ == '__main__':
         
         print(f'End of epoch:{epoch}')
             
-        if epoch % 1000 == 0:# and epoch>0:
+        if epoch % 100 == 0:# and epoch>0:
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
@@ -439,7 +439,7 @@ if __name__ == '__main__':
                     assert(len(T)==len(fake_gauge_vec.flatten()))
                     
                     
-                    model.setup(train_opt)  # get ready for regular train setup: load and print networks; create schedulers
+#                     model.setup(train_opt)  # get ready for regular train setup: load and print networks; create schedulers
 
                     if seq_len:
                         wandb.log({f"RMSE-{link}-{gauge}":np.sqrt(real_fake_gauge_metric[f"{link}-{gauge}"]/seq_len)})
@@ -460,7 +460,7 @@ if __name__ == '__main__':
             if ENABLE_WANDB and epoch>0:
 #                 wandb.log({"Real vs Fake": rain_fig})
                 
-                wandb.log({**validation_losses,**training_losses})      
+                wandb.log({**training_losses})      ## DOTO: Need to add **validation_losses
                 path_to_html = f"{v.out_path}/{v.map_name}"
 #                 v.draw_cml_map()
 #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
