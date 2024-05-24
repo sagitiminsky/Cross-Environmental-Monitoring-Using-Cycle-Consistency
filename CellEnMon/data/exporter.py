@@ -255,7 +255,14 @@ class Extractor:
             s = pd.Series(ims_matrix)
 
             training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=False)]
-            dataset = training_data if is_train else validation_data  
+            
+            #Conditional dataset
+            validation_data["LAHAV"]=training_data["LAHAV"]
+            training_data.pop("LAHAV",None)
+            
+            dataset = training_data if is_train else validation_data
+                            
+            
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
                 pickle.dump(dataset, f)
 
@@ -351,7 +358,12 @@ class Extractor:
                             f"Not all fields [PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
 
             s = pd.Series(dme_matrix)
-            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=True)]
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=False)]
+            
+            #Conditional dataset
+            validation_data["b394-ts04"]=training_data["b394-ts04"]
+            training_data.pop("b394-ts04",None)
+            
             dataset = training_data if is_train else validation_data
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
                 pickle.dump(dataset, f)
