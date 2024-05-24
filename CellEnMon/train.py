@@ -41,6 +41,12 @@ SELECTED_GROUP_NAME = "Frontiers"
 SELECT_JOB = 1
 
 
+# gauges in train dataset:dict_keys(['ZOMET HANEGEV', 'BEER SHEVA', 'EZUZ', 'NEOT SMADAR'])
+# links in train dataset:dict_keys(['a477-b379', 'a459-803b', '462d-c088', 'a479-b477', 'b465-d481', 'b451-a350', 'b459-a690', 'b480-a458'])
+
+# gauges in validation dataset:dict_keys(['SEDE BOQER', 'PARAN', 'NEVATIM', 'LAHAV'])
+# links in validation dataset:dict_keys(['f350-e483', 'c078-d088', 'f483-ts05', 'a473-b119', 'b394-ts04'])
+
 
 # Validation Matching
 all_link_to_gauge_matching ={
@@ -66,25 +72,12 @@ all_link_to_gauge_matching ={
     "j033-261c": ["NEGBA", "ASHQELON PORT", "NIZZAN"]
 }
 
-# gauges in validation dataset:dict_keys(['NEGBA', 'PARAN', 'ZOVA', 'NEVATIM'])
-# links in validation dataset:dict_keys(['b394-ts04', 'b480-a458', 'j033-261c', 'c078-d088', '462d-c088', 'b459-a690'])
-
 validation_link_to_gauge_matching ={
-    "b394-ts04": [], #,"NEVATIM","ZOVA"], too far away
-    "b480-a458": [], # PARAN - not enough rain
-    "j033-261c": ["NEGBA"],
-    "c078-d088": [],
-    "462d-c088": [],
-    "b459-a690": []
-    
-    
-#     "f483-ts05": ["NEVATIM"], #, "ZOVA"],  too far away
-#     "a063-b349": ["ZOVA"], # "NEVATIM", too far away
-    
-#     "a479-b477": [], # ["PARAN"], too far away
-#     "b412-c349": [], #["NEVATIM","ZOVA"],
-
-    
+    "f350-e483": [], 
+    "c078-d088": [], 
+    "f483-ts05": [], 
+    "a473-b119": [], 
+    "b394-ts04": ["LAHAV"]
 
 }
 
@@ -183,7 +176,7 @@ if __name__ == '__main__':
         
         print(f'End of epoch:{epoch}')
             
-        if epoch % 100 == 0:# and epoch>0:
+        if epoch % 1000 == 0:# and epoch>0:
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
@@ -284,13 +277,13 @@ if __name__ == '__main__':
                             
                                 for i in range(1, 5):
                                     if 'A' in key:
-                                        mmin = model.data_transformation['link']['min'][0].numpy()
-                                        mmax = model.data_transformation['link']['max'][0].numpy()
+                                        mmin = 0 #model.data_transformation['link']['min'][0].numpy()
+                                        mmax = 120 #model.data_transformation['link']['max'][0].numpy()
                                         label = DME_KEYS[i]
                                         data_vector = data[:, i - 1]
                                     else:
                                         mmin = 0 #model.data_transformation['gague']['min'][0].numpy()
-                                        mmax = 8.2 #model.data_transformation['gague']['max'][0].numpy()
+                                        mmax = 3.5 #model.data_transformation['gague']['max'][0].numpy()
                                         mmin_B=mmin
                                         mmax_B=mmax
                                         label = IMS_KEYS[1]
@@ -407,11 +400,13 @@ if __name__ == '__main__':
                             
                             wandb.log({title: fig})
         
-                    p=Preprocess()
+                    p=Preprocess(link=link,gauge=gauge)
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
 
                     preprocessed_time=np.asarray(p.excel_data.Time) #2015-01-06 20:30:00
                     preprocessed_time_wanb=[mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in preprocessed_time]
+                    
+                    
                     axs_preprocessed.plot(preprocessed_time_wanb, p.fake, label="CML")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.real, "--", label="Gauge")
                     axs_preprocessed.grid()
@@ -432,7 +427,7 @@ if __name__ == '__main__':
                     axs_preprocessed.set_xticklabels(preprocessed_time_wanb[::step_size], rotation=45)  # Setting x-tick labels with rotation
                     axs_preprocessed.xaxis.set_major_formatter(date_format)
 
-                    wandb.log({"Virtual (CML) vs Real (Gauge)":fig_preprocessed})
+                    wandb.log({f"Virtual (CML) vs Real (Gauge) - {link}-{gauge}":fig_preprocessed})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))

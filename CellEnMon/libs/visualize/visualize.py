@@ -34,7 +34,7 @@ class Visualizer:
         self.dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
         self.map_name = f"{config.export_type}.html"
         self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
-        self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
+        self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/raw")
         self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict/{experiment_name}")
         self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")
         if not os.path.exists(Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")):

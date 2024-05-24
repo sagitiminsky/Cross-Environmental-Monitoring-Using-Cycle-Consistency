@@ -5,13 +5,13 @@ import CellEnMon.config as config
 import os
 import ast
 #from google.cloud import storage
-from CellEnMon.libs.vault.vault import VaultService
+# from CellEnMon.libs.vault.vault import VaultService
 import numpy as np 
-vault_service=VaultService()
+# vault_service=VaultService()
 url = "https://api.ims.gov.il/v1/envista/stations/64/data?from=2019/12/01&to=2020/01/01"
 
 headers = {
-    'Authorization': 'ApiToken ' + vault_service.dict_secrets["ims"]["token"]
+    'Authorization': 'ApiToken ' + "f058958a-d8bd-47cc-95d7-7ecf98610e47"
 }
 
 ## Setting credentials using the downloaded JSON file
