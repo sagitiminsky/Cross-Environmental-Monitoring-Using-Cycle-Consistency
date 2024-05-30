@@ -5,7 +5,10 @@ import numpy as np
 
 root="CellEnMon/datasets/ims"
 content=sorted(os.listdir(f"{root}/01012015_01022015/predict/only_dynamic"))
-content.remove(".ipynb_checkpoints")
+try:
+    content.remove(".ipynb_checkpoints")
+except Exception:
+    pass
 import glob
 
 

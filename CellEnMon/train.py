@@ -42,10 +42,10 @@ SELECT_JOB = 1
 
 
 # gauges in train dataset:dict_keys(['ZOMET HANEGEV', 'BEER SHEVA', 'EZUZ', 'NEOT SMADAR', 'SEDE BOQER', 'PARAN'])
-# links in train dataset:dict_keys(['a477-b379', 'a459-803b', '462d-c088', 'a479-b477', 'b465-d481', 'b451-a350', 'b459-a690', 'b480-a458', 'f350-e483'])
+# links in train dataset:dict_keys(['b480-a458', '462d-c088', 'c078-d088', 'f350-e483', 'a477-b379', 'a459-803b', 'a479-b477', 'b459-a690', 'b465-d481'])
 
 # gauges in validation dataset:dict_keys(['NEVATIM', 'LAHAV'])
-# links in validation dataset:dict_keys(['c078-d088', 'a473-b119', 'b394-ts04'])
+# links in validation dataset:dict_keys(['a473-b119', 'b451-a350', 'b394-ts04'])
 
 
 # Validation Matching
@@ -73,8 +73,8 @@ all_link_to_gauge_matching ={
 }
 
 validation_link_to_gauge_matching ={
-    "c078-d088": [], 
     "a473-b119": [], 
+    "b451-a350": [], 
     "b394-ts04": ["LAHAV"]
 
 }
@@ -264,7 +264,8 @@ if __name__ == '__main__':
 #                                     N = 8 if 'A' in key else 5
 
                                 # Plot Data
-                                data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy()
+                                data = visuals[key][0].cpu().detach().numpy().T
+                                assert(data.shape == (64,N))
                                 
                 
 
@@ -272,10 +273,11 @@ if __name__ == '__main__':
 #                                     print(f"{key}")
 #                                     print(data)
                             
+                                
                                 for i in range(1, 5):
                                     if 'A' in key:
-                                        mmin = 0 #model.data_transformation['link']['min'][0].numpy()
-                                        mmax = 120 #model.data_transformation['link']['max'][0].numpy()
+                                        mmin = 11 #model.data_transformation['link']['min'][0].numpy()
+                                        mmax = -50.5 #model.data_transformation['link']['max'][0].numpy()
                                         label = DME_KEYS[i]
                                         data_vector = data[:, i - 1]
                                     else:
