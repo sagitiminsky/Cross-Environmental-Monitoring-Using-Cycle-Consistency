@@ -264,7 +264,8 @@ if __name__ == '__main__':
 #                                     N = 8 if 'A' in key else 5
 
                                 # Plot Data
-                                data = visuals[key][0].reshape(train_opt.slice_dist, N).cpu().detach().numpy()
+                                data = visuals[key][0].cpu().detach().numpy().T
+                                assert(data.shape == (64,N))
                                 
                 
 
@@ -275,7 +276,7 @@ if __name__ == '__main__':
                                 for i in range(1, 5):
                                     if 'A' in key:
                                         mmin = 0 #model.data_transformation['link']['min'][0].numpy()
-                                        mmax = 120 #model.data_transformation['link']['max'][0].numpy()
+                                        mmax = 7.2 #model.data_transformation['link']['max'][0].numpy()
                                         label = DME_KEYS[i]
                                         data_vector = data[:, i - 1]
                                     else:
