@@ -43,13 +43,13 @@ export_type="israel"
 date = {
     'value': {
         'dd': '01',
-        'mm': '12',
+        'mm': '01',
         'yyyy': '2015'
     },
     'value_range': {
         'dd': '01',
-        'mm': '01',
-        'yyyy': '2016'
+        'mm': '02',
+        'yyyy': '2015'
     }
 }
 
