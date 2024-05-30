@@ -41,11 +41,11 @@ SELECTED_GROUP_NAME = "Frontiers"
 SELECT_JOB = 1
 
 
-# gauges in train dataset:dict_keys(['ZOMET HANEGEV', 'BEER SHEVA', 'EZUZ', 'NEOT SMADAR'])
-# links in train dataset:dict_keys(['a477-b379', 'a459-803b', '462d-c088', 'a479-b477', 'b465-d481', 'b451-a350', 'b459-a690', 'b480-a458'])
+# gauges in train dataset:dict_keys(['ZOMET HANEGEV', 'BEER SHEVA', 'EZUZ', 'NEOT SMADAR', 'SEDE BOQER', 'PARAN'])
+# links in train dataset:dict_keys(['a477-b379', 'a459-803b', '462d-c088', 'a479-b477', 'b465-d481', 'b451-a350', 'b459-a690', 'b480-a458', 'f350-e483'])
 
-# gauges in validation dataset:dict_keys(['SEDE BOQER', 'PARAN', 'NEVATIM', 'LAHAV'])
-# links in validation dataset:dict_keys(['f350-e483', 'c078-d088', 'f483-ts05', 'a473-b119', 'b394-ts04'])
+# gauges in validation dataset:dict_keys(['NEVATIM', 'LAHAV'])
+# links in validation dataset:dict_keys(['c078-d088', 'a473-b119', 'b394-ts04'])
 
 
 # Validation Matching
@@ -73,14 +73,11 @@ all_link_to_gauge_matching ={
 }
 
 validation_link_to_gauge_matching ={
-    "f350-e483": [], 
     "c078-d088": [], 
-    "f483-ts05": [], 
     "a473-b119": [], 
     "b394-ts04": ["LAHAV"]
 
 }
-
 
 
 #Formatting Date
