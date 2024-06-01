@@ -254,7 +254,7 @@ class Extractor:
             
             s = pd.Series(ims_matrix)
 
-            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.1, shuffle=False)]
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.000001, shuffle=False)]
             
             #Conditional dataset
             validation_data["LAHAV"]=training_data["LAHAV"]
@@ -358,7 +358,7 @@ class Extractor:
                             f"Not all fields [PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
 
             s = pd.Series(dme_matrix)
-            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.1, shuffle=False)]
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.000001, shuffle=False)]
             
             #Conditional dataset
             validation_data["b394-ts04"]=training_data["b394-ts04"]

@@ -286,6 +286,7 @@ if __name__ == '__main__':
                                         mmax_B=mmax
                                         label = IMS_KEYS[1]
                                         data_vector = data.T[0]
+                                        
 
 
                                     metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
@@ -372,7 +373,7 @@ if __name__ == '__main__':
                                         "real_latitude":gague_metadata[1]},
                                         radius=config.VALIDATION_RADIUS)
 
-                                    if is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
+                                    if True: #is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
                                         print("Virtual link is in range with real gauge...")
                                         path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{gague_metadata[0]}_{gague_metadata[1]}.csv'}"  
                                         real_rain_add=min_max_inv_transform(rain_slice, mmin=mmin_B, mmax=mmax_B).cpu().detach().numpy().flatten()
@@ -380,7 +381,7 @@ if __name__ == '__main__':
 
                                         assert(len(real_rain_add)==len(fake_rain_add))
 
-                                        cond=np.array([True if r >= 1 or f >=0.5 else False for r,f in zip(real_rain_add,fake_rain_add)])
+                                        cond=np.array([True if True else False for r,f in zip(real_rain_add,fake_rain_add)]) #r >= 1 or f >=0.5
                                         to_add=np.sum((real_rain_add-fake_rain_add)[cond]**2)
 
                                         #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
@@ -395,7 +396,6 @@ if __name__ == '__main__':
 
 
 ############################
-                            
                             wandb.log({title: fig})
         
                     p=Preprocess(link=link,gauge=gauge)
@@ -426,6 +426,9 @@ if __name__ == '__main__':
                     axs_preprocessed.xaxis.set_major_formatter(date_format)
 
                     wandb.log({f"Virtual (CML) vs Real (Gauge) - {link}-{gauge}":fig_preprocessed})
+                    
+                    if seq_len:
+                        wandb.log({f"RMSE-{link}-{gauge}":np.sqrt(real_fake_gauge_metric[f"{link}-{gauge}"]/seq_len)})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))
@@ -434,8 +437,6 @@ if __name__ == '__main__':
                     
 #                     model.setup(train_opt)  # get ready for regular train setup: load and print networks; create schedulers
 
-                    if seq_len:
-                        wandb.log({f"RMSE-{link}-{gauge}":np.sqrt(real_fake_gauge_metric[f"{link}-{gauge}"]/seq_len)})
                     rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
                     rain_axs[link_counter].plot(T, fake_gauge_vec, marker='x',linestyle='dashed',linewidth=0.0,markersize=2,label="Fake")
                     rain_axs[link_counter].set_title(f"{link}-{gauge}")
