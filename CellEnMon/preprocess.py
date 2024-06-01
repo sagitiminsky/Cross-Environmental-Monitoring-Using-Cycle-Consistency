@@ -14,27 +14,38 @@ class Preprocess:
         
         self.link = link.replace("-","_")
         self.gauge=gauge
-        
-        # Construct the file pattern
-        file_pattern = f"{root}/01012015_01022015/processed/{gauge}_*.csv"
-
+                
         # Use glob to find all files matching the pattern
-        gauge_gt_file = glob.glob(file_pattern)[0]
+#         gauge_gt_file = glob.glob(file_pattern)[0]
+  
+        gauge_gt_file = f"{root}/01012015_01022015/processed/LAHAV_34.87_31.3.csv"
+        
+        filenames = os.listdir(f"{root}/01012015_01022015/predict/only_dynamic")
+
+        # Remove any item that does not match the pattern of containing a numerical identifier before 'b394'
+        cleaned_filenames = [f for f in filenames if f.split('-')[0].isdigit()]
+
+        # Sort the list by the numerical identifier, converting the first split part to integer
+        sorted_filenames = sorted(cleaned_filenames, key=lambda x: int(x.split('-')[0]))
         
         
+                                  
+#         print(sorted_filenames)
+#         assert(False)
+                                  
         
         fake_station = pd.DataFrame(columns=["Time","RainAmout[mm/h]"])
 
 
-        for file in content:
+        for file in sorted_filenames:
             df = pd.read_csv(f"{root}/01012015_01022015/predict/only_dynamic/{file}")
             if f"{link}-{gauge}" in file:
                 fake_station = pd.concat([fake_station,df], ignore_index=True)
 
 
 
-        # Replace small fake values with zero
-        fake_station.loc[fake_station['RainAmout[mm/h]'] <= 0.5, 'RainAmout[mm/h]'] = 0
+        # Replace neg fake values with zero
+        fake_station.loc[fake_station['RainAmout[mm/h]'] <= 0.0, 'RainAmout[mm/h]'] = 0
 
 
         # Sort by the 'Time' column in ascending order
@@ -51,7 +62,7 @@ class Preprocess:
 
 
         # Replace real values with zero
-        fake_station.loc[fake_station['RainAmoutGT[mm/h]'] <= 1, 'RainAmoutGT[mm/h]'] = 0
+#         fake_station.loc[fake_station['RainAmoutGT[mm/h]'] <= 1, 'RainAmoutGT[mm/h]'] = 0
 
 
 
