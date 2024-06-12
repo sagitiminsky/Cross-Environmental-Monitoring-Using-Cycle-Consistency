@@ -63,6 +63,10 @@ class Preprocess:
 
         # Replace real values with zero
 #         fake_station.loc[fake_station['RainAmoutGT[mm/h]'] <= 1, 'RainAmoutGT[mm/h]'] = 0
+        # Set 'RainAmout[mm/h]' to zero for the specified time range
+        df.loc[(df['Time'] >= '2015-01-01 00:00:00') & (df['Time'] <= '2015-01-03 11:30:00'), 'RainAmout[mm/h]'] = 0
+        df.loc[(df['Time'] >= '2015-01-04 07:20:00') & (df['Time'] <= '2015-01-07 07:50:00'), 'RainAmout[mm/h]'] = 0
+        df.loc[(df['Time'] >= '2015-01-11 10:20:00') & (df['Time'] <= '2015-01-16 23:50:00'), 'RainAmout[mm/h]'] = 0
 
 
 

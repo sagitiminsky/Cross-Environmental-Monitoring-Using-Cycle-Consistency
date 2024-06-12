@@ -198,15 +198,22 @@ class CycleGANModel(BaseModel):
         fake_B_unnormalized=self.min_max_inv_transform(x=fake_B_max,mmin=mmin,mmax=mmax)
 
         
-        self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A ) * lambda_A #* self.attenuation_prob
+        self.loss_cycle_A = self.criterionCycle(self.real_A, self.rec_A ) * lambda_A #* self.attenuation_prob
         #(self.alpha + 1 -self.func_fit(x=fake_B_unnormalized,a=self.a_rain, b=self.b_rain,c=self.c_rain))
         # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B * self.rain_rate_prob
+        
+        
+        th=0.8
+        tensor=self.rec_B
+        self.loss_cycle_B = self.criterionCycle(self.real_B, torch.where(self.real_B > th, tensor, torch.zeros_like(tensor))) * lambda_B  #* self.rain_rate_prob
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
-        self.loss_mse_B = self.mse(self.fake_B, self.real_B)
+        
+        
+        tensor=self.fake_B
+        self.loss_mse_B = self.mse(self.real_B, torch.where(tensor > th, tensor, torch.zeros_like(tensor)))
    
     
     def min_max_inv_transform(self,x, mmin, mmax):
