@@ -147,7 +147,7 @@ if __name__ == '__main__':
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
         agg_train_mse_A, agg_train_mse_B = 0, 0
-        model.update_learning_rate()  # update learning rates in the beginning of every epoch.
+#         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
 
 #         print(f"Direction:{direction}")
         for i, data in enumerate(train_dataset):  # inner loop within one epoch
@@ -171,7 +171,8 @@ if __name__ == '__main__':
 
             iter_data_time = time.time()
         
-        print(f'End of epoch:{epoch}')
+        if epoch%100==0:
+            print(f'End of epoch:{epoch}')
             
         if epoch % 1000 == 0:# and epoch>0:
             print("Validation in progress...")
