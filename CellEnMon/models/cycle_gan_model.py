@@ -184,9 +184,12 @@ class CycleGANModel(BaseModel):
         else:
             self.loss_idt_A = 0
             self.loss_idt_B = 0
-
+        
+        
+        th=0.25
+        
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True) 
+        self.loss_G_A = self.criterionGAN(self.netD_A(torch.where(self.real_B > th, self.fake_B, torch.zeros_like(self.fake_B))), True) 
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True) 
         # Forward cycle loss || G_B(G_A(A)) - A||
@@ -203,9 +206,9 @@ class CycleGANModel(BaseModel):
         # Backward cycle loss || G_A(G_B(B)) - B||
         
         
-        th=0.8
-        tensor=self.rec_B
-        self.loss_cycle_B = self.criterionCycle(self.real_B, torch.where(self.real_B > th, tensor, torch.zeros_like(tensor))) * lambda_B  #* self.rain_rate_prob
+
+        #torch.where(self.real_B > th, tensor, torch.zeros_like(tensor))
+        self.loss_cycle_B = self.criterionCycle(self.real_B,torch.where(self.real_B > th, self.rec_B, torch.zeros_like(self.rec_B))) * lambda_B  #* self.rain_rate_prob
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()

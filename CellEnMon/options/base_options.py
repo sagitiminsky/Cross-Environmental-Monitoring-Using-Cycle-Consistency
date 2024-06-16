@@ -35,7 +35,7 @@ class BaseOptions():
         parser.add_argument('--input_nc_B', type=int, default=1 if is_only_dynamic else 5, help='# of input channels')
         parser.add_argument('--output_nc_B', type=int, default=4 if is_only_dynamic else 8, help='# of output channels')
         parser.add_argument('--ngf', type=int, default=2, help='# of gen filters in the last conv layer')
-        parser.add_argument('--ndf', type=int, default=1, help='# of discrim filters in the first conv layer')
+        parser.add_argument('--ndf', type=int, default=2, help='# of discrim filters in the first conv layer')
         parser.add_argument('--netD', type=str, default='n_layers',
                             help='specify discriminator architecture [n_layers]. n_layers allows you to specify the layers in the discriminator')
         parser.add_argument('--netG', type=str, default='resnet_9blocks', help='specify generator architecture [n_layers]')
