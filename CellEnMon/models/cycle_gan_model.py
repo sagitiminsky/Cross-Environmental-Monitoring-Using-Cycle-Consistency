@@ -131,10 +131,21 @@ class CycleGANModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        self.fake_B = self.netG_A(self.real_A)  # G_A(A)
+        
+        
+        self.fake_B = self.netG_A(self.real_A)[:, :1, :]  # G_A(A)
+        self.fake_B_classification_vector = self.netG_A(self.real_A)[:, 1:2, :]
+        self.fake_A = self.netG_B(self.real_B)[:, :1, :]  # G_B(B)            
+        self.fake_A_classification_vector = self.netG_B(self.real_B)[:, 1:2, :]
+        print(self.fake_A)
+        assert(False)
+            
+            
         self.rec_A = self.netG_B(self.fake_B)  # G_B(G_A(A))
-        self.fake_A = self.netG_B(self.real_B)  # G_B(B)
         self.rec_B = self.netG_A(self.fake_A)  # G_A(G_B(B))
+        
+        
+        
 
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator
@@ -189,9 +200,11 @@ class CycleGANModel(BaseModel):
         th=0.25
         
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(torch.where(self.real_B > th, self.fake_B, torch.zeros_like(self.fake_B))), True) 
+#         self.loss_G_A = self.criterionGAN(self.netD_A(torch.where(self.real_B > th, self.fake_B, torch.zeros_like(self.fake_B))), True) 
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True) 
         # GAN loss D_B(G_B(B))
         self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True) 
+#         + self.criterionGAN(self.fake_B_classification_vector,self.real_B)
         # Forward cycle loss || G_B(G_A(A)) - A||
         
 

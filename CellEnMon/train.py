@@ -399,7 +399,7 @@ if __name__ == '__main__':
 ############################
                             wandb.log({title: fig})
         
-                    p=Preprocess(link=link,gauge=gauge)
+                    p=Preprocess(link=link,gauge=gauge, epoch=epoch)
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
 
                     preprocessed_time=np.asarray(p.excel_data.Time) #2015-01-06 20:30:00
