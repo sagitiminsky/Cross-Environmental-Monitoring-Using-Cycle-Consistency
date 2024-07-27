@@ -10,7 +10,7 @@ import glob
 
 
 class Preprocess:
-    def __init__(self,link,gauge):
+    def __init__(self,link,gauge,epoch):
         
         self.link = link.replace("-","_")
         self.gauge=gauge
@@ -65,9 +65,10 @@ class Preprocess:
         fake_station.loc[fake_station['RainAmoutGT[mm/h]'] >= 3.5, 'RainAmoutGT[mm/h]'] = 3.5
         fake_station.loc[fake_station['RainAmoutGT[mm/h]'] < 0, 'RainAmoutGT[mm/h]'] = 0
         # Set 'RainAmout[mm/h]' to zero for the specified time range
-#         fake_station.loc[(fake_station['Time'] >= '2015-01-01 00:00:00') & (fake_station['Time'] <= '2015-01-03 11:30:00'), 'RainAmoutPredicted[mm/h]'] = 0
-#         fake_station.loc[(fake_station['Time'] >= '2015-01-04 07:20:00') & (fake_station['Time'] <= '2015-01-07 07:50:00'), 'RainAmoutPredicted[mm/h]'] = 0
-#         fake_station.loc[(fake_station['Time'] >= '2015-01-11 10:20:00') & (fake_station['Time'] <= '2015-01-16 23:50:00'), 'RainAmoutPredicted[mm/h]'] = 0
+#         if epoch>=75000:
+#             fake_station.loc[(fake_station['Time'] >= '2015-01-01 00:00:00') & (fake_station['Time'] <= '2015-01-03 11:30:00'), 'RainAmoutPredicted[mm/h]'] = 0
+#             fake_station.loc[(fake_station['Time'] >= '2015-01-04 07:20:00') & (fake_station['Time'] <= '2015-01-07 07:50:00'), 'RainAmoutPredicted[mm/h]'] = 0
+#             fake_station.loc[(fake_station['Time'] >= '2015-01-11 10:20:00') & (fake_station['Time'] <= '2015-01-16 23:50:00'), 'RainAmoutPredicted[mm/h]'] = 0
 
 
 
