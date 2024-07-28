@@ -372,11 +372,11 @@ class ResnetGenerator(nn.Module):
         """Standard forward"""
         output = self.model(input)
 
-        output1, output2 = output[:, 0:1, :], output[:, 0:1, :]
-        output2 = torch.sigmoid(output2)
-        output2 = (output2 > 0.1).float() * output2
-        return torch.cat([output1, output2], dim=1)
-#         return self.model(input)
+#         output1, output2 = output[:, 0:1, :], output[:, 0:1, :]
+#         output2 = torch.sigmoid(output2)
+#         output2 = (output2 > 0.1).float() * output2
+#         return torch.cat([output1, output2], dim=1)
+        return output
 
 
 class ResnetBlock(nn.Module):
