@@ -147,13 +147,13 @@ class CycleGANModel(BaseModel):
 
             
             
-        self.fake_B = self.netG_A(self.real_A)  # G_A(A)
-        self.fake_B_classification_vector = torch.sigmoid(self.fake_B).float()
-        self.rec_A = self.netG_B(self.fake_B)  # G_B(G_A(A))
+        self.fake_B = self.netG_A(self.real_A)[0]  # G_A(A)
+        self.fake_B_classification_vector = self.netG_A(self.real_A)[1]
+        self.rec_A = self.netG_B(self.fake_B)[0]  # G_B(G_A(A))
         
-        self.fake_A = self.netG_B(self.real_B)  # G_B(B)
-        self.fake_A_classification_vector = torch.sigmoid(self.fake_A).float()
-        self.rec_B = self.netG_A(self.fake_A)  # G_A(G_B(B))
+        self.fake_A = self.netG_B(self.real_B)[0]  # G_B(B)
+        self.fake_A_classification_vector = self.netG_B(self.real_B)[1]
+        self.rec_B = self.netG_A(self.fake_A)[0]  # G_A(G_B(B))
         
         
         
