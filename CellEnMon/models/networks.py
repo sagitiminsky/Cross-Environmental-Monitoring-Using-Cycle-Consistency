@@ -363,20 +363,26 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
         model += [nn.ReflectionPad1d(3)]
         model += [nn.Conv1d(ngf, output_nc, kernel_size=7, padding=0)]
-        model += [nn.PReLU()] # LeakyReLU() | if direction == "AtoB" else [nn.Tanh()]
         
-
         self.model = nn.Sequential(*model)
+
+        # Branch 1: LeakyReLU
+        self.branch1 = nn.Sequential(
+            nn.LeakyReLU()
+        )
+
+        # Branch 2: Sigmoid
+        self.branch2 = nn.Sequential(
+            nn.Sigmoid()
+        )
+        
 
     def forward(self, input):
         """Standard forward"""
         output = self.model(input)
-
-#         output1, output2 = output[:, 0:1, :], output[:, 0:1, :]
-#         output2 = torch.sigmoid(output2)
-#         output2 = (output2 > 0.1).float() * output2
-#         return torch.cat([output1, output2], dim=1)
-        return output
+        output1 = self.branch1(output)
+        output2 = self.branch2(output)
+        return output1, output2
 
 
 class ResnetBlock(nn.Module):
