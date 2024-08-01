@@ -30,12 +30,12 @@ class BaseOptions():
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='cycle_gan', help='chooses which model to use. [cycle_gan]')
-        parser.add_argument('--input_nc_A', type=int, default=4 if is_only_dynamic else 8, help='# of input channels')
-        parser.add_argument('--output_nc_A', type=int, default=1 if is_only_dynamic else 5, help='# of output channels')
-        parser.add_argument('--input_nc_B', type=int, default=1 if is_only_dynamic else 5, help='# of input channels')
-        parser.add_argument('--output_nc_B', type=int, default=4 if is_only_dynamic else 8, help='# of output channels')
-        parser.add_argument('--ngf', type=int, default=4, help='# of gen filters in the last conv layer')
-        parser.add_argument('--ndf', type=int, default=4, help='# of discrim filters in the first conv layer')
+        parser.add_argument('--input_nc_A', type=int, default=4, help='# of input channels')
+        parser.add_argument('--output_nc_A', type=int, default=2, help='# of output channels') # in the output we want to duplicate the 64 vector | one for regression the other for classification, so 4x64->2x64
+        parser.add_argument('--input_nc_B', type=int, default=1, help='# of input channels')
+        parser.add_argument('--output_nc_B', type=int, default=4, help='# of output channels') # here we go from Rain to Att, so 1x64->4x64
+        parser.add_argument('--ngf', type=int, default=2, help='# of gen filters in the last conv layer')
+        parser.add_argument('--ndf', type=int, default=2, help='# of discrim filters in the first conv layer')
         parser.add_argument('--netD', type=str, default='n_layers',
                             help='specify discriminator architecture [n_layers]. n_layers allows you to specify the layers in the discriminator')
         parser.add_argument('--netG', type=str, default='resnet_9blocks', help='specify generator architecture [n_layers]')

@@ -279,17 +279,22 @@ if __name__ == '__main__':
                                         mmin = 0 #model.data_transformation['link']['min'][0].numpy()
                                         mmax = 7.2 #model.data_transformation['link']['max'][0].numpy()
                                         label = DME_KEYS[i]
-                                        data_vector = data[:, i - 1]
+                                        data_vector = torch.tensor(data[:, i - 1])
+                                        
                                     else:
                                         mmin = 0 #model.data_transformation['gague']['min'][0].numpy()
-                                        mmax = 3.5 #model.data_transformation['gague']['max'][0].numpy()
+                                        mmax = 3.2 #model.data_transformation['gague']['max'][0].numpy()
                                         mmin_B=mmin
                                         mmax_B=mmax
                                         label = IMS_KEYS[1]
-                                        data_vector = data.T[0]
-                                        
+                                        # Convert the desired part of the data to a PyTorch tensor
+                                        data_vector = torch.tensor(data.T[0])
+                                        data_vector[data_vector < 0.1] = 0
 
+    
+                                    data_vector = torch.clamp(data_vector, min=0, max=1)
 
+                    
                                     metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
                                     metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
                                     metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
@@ -382,8 +387,8 @@ if __name__ == '__main__':
 
                                         assert(len(real_rain_add)==len(fake_rain_add))
 
-                                        cond=np.array([True if True else False for r,f in zip(real_rain_add,fake_rain_add)]) #r >= 1 or f >=0.5
-                                        to_add=np.sum((real_rain_add-fake_rain_add)[cond]**2)
+                                        cond=np.array([True if r >= 0.4 or f >=0.1 else False for r,f in zip(real_rain_add,fake_rain_add)])
+                                        to_add=np.sum((real_rain_add-fake_rain_add.cpu().numpy())[cond]**2)
 
                                         #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
 

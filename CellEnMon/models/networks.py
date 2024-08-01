@@ -318,7 +318,7 @@ class ResnetGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=6, padding_type='zero', direction="AtoB"):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=128, padding_type='zero', direction="AtoB"):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -342,7 +342,7 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 2
+        n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1, bias=use_bias),
@@ -363,26 +363,20 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
         model += [nn.ReflectionPad1d(3)]
         model += [nn.Conv1d(ngf, output_nc, kernel_size=7, padding=0)]
-        
         self.model = nn.Sequential(*model)
-
-        # Branch 1: LeakyReLU
-        self.branch1 = nn.Sequential(
-            nn.LeakyReLU()
-        )
-
-        # Branch 2: Sigmoid
-        self.branch2 = nn.Sequential(
-            nn.Sigmoid()
-        )
         
 
-    def forward(self, input):
+    def forward(self, input,dir="AtoB"):
         """Standard forward"""
-        output = self.model(input)
-        output1 = self.branch1(output)
-        output2 = self.branch2(output)
-        return output1, output2
+        output1 = self.model(input)
+        if dir=="AtoB":
+            res=torch.split(output1, 1, dim=1)
+            reg=res[0]
+            det=res[1]
+
+            # Remove the extra dimension added by split
+            return (reg, torch.sigmoid(det))
+        return output1
 
 
 class ResnetBlock(nn.Module):
