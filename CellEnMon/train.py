@@ -20,6 +20,8 @@ from libs.visualize.visualize import Visualizer
 from preprocess import Preprocess
 from collections import OrderedDict
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
+from sklearn.metrics import f1_score
+from sklearn.metrics import confusion_matrix
 
 ENABLE_WANDB = True
 GROUPS = {
@@ -146,7 +148,7 @@ if __name__ == '__main__':
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()  # timer for data loading per iteration
         epoch_iter = 0  # the number of training iterations in current epoch, reset to 0 every epoch
-        agg_train_mse_A, agg_train_mse_B = 0, 0
+        agg_train_mse_A, agg_train_mse_B, agg_train_bce_B = 0, 0, 0
 #         model.update_learning_rate()  # update learning rates in the beginning of every epoch.
 
 #         print(f"Direction:{direction}")
@@ -163,13 +165,13 @@ if __name__ == '__main__':
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
             
             # Training losses
-            training_losses = model.get_current_losses(is_train=True)
-            agg_train_mse_A += training_losses["Train/mse_A"]
-            agg_train_mse_B += training_losses["Train/mse_B"]
+            
 
             t_comp = (time.time() - iter_start_time) / train_opt.batch_size
 
             iter_data_time = time.time()
+        
+        training_losses = model.get_current_losses(is_train=True)
         
         if epoch%100==0:
             print(f'End of epoch:{epoch}')
@@ -195,6 +197,7 @@ if __name__ == '__main__':
                     seq_len=0
                     real_gauge_vec=np.array([])
                     fake_gauge_vec=np.array([])
+                    fake_gauge_vec_det=np.array([])
                     T=np.array([])
 
                     # calculate metric for test gauges
@@ -239,7 +242,7 @@ if __name__ == '__main__':
                         
                         model.test()
 #                         model.optimize_parameters(is_train=False)  # calculate loss functions
-#                         validation_losses = model.get_current_losses(is_train=False)
+                        validation_losses = model.get_current_losses(is_train=False)
 
 
                         if ENABLE_WANDB:
@@ -397,12 +400,35 @@ if __name__ == '__main__':
                                         seq_len+=len(cond)
                                         real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
                                         fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
+                                        fake_gauge_vec_det=np.append(fake_gauge_vec_det, model.fake_B_det.cpu().numpy())
                                         T=np.append(T,np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t]))
 
 
 
 ############################
                             wandb.log({title: fig})
+                    
+                    
+                    # Threshold for binary classification
+                    threshold = 0.4
+
+                    # Convert continuous values to binary class labels
+                    fake_gauge_vec_det_labels = (fake_gauge_vec_det >= 0.125).astype(int)
+                    fake_gauge_vec_labels = (fake_gauge_vec >= threshold).astype(int)
+                    real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
+            
+                    wandb.log({"Confusion Mat Detection" : wandb.plot.confusion_matrix(preds=fake_gauge_vec_det_labels, y_true=real_gauge_vec_labels, class_names=["dry","wet"])})
+                    
+                    print(f"Detection:{confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_det_labels)}")
+                    wandb.log({"Confusion Mat Regression" : wandb.plot.confusion_matrix(preds=fake_gauge_vec_labels, y_true=real_gauge_vec_labels, class_names=["dry",'wet'])})
+                    print(f"Regression:{confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_labels)}")
+                    
+                    
+                    
+                    wandb.log({"f1-score Detection": f1_score(fake_gauge_vec_det_labels, real_gauge_vec_labels)})
+                    wandb.log({"f1-score Regression": f1_score(fake_gauge_vec_labels, real_gauge_vec_labels)})
+                    
+
         
                     p=Preprocess(link=link,gauge=gauge, epoch=epoch)
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
@@ -460,7 +486,7 @@ if __name__ == '__main__':
             if ENABLE_WANDB and epoch>0:
 #                 wandb.log({"Real vs Fake": rain_fig})
                 
-                wandb.log({**training_losses})      ## DOTO: Need to add **validation_losses
+                wandb.log({**training_losses, **validation_losses})
                 path_to_html = f"{v.out_path}/{v.map_name}"
 #                 v.draw_cml_map()
 #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
