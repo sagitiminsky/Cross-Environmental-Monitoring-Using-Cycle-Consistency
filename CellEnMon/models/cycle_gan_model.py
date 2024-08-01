@@ -130,30 +130,13 @@ class CycleGANModel(BaseModel):
             
 
     def forward(self):
-        """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        
-        
-#         output1, output2 = output[:, 0:1, :], output[:, 0:1, :]
-#         output2 = torch.sigmoid(output2)
-#         output2 = (output2 > 0.1).float() * output2
-#         return torch.cat([output1, output2], dim=1)
-
-        
-        
-#         self.fake_B = self.netG_A(self.real_A)[:, :1, :]  # G_A(A)
-#         self.fake_B_classification_vector = self.netG_A(self.real_A)[:, 1:2, :]
-#         self.fake_A = self.netG_B(self.real_B)[:, :1, :]  # G_B(B)            
-#         self.fake_A_classification_vector = self.netG_B(self.real_B)[:, 1:2, :]
-
-            
-            
-        self.fake_B = self.netG_A(self.real_A)[0]  # G_A(A)
-        self.fake_B_classification_vector = self.netG_A(self.real_A)[1]
-        self.rec_A = self.netG_B(self.fake_B)[0]  # G_B(G_A(A))
-        
-        self.fake_A = self.netG_B(self.real_B)[0]  # G_B(B)
-        self.fake_A_classification_vector = self.netG_B(self.real_B)[1]
-        self.rec_B = self.netG_A(self.fake_A)[0]  # G_A(G_B(B))
+        """Run forward pass; called by both functions <optimize_parameters> and <test>."""          
+        fake_B = self.netG_A(self.real_A, dir="AtoB")  # G_A(A)
+        self.fake_B=fake_B[0]
+        self.fake_B_classification_vector = fake_B[1]
+        self.rec_A = self.netG_B(self.fake_B, dir="BtoA")
+        self.fake_A = self.netG_B(self.real_B,dir="BtoA")  # G_B(B)
+        self.rec_B = self.netG_A(self.fake_A,dir="AtoB")[0]  # G_A(G_B(B))
         
         
         
@@ -209,29 +192,28 @@ class CycleGANModel(BaseModel):
 
         # GAN loss D_A(G_A(A))
         self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
+        
         # GAN loss D_B(G_B(B))
         self.bce_criterion = torch.nn.BCELoss()
+        classification_vector=self.fake_B_classification_vector
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)  + self.bce_criterion(classification_vector, (self.real_B>0.125).float()) # 0.4/3.2=0.125, ie. we consider a wet event over 0.4 mm/h
         
-
-
-        classification_vector=torch.where(self.fake_B_classification_vector > 0.1, self.fake_B_classification_vector, torch.zeros_like(self.fake_B_classification_vector))
+        #TODO: confusion matrix, f1-score, fss
         
         
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)  + self. bce_criterion(classification_vector, self.real_B)
         # Forward cycle loss || G_B(G_A(A)) - A||
-        
-
         mmin=torch.Tensor(self.data_transformation['link']['min']).cuda()
         mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
         fake_B_max=torch.max(self.fake_B)
         fake_B_unnormalized=self.min_max_inv_transform(x=fake_B_max,mmin=mmin,mmax=mmax)
 
         
-        self.loss_cycle_A = lambda_A *(self.criterionCycle(self.rec_A, self.real_A) * self.attenuation_prob)
+        self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A) * self.attenuation_prob
+                                       
         #(self.alpha + 1 -self.func_fit(x=fake_B_unnormalized,a=self.a_rain, b=self.b_rain,c=self.c_rain))
         # Backward cycle loss || G_A(G_B(B)) - B||
-        th=0.1
-        self.loss_cycle_B = self.criterionCycle(self.real_B,torch.where(self.real_B > th, self.rec_B, torch.zeros_like(self.rec_B))) * lambda_B  * self.rain_rate_prob
+        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) * self.rain_rate_prob
+        
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
@@ -240,7 +222,7 @@ class CycleGANModel(BaseModel):
    
     
     def min_max_inv_transform(self,x, mmin, mmax):
-        return (x+1) * (mmax - mmin) * 0.5 + mmin
+        return x * (mmax - mmin) + mmin
     
     def func_fit(self, x, a, b, c):
         return a * torch.exp(-b * x) + c

@@ -42,34 +42,20 @@ class Preprocess:
             if f"{link}-{gauge}" in file:
                 fake_station = pd.concat([fake_station,df], ignore_index=True)
 
-
+        # Change naming to reflect prediction
+        fake_station = fake_station.rename(columns={'RainAmout[mm/h]': 'RainAmoutPredicted[mm/h]'})
 
         # Replace neg fake values with zero
-        fake_station.loc[fake_station['RainAmout[mm/h]'] <= 0.0, 'RainAmout[mm/h]'] = 0
+        fake_station.loc[fake_station['RainAmoutPredicted[mm/h]'] < 0.1, 'RainAmoutPredicted[mm/h]'] = 0
+        fake_station.loc[fake_station['RainAmoutPredicted[mm/h]'] > 3.2, 'RainAmoutPredicted[mm/h]'] = 3.2
 
 
         # Sort by the 'Time' column in ascending order
         fake_station = fake_station.sort_values(by='Time')
 
 
-        # Change naming to reflect prediction
-        fake_station = fake_station.rename(columns={'RainAmout[mm/h]': 'RainAmoutPredicted[mm/h]'})
-
-
         # Add GT
         fake_station["RainAmoutGT[mm/h]"]=pd.read_csv(f"{gauge_gt_file}")["RR[mm/h]"][:len(fake_station)]
-
-
-
-        # Replace real values with zero
-        fake_station.loc[fake_station['RainAmoutGT[mm/h]'] >= 3.5, 'RainAmoutGT[mm/h]'] = 3.5
-        fake_station.loc[fake_station['RainAmoutGT[mm/h]'] < 0, 'RainAmoutGT[mm/h]'] = 0
-        # Set 'RainAmout[mm/h]' to zero for the specified time range
-        fake_station.loc[(fake_station['Time'] >= '2015-01-01 00:00:00') & (fake_station['Time'] <= '2015-01-03 11:30:00'), 'RainAmoutPredicted[mm/h]'] = 0
-#         fake_station.loc[(fake_station['Time'] >= '2015-01-04 07:20:00') & (fake_station['Time'] <= '2015-01-07 07:50:00'), 'RainAmoutPredicted[mm/h]'] = 0
-        fake_station.loc[(fake_station['Time'] >= '2015-01-11 10:20:00') & (fake_station['Time'] <= '2015-01-16 23:50:00'), 'RainAmoutPredicted[mm/h]'] = 0
-
-
 
         # Accumulative
         fake_station["RainAmoutPredictedCumSum"]=fake_station['RainAmoutPredicted[mm/h]'].cumsum()
