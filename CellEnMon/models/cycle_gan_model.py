@@ -47,9 +47,9 @@ class CycleGANModel(BaseModel):
         """
         BaseModel.__init__(self, opt)
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'mse_A', 'mse_B']
+        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'mse_A', 'mse_B', 'bce_B']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        visual_names_A = ['real_A', 'fake_B', 'rec_A']
+        visual_names_A = ['real_A', 'fake_B', 'rec_A', "fake_B_det"]
         visual_names_B = ['real_B', 'fake_A', 'rec_B']
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt_B=G_A(B) ad idt_A=G_A(B)
             visual_names_A.append('idt_B')
@@ -133,7 +133,7 @@ class CycleGANModel(BaseModel):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""          
         fake_B = self.netG_A(self.real_A, dir="AtoB")  # G_A(A)
         self.fake_B=fake_B[0]
-        self.fake_B_classification_vector = fake_B[1]
+        self.fake_B_det = fake_B[1]
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA")
         self.fake_A = self.netG_B(self.real_B,dir="BtoA")  # G_B(B)
         self.rec_B = self.netG_A(self.fake_A,dir="AtoB")[0]  # G_A(G_B(B))
@@ -195,8 +195,9 @@ class CycleGANModel(BaseModel):
         
         # GAN loss D_B(G_B(B))
         self.bce_criterion = torch.nn.BCELoss()
-        classification_vector=self.fake_B_classification_vector
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)  + self.bce_criterion(classification_vector, (self.real_B>0.125).float()) # 0.4/3.2=0.125, ie. we consider a wet event over 0.4 mm/h
+        self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.125).float()) # 0.4/3.2=0.125, ie. we consider a wet event over 0.4 mm/h
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True) + self.loss_bce_B
+        
         
         #TODO: confusion matrix, f1-score, fss
         
