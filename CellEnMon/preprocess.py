@@ -10,7 +10,7 @@ import glob
 
 
 class Preprocess:
-    def __init__(self,link,gauge,epoch):
+    def __init__(self,link,gauge,epoch,detections):
         
         self.link = link.replace("-","_")
         self.gauge=gauge
@@ -55,7 +55,7 @@ class Preprocess:
 
 
         # Add GT
-        fake_station["RainAmoutGT[mm/h]"]=pd.read_csv(f"{gauge_gt_file}")["RR[mm/h]"][:len(fake_station)]
+        fake_station["RainAmoutGT[mm/h]"]=pd.read_csv(f"{gauge_gt_file}")["RR[mm/h]"][:len(fake_station)] * detections
 
         # Accumulative
         fake_station["RainAmoutPredictedCumSum"]=fake_station['RainAmoutPredicted[mm/h]'].cumsum()
