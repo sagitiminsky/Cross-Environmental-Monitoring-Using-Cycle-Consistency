@@ -251,7 +251,7 @@ if __name__ == '__main__':
                         
 #                         model.test()
                         model.optimize_parameters(is_train=False)  # calculate loss functions
-                        validation_losses = model.get_current_losses(is_train=False)
+                        validation_losses = model.get_current_losses(is_train=False) # validation for each batch, i.e 64 samples
 
 
                         if ENABLE_WANDB:
@@ -419,43 +419,35 @@ if __name__ == '__main__':
                     
                     
                     # Threshold for binary classification
-                    threshold = 0.1
+                    threshold = 0.2
 
                     # Convert continuous values to binary class labels
-                    fake_gauge_vec_det_labels = (fake_gauge_vec_det >= threshold).astype(int)
+                    fake_gauge_vec_det_labels = (fake_gauge_vec_det >= 0.0625).astype(int) # 0.2/3.2=0.0625, ie. we consider a wet event over 0.2 mm/h
                     fake_gauge_vec_labels = (fake_gauge_vec >= threshold).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
                     
+                    CM=confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_det_labels)
+                    
                     # Create subplots for given confusion matrices
-                    f, axes = plt.subplots(1, 2, figsize=(15, 15))
+                    f, axes = plt.subplots(1, 1, figsize=(15, 15))
 
                     # Plot the first confusion matrix at position (0)
-                    axes[0].set_title("Confusion Mat Detection", size=8)
-                    ConfusionMatrixDisplay(confusion_matrix=confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_det_labels), display_labels=["dry","wet"]).plot(
-                        include_values=True, cmap="Blues", ax=axes[0], colorbar=False, values_format=".0f")
+                    axes.set_title("Confusion Mat Detection", size=8)
+                    ConfusionMatrixDisplay(confusion_matrix=CM, display_labels=["dry","wet"]).plot(
+                        include_values=True, cmap="Blues", ax=axes, colorbar=False, values_format=".0f")
 
                     # Remove x-axis labels and ticks
-                    axes[0].xaxis.set_ticklabels(['dry', 'wet'])
-                    axes[0].yaxis.set_ticklabels(['dry', 'wet'])
-
-                    # Plot the second confusion matrix at position (1)
-                    axes[1].set_title("Confusion Mat Regression", size=8)
-                    ConfusionMatrixDisplay(confusion_matrix=confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_labels), display_labels=["dry","wet"]).plot(include_values=True, cmap="Blues", ax=axes[1], colorbar=False, values_format=".0f")
-
-                    # Remove x and y-axis labels and ticks
-                    axes[1].xaxis.set_ticklabels(['dry', 'wet'])
-                    axes[1].yaxis.set_ticklabels(['dry', 'wet'])
+                    axes.xaxis.set_ticklabels(['dry', 'wet'])
+                    axes.yaxis.set_ticklabels(['dry', 'wet'])
 
                     
                     wandb.log({f"Confusion Matrix":f})
-                    
-                    
                     wandb.log({"f1-score Detection": f1_score(fake_gauge_vec_det_labels, real_gauge_vec_labels)})
-                    wandb.log({"f1-score Regression": f1_score(fake_gauge_vec_labels, real_gauge_vec_labels)})
+                    wandb.log({"Acc": (CM[0][0]+CM[1][1])/(CM[0][0]+CM[0][1]+CM[1][0]+CM[1][1])})
                     
 
         
-                    p=Preprocess(link=link,gauge=gauge, epoch=epoch)
+                    p=Preprocess(link=link,gauge=gauge, epoch=epoch, detections=fake_gauge_vec_det_labels)
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
 
                     preprocessed_time=np.asarray(p.excel_data.Time) #2015-01-06 20:30:00

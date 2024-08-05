@@ -196,8 +196,8 @@ class CycleGANModel(BaseModel):
         
         # GAN loss D_B(G_B(B))
         self.bce_criterion = torch.nn.BCELoss()
-        self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.25).float()) # 0.8/3.2=0.25, ie. we consider a wet event over 0.8 mm/h
-        self.loss_G_B = (self.criterionGAN(self.netD_B(self.fake_A), True) + self.loss_bce_B) * self.rain_rate_prob
+        self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 0.2 mm/h
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True) * self.rain_rate_prob + self.loss_bce_B
         
         
         #TODO: confusion matrix, f1-score, fss
