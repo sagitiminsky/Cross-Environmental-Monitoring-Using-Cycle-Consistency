@@ -22,6 +22,7 @@ from collections import OrderedDict
 plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
 
 ENABLE_WANDB = True
 GROUPS = {
@@ -80,6 +81,14 @@ validation_link_to_gauge_matching ={
     "b394-ts04": ["LAHAV"]
 
 }
+
+
+# Detection:
+#[[  52 2099]
+#  [   3  150]]
+# Regression:
+#[[1793  358]
+#  [ 126   27]]
 
 
 #Formatting Date
@@ -240,8 +249,8 @@ if __name__ == '__main__':
     #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
     #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
                         
-                        model.test()
-#                         model.optimize_parameters(is_train=False)  # calculate loss functions
+#                         model.test()
+                        model.optimize_parameters(is_train=False)  # calculate loss functions
                         validation_losses = model.get_current_losses(is_train=False)
 
 
@@ -292,10 +301,10 @@ if __name__ == '__main__':
                                         label = IMS_KEYS[1]
                                         # Convert the desired part of the data to a PyTorch tensor
                                         data_vector = torch.tensor(data.T[0])
-                                        data_vector[data_vector < 0.1] = 0
+#                                         data_vector[data_vector < 0.1] = 0
 
     
-                                    data_vector = torch.clamp(data_vector, min=0, max=1)
+#                                     data_vector = torch.clamp(data_vector, min=0, max=1)
 
                     
                                     metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
@@ -400,7 +409,7 @@ if __name__ == '__main__':
                                         seq_len+=len(cond)
                                         real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
                                         fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
-                                        fake_gauge_vec_det=np.append(fake_gauge_vec_det, model.fake_B_det.cpu().numpy())
+                                        fake_gauge_vec_det=np.append(fake_gauge_vec_det, model.fake_B_det.cpu().detach().numpy())
                                         T=np.append(T,np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t]))
 
 
@@ -410,19 +419,35 @@ if __name__ == '__main__':
                     
                     
                     # Threshold for binary classification
-                    threshold = 0.4
+                    threshold = 0.1
 
                     # Convert continuous values to binary class labels
-                    fake_gauge_vec_det_labels = (fake_gauge_vec_det >= 0.125).astype(int)
+                    fake_gauge_vec_det_labels = (fake_gauge_vec_det >= threshold).astype(int)
                     fake_gauge_vec_labels = (fake_gauge_vec >= threshold).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
-            
-                    wandb.log({"Confusion Mat Detection" : wandb.plot.confusion_matrix(preds=fake_gauge_vec_det_labels, y_true=real_gauge_vec_labels, class_names=["dry","wet"])})
                     
-                    print(f"Detection:{confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_det_labels)}")
-                    wandb.log({"Confusion Mat Regression" : wandb.plot.confusion_matrix(preds=fake_gauge_vec_labels, y_true=real_gauge_vec_labels, class_names=["dry",'wet'])})
-                    print(f"Regression:{confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_labels)}")
+                    # Create subplots for given confusion matrices
+                    f, axes = plt.subplots(1, 2, figsize=(15, 15))
+
+                    # Plot the first confusion matrix at position (0)
+                    axes[0].set_title("Confusion Mat Detection", size=8)
+                    ConfusionMatrixDisplay(confusion_matrix=confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_det_labels), display_labels=["dry","wet"]).plot(
+                        include_values=True, cmap="Blues", ax=axes[0], colorbar=False, values_format=".0f")
+
+                    # Remove x-axis labels and ticks
+                    axes[0].xaxis.set_ticklabels(['dry', 'wet'])
+                    axes[0].yaxis.set_ticklabels(['dry', 'wet'])
+
+                    # Plot the second confusion matrix at position (1)
+                    axes[1].set_title("Confusion Mat Regression", size=8)
+                    ConfusionMatrixDisplay(confusion_matrix=confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_labels), display_labels=["dry","wet"]).plot(include_values=True, cmap="Blues", ax=axes[1], colorbar=False, values_format=".0f")
+
+                    # Remove x and y-axis labels and ticks
+                    axes[1].xaxis.set_ticklabels(['dry', 'wet'])
+                    axes[1].yaxis.set_ticklabels(['dry', 'wet'])
+
                     
+                    wandb.log({f"Confusion Matrix":f})
                     
                     
                     wandb.log({"f1-score Detection": f1_score(fake_gauge_vec_det_labels, real_gauge_vec_labels)})

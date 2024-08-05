@@ -200,8 +200,10 @@ class CellenmonDataset(BaseDataset):
             A=A.T # (8,256)
             B=B.T # (5,256)
 
-        A_attenuation_max=np.array(list(self.dataset.dme.db[selected_link]['data'].values())).max()
-        B_rain_rate_max=np.array(list(self.dataset.ims.db[selected_gague]['data'].values())).max()
+        A_attenuation_max_normalized=np.array(list(self.dataset.dme.db[selected_link]['data'].values())).max()
+        A_attenuation_max=self.min_max_inv_transform(x=A_attenuation_max_normalized,mmin=0,mmax=7.2)
+        B_rain_rate_max_normalized=np.array(list(self.dataset.ims.db[selected_gague]['data'].values())).max()
+        B_rain_rate_max = self.min_max_inv_transform(x=B_rain_rate_max_normalized,mmin=0,mmax=3.2)
         
         return {
             'A': A,
@@ -226,18 +228,21 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
             
-            'attenuation': self.func_fit(x=A_attenuation_max, a=self.dataset.rain_a, b=self.dataset.rain_b,
-                                       c=self.dataset.rain_c),
-            'rain_rate': self.func_fit(x=B_rain_rate_max, a=self.dataset.attenuation_a, b=self.dataset.attenuation_b,
-                                       c=self.dataset.attenuation_c),
+            'attenuation_prob': self.func_fit(x=A_attenuation_max, a=self.dataset.attenuation_a, b=self.dataset.attenuation_b,c=self.dataset.attenuation_c),
+            'rain_rate_prob': self.func_fit(x=B_rain_rate_max, a=self.dataset.rain_a, b=self.dataset.rain_b, c=self.dataset.rain_c),
             
 #             'a_rain': self.dataset.a,
 #             'b_rain': self.dataset.b,
 #             'c_rain': self.dataset.c
         }
 
+    def min_max_inv_transform(self,x, mmin, mmax):
+        return x * (mmax - mmin) + mmin
+    
     def func_fit(self, x, a, b, c):
-        return a * np.exp(-b * x) + c
+        x=torch.from_numpy(np.array(x))
+        b=torch.from_numpy(np.array(b))
+        return a * torch.exp(-b * x) + c
 
     def __len__(self):
         """Return the total number of images."""
