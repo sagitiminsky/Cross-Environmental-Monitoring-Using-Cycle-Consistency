@@ -111,8 +111,8 @@ class CycleGANModel(BaseModel):
             self.alpha=0.2
             self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
             self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
-            self.rain_rate_prob = 1 - input['rain_rate'].to(self.device)
-            self.attenuation_prob = 1 - input['attenuation'].to(self.device)
+            self.rain_rate_prob = self.alpha + 1 - input['rain_rate_prob'].to(self.device)
+            self.attenuation_prob = self.alpha + 1 - input['attenuation_prob'].to(self.device)
 
             
             self.link_norm_metadata=input['link_norm_metadata']
@@ -177,26 +177,27 @@ class CycleGANModel(BaseModel):
         """Calculate the loss for generators G_A and G_B"""
         lambda_idt = self.opt.lambda_identity
         lambda_A = 10
-        lambda_B = 10
+        lambda_B = 1
         # Identity loss
         if lambda_idt > 0:
+
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
-            self.idt_A = self.netG_A(self.real_B)
+            self.idt_A = self.netG_A(self.real_B,dir="BtoA")
             self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt
             # G_B should be identity if real_A is fed: ||G_B(A) - A||
-            self.idt_B = self.netG_B(self.real_A)
+            self.idt_B = self.netG_B(self.real_A, dir="AtoB")[0]
             self.loss_idt_B = self.criterionIdt(self.idt_B, self.real_A) * lambda_A * lambda_idt
         else:
             self.loss_idt_A = 0
             self.loss_idt_B = 0
 
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True) #* self.attenuation_prob
         
         # GAN loss D_B(G_B(B))
         self.bce_criterion = torch.nn.BCELoss()
-        self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.125).float()) # 0.4/3.2=0.125, ie. we consider a wet event over 0.4 mm/h
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True) + self.loss_bce_B
+        self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.25).float()) # 0.8/3.2=0.25, ie. we consider a wet event over 0.8 mm/h
+        self.loss_G_B = (self.criterionGAN(self.netD_B(self.fake_A), True) + self.loss_bce_B) * self.rain_rate_prob
         
         
         #TODO: confusion matrix, f1-score, fss
@@ -205,14 +206,11 @@ class CycleGANModel(BaseModel):
         # Forward cycle loss || G_B(G_A(A)) - A||
         mmin=torch.Tensor(self.data_transformation['link']['min']).cuda()
         mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
-        fake_B_max=torch.max(self.fake_B)
-        fake_B_unnormalized=self.min_max_inv_transform(x=fake_B_max,mmin=mmin,mmax=mmax)
 
         
-        self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A) * self.attenuation_prob
+        self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A)# * self.attenuation_prob
                                        
-        #(self.alpha + 1 -self.func_fit(x=fake_B_unnormalized,a=self.a_rain, b=self.b_rain,c=self.c_rain))
-        # Backward cycle loss || G_A(G_B(B)) - B||
+        # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
         self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) * self.rain_rate_prob
         
         # combined loss and calculate gradients
@@ -230,20 +228,19 @@ class CycleGANModel(BaseModel):
     
     def optimize_parameters(self, is_train=True):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # forward
-        if is_train:
-            self.forward()  # compute fake images and reconstruction images.
-            # G_A and G_B
-            self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
-            self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
-            self.backward_G()  # calculate gradients for G_A and G_B
+        
+
+        self.forward()  # compute fake images and reconstruction images.
+        # G_A and G_B
+        self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
+        self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
+        self.backward_G()  # calculate gradients for G_A and G_B
+        if is_train: 
             self.optimizer_G.step()  # update G_A and G_B's weights
-            # D_A and D_B
-            self.set_requires_grad([self.netD_A, self.netD_B], True)
-            self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
-            self.backward_D_A()  # calculate gradients for D_A
-            self.backward_D_B()  # calculate graidents for D_B
+        # D_A and D_B
+        self.set_requires_grad([self.netD_A, self.netD_B], True)
+        self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
+        self.backward_D_A()  # calculate gradients for D_A
+        self.backward_D_B()  # calculate graidents for D_B
+        if is_train:
             self.optimizer_D.step()  # update D_A and D_B's weights
-        else:
-            with torch.no_grad():
-                self.forward()
