@@ -342,7 +342,7 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 6
+        n_downsampling = 3
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1, bias=use_bias),
@@ -369,6 +369,7 @@ class ResnetGenerator(nn.Module):
     def forward(self, input,dir="AtoB"):
         """Standard forward"""
         output1 = self.model(input)
+#         print(f"dir:{dir} | {output1.shape}") # AtoB [2, 64], BtoA [4, 64]
         if dir=="AtoB":
             res=torch.split(output1, 1, dim=1)
             reg=res[0]

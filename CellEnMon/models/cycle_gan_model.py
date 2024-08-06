@@ -71,9 +71,9 @@ class CycleGANModel(BaseModel):
                                not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids, direction="BtoA")
 
         if self.isTrain:  # define discriminators
-            self.netD_A = define_D(opt.input_nc_B, opt.ndf, opt.netD,
+            self.netD_A = define_D(opt.input_nc_A, opt.ndf, opt.netD,
                                    opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
-            self.netD_B = define_D(opt.input_nc_A, opt.ndf, opt.netD,
+            self.netD_B = define_D(opt.input_nc_B, opt.ndf, opt.netD,
                                    opt.n_layers_D, opt.norm, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:
@@ -159,25 +159,25 @@ class CycleGANModel(BaseModel):
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
-        loss_D = loss_D_real + loss_D_fake
+        loss_D = (loss_D_real + loss_D_fake) * self.rain_rate_prob
         loss_D.backward()
         return loss_D
 
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
-        fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B)
+        #fake_B = self.fake_B_pool.query(self.fake_B)
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
-        fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A, fake_A)
+        #fake_A = self.fake_A_pool.query(self.fake_A)
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B)
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
         lambda_idt = self.opt.lambda_identity
         lambda_A = 10
-        lambda_B = 1
+        lambda_B = 10
         # Identity loss
         if lambda_idt > 0:
 
@@ -192,12 +192,11 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True) #* self.attenuation_prob
-        
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), True)        
         # GAN loss D_B(G_B(B))
         self.bce_criterion = torch.nn.BCELoss()
         self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 0.2 mm/h
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True) * self.rain_rate_prob + self.loss_bce_B
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), True) * self.rain_rate_prob + self.loss_bce_B
         
         
         #TODO: confusion matrix, f1-score, fss
@@ -211,7 +210,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A)# * self.attenuation_prob
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) * self.rain_rate_prob
+        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) #* self.rain_rate_prob
         
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
