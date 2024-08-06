@@ -52,10 +52,13 @@ class Preprocess:
 
         # Sort by the 'Time' column in ascending order
         fake_station = fake_station.sort_values(by='Time')
-
+        
+        # Multiply by detections
+        
+        fake_station["RainAmoutPredicted[mm/h]"]=fake_station["RainAmoutPredicted[mm/h]"] * detections
 
         # Add GT
-        fake_station["RainAmoutGT[mm/h]"]=pd.read_csv(f"{gauge_gt_file}")["RR[mm/h]"][:len(fake_station)] * detections
+        fake_station["RainAmoutGT[mm/h]"]=pd.read_csv(f"{gauge_gt_file}")["RR[mm/h]"][:len(fake_station)] 
 
         # Accumulative
         fake_station["RainAmoutPredictedCumSum"]=fake_station['RainAmoutPredicted[mm/h]'].cumsum()
