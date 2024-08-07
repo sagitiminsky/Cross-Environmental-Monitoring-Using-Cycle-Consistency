@@ -192,17 +192,18 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), False)        
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), True)        
         # GAN loss D_B(G_B(B))
         self.bce_criterion = torch.nn.BCELoss()
         self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 0.2 mm/h
         
         
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
-#         print(f"fake_B: {self.netD_B(self.fake_B).shape}")
+#         print(f"D(fake_B): {self.netD_B(self.fake_B).shape}")
+#         print(f"D(fake_A): {self.netD_A(self.fake_A).shape}")
         assert(self.rain_rate_prob.shape==self.netD_B(self.fake_B).shape)
 
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), False, weight=self.rain_rate_prob) + self.loss_bce_B
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rain_rate_prob) + self.loss_bce_B
         
         
         #TODO: confusion matrix, f1-score, fss
@@ -216,7 +217,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A)# * self.attenuation_prob
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) # * self.rain_rate_prob
+        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) * self.rain_rate_prob.mean()
         
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B

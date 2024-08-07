@@ -147,7 +147,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=True, ini
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netG == 'resnet_9blocks': #<---- selected
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=True, n_blocks=4, direction=direction)
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=True, n_blocks=2, direction=direction)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, direction=direction)
     elif netG == 'unet_128':
@@ -584,10 +584,13 @@ class NLayerDiscriminator(nn.Module):
         ]
             
             
-        sequence += [nn.ConvTranspose1d(in_channels=32, out_channels=input_nc, kernel_size=4, stride=2, padding=1, output_padding=1)]
-#         sequence += [nn.Conv1d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
 
-        sequence += [nn.ReflectionPad1d((0,1))]
+        sequence += [nn.Conv1d(ndf * nf_mult, 64, kernel_size=7, stride=1, padding=0)]  # output 1 channel prediction map
+        sequence += [nn.Flatten()]
+        sequence += [nn.Unflatten(dim=1, unflattened_size=(1, 64))]
+#         sequence += [nn.ConvTranspose1d(in_channels=1, out_channels=input_nc, kernel_size=8, stride=8, padding=1, output_padding=1)]
+
+#         sequence += [nn.ReflectionPad1d((0,1))]
         self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
