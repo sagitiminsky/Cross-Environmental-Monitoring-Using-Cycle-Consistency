@@ -140,7 +140,6 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=True, ini
         Resnet-based generator consists of several Resnet blocks between a few downsampling/upsampling operations.
         We adapt Torch code from Justin Johnson's neural style transfer project (https://github.com/jcjohnson/fast-neural-style).
 
-
     The generator has been initialized by <init_net>. It uses RELU for non-linearity.
     """
     net = None
