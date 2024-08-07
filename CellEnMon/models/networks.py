@@ -159,7 +159,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=True, ini
     return init_net(net, init_type, init_gain, gpu_ids)
 
 
-def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
+def define_D(input_nc, ndf, netD, n_layers_D=4, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a discriminator
 
     Parameters:
@@ -254,7 +254,7 @@ class GANLoss(nn.Module):
             target_tensor = self.fake_label
         return target_tensor.expand_as(prediction)
 
-    def __call__(self, prediction, target_is_real):
+    def __call__(self, prediction, target_is_real, pos_weight=torch.ones([1], device='cuda')):
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
@@ -266,6 +266,7 @@ class GANLoss(nn.Module):
         """
         if self.gan_mode in ['lsgan', 'vanilla']:
             target_tensor = self.get_target_tensor(prediction, target_is_real)
+            self.loss= nn.BCEWithLogitsLoss(pos_weight=pos_weight)
             loss = self.loss(prediction, target_tensor)
         elif self.gan_mode == 'wgangp':
             if target_is_real:
@@ -318,7 +319,7 @@ class ResnetGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=128, padding_type='zero', direction="AtoB"):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=128, padding_type='reflect', direction="AtoB"):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -337,12 +338,11 @@ class ResnetGenerator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
-        model = [nn.ReflectionPad1d(3),
-                 nn.Conv1d(input_nc, ngf, kernel_size=7, padding_mode='zeros', bias=use_bias),
+        model = [nn.Conv1d(input_nc, ngf, kernel_size=7, padding_mode='zeros', bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 3
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=2, padding=1, bias=use_bias),
@@ -361,7 +361,7 @@ class ResnetGenerator(nn.Module):
                                          bias=use_bias),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-        model += [nn.ReflectionPad1d(3)]
+        model += [nn.ReflectionPad1d((0,10))]
         model += [nn.Conv1d(ngf, output_nc, kernel_size=7, padding=0)]
         self.model = nn.Sequential(*model)
         
@@ -582,12 +582,18 @@ class NLayerDiscriminator(nn.Module):
             norm_layer(ndf * nf_mult),
             nn.LeakyReLU(0.2, True)
         ]
+            
+            
+        sequence += [nn.ConvTranspose1d(in_channels=32, out_channels=input_nc, kernel_size=4, stride=2, padding=1, output_padding=1)]
+#         sequence += [nn.Conv1d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
 
-        sequence += [nn.Conv1d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
+        sequence += [nn.ReflectionPad1d((0,1))]
         self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
         """Standard forward."""
+        out=self.model(input)
+#         print(f"D: {out.shape}")
         return self.model(input)
 
 
