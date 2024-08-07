@@ -254,7 +254,7 @@ class GANLoss(nn.Module):
             target_tensor = self.fake_label
         return target_tensor.expand_as(prediction)
 
-    def __call__(self, prediction, target_is_real, pos_weight=torch.ones([1], device='cuda')):
+    def __call__(self, prediction, target_is_real, weight=torch.ones([1], device='cuda')):
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
@@ -266,7 +266,7 @@ class GANLoss(nn.Module):
         """
         if self.gan_mode in ['lsgan', 'vanilla']:
             target_tensor = self.get_target_tensor(prediction, target_is_real)
-            self.loss= nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+            self.loss= nn.BCEWithLogitsLoss(weight=weight)
             loss = self.loss(prediction, target_tensor)
         elif self.gan_mode == 'wgangp':
             if target_is_real:
