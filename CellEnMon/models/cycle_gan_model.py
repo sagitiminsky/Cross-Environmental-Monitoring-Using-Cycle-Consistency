@@ -217,7 +217,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A)# * self.attenuation_prob
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) * self.rain_rate_prob.mean()
+        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) * (self.alpha + 1-self.rain_rate_prob.mean())
         
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
