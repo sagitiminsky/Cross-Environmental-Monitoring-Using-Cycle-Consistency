@@ -23,6 +23,8 @@ plt.switch_backend('agg')  # RuntimeError: main thread is not in main loop
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
+import numpy as np
+from matplotlib import colors
 
 ENABLE_WANDB = True
 GROUPS = {
@@ -227,8 +229,11 @@ if __name__ == '__main__':
                         try:
                             A=validation_link_full[i :  i + k].reshape(k,4)
                             B=validation_gauge_full[i : i + k].reshape(k,1)
+                            
+#                             print(f"validation_link_full: {validation_link_full.shape}")
+#                             print(f"validation_gauge_full: {torch.all(validation_gauge_full>=0) and torch.all(validation_gauge_full<=1) }")
+                            
                             slice_time=data_norm_B['time'][i: i + k]
-                            rain_slice=B
                     
                         except RuntimeError:
                             break
@@ -321,15 +326,31 @@ if __name__ == '__main__':
                                     metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
                                                 (mmin, mmax), x in
                                                 zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
-
-                                    ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t],
-                                            min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
-                                            marker='o',
-                                            linestyle='dashed',
-                                            linewidth=0.0,
-                                            markersize=4,
-                                            label=label
-                                            )
+                                    mask=model.fake_B_det.cpu().detach().numpy()[0][0]
+                                    mask=(mask >= 0.0625).astype(int)
+                                    model_t=model.t
+                                    
+                                    if "fake_B" not in key:
+                                        ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
+                                                min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
+                                                marker='o',
+                                                linestyle='dashed',
+                                                linewidth=0.0,
+                                                markersize=4,
+                                                label=label
+                                                )
+                                    else:
+                                        cmap=["red" if m else "black" for m in mask]
+                                        
+                                        ax.scatter([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
+                                                min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
+                                                marker='o',
+                                                linestyle='dashed',
+                                                linewidth=0.0,
+                                                c=cmap,
+                                                label="RainAmout[mm/h]",
+                                                )
+                                        
 
                                     ax.set_title(key if train_opt.is_only_dynamic else f'{key} \n'
                                                                                        f' {metadata}', y=0.75, fontdict={'fontsize':6})
@@ -339,16 +360,16 @@ if __name__ == '__main__':
 
 
                                 # save in predict directory for generated data
-                                start_date = config.start_date_str_rep_ddmmyyyy
-                                end_date = config.end_date_str_rep_ddmmyyyy
-                                produced_gauge_folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict/{experiment_name}' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict/{experiment_name}'
-                                real_gauge_folder=f'CellEnMon/datasets/ims/{start_date}_{end_date}/processed'
+#                                 start_date = config.start_date_str_rep_ddmmyyyy
+#                                 end_date = config.end_date_str_rep_ddmmyyyy
+#                                 produced_gauge_folder = f'CellEnMon/datasets/dme/{start_date}_{end_date}/predict/{experiment_name}' if 'A' in key else f'CellEnMon/datasets/ims/{start_date}_{end_date}/predict/{experiment_name}'
+#                                 real_gauge_folder=f'CellEnMon/datasets/ims/{start_date}_{end_date}/processed'
 
-                                if not os.path.exists(produced_gauge_folder):
-                                    os.makedirs(produced_gauge_folder)
+#                                 if not os.path.exists(produced_gauge_folder):
+#                                     os.makedirs(produced_gauge_folder)
 
-                                if not os.path.exists(real_gauge_folder):
-                                    os.makedirs(real_gauge_folder)
+#                                 if not os.path.exists(real_gauge_folder):
+#                                     os.makedirs(real_gauge_folder)
 
                                 if 'fake_B' == key:
         #                             if experiment_name=="only_dynamic":
@@ -356,23 +377,23 @@ if __name__ == '__main__':
         #                                 virtual_gauge_long=f"{float(model.link_center_metadata['longitude']):.3f}"
         #                             else:
 
-                                    virtual_gauge_lat=data_A.db[link]["metadata"][0]
-                                    virtual_gauge_long=data_A.db[link]["metadata"][1]
+#                                     virtual_gauge_lat=data_A.db[link]["metadata"][0]
+#                                     virtual_gauge_long=data_A.db[link]["metadata"][1]
 
-                                    file_path = f'{produced_gauge_folder}/{batch_counter}-{link}-{gauge}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
-    #                                 for file_path in glob.glob(f'{produced_gauge_folder}/{link}-{"PARAN"}_*.csv',recursive=True): 
-    #                                     try:
-    #                                         os.remove(file_path)
-    #                                     except OSError:
-    #                                         print("OSError or file does not exist")
+#                                     file_path = f'{produced_gauge_folder}/{batch_counter}-{link}-{gauge}_{virtual_gauge_lat}_{virtual_gauge_long}.csv'
+#     #                                 for file_path in glob.glob(f'{produced_gauge_folder}/{link}-{"PARAN"}_*.csv',recursive=True): 
+#     #                                     try:
+#     #                                         os.remove(file_path)
+#     #                                     except OSError:
+#     #                                         print("OSError or file does not exist")
 
-                                    with open(file_path, "w") as file:
-                                        a=np.array(model.t).reshape(train_opt.slice_dist,1)                    
-                                        b=min_max_inv_transform(data_vector, mmin=mmin_B, mmax=mmax_B).reshape(train_opt.slice_dist,1)
-                                        headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
-                                        c=np.hstack((a,b))
-                                        fmt = ",".join(["%s"]*(c.shape[1]))
-                                        np.savetxt(file, c, fmt=fmt, header=headers, comments='')
+#                                     with open(file_path, "w") as file:
+#                                         a=np.array(model.t).reshape(train_opt.slice_dist,1)                    
+#                                         b=min_max_inv_transform(data_vector, mmin=mmin_B, mmax=mmax_B).reshape(train_opt.slice_dist,1)
+#                                         headers = ','.join(['Time']+list(DME_KEYS.values())) if 'A' in key else ','.join(['Time']+list(IMS_KEYS.values()))
+#                                         c=np.hstack((a,b))
+#                                         fmt = ",".join(["%s"]*(c.shape[1]))
+#                                         np.savetxt(file, c, fmt=fmt, header=headers, comments='')
 
 
 
@@ -383,24 +404,34 @@ if __name__ == '__main__':
         #                                     "real_latitude": model.link_center_metadata['latitude']},
         #                                     radius=config.VALIDATION_RADIUS)
 ############################
-                                    gague_metadata=model.gague_metadata.tolist()[0]
-                                    is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
-                                        "fake_longitude":virtual_gauge_long, 
-                                        "fake_latitude":virtual_gauge_lat,
-                                        "real_longitude":gague_metadata[0],
-                                        "real_latitude":gague_metadata[1]},
-                                        radius=config.VALIDATION_RADIUS)
+#                                     gague_metadata=model.gague_metadata.tolist()[0]
+#                                     is_virtual_gauge_within_radius_with_real_gauge = v.is_within_radius(stations={
+#                                         "fake_longitude":virtual_gauge_long, 
+#                                         "fake_latitude":virtual_gauge_lat,
+#                                         "real_longitude":gague_metadata[0],
+#                                         "real_latitude":gague_metadata[1]},
+#                                         radius=config.VALIDATION_RADIUS)
 
                                     if True: #is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
                                         print("Virtual link is in range with real gauge...")
-                                        path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{gague_metadata[0]}_{gague_metadata[1]}.csv'}"  
-                                        real_rain_add=min_max_inv_transform(rain_slice, mmin=mmin_B, mmax=mmax_B).cpu().detach().numpy().flatten()
-                                        fake_rain_add=b.flatten()
+#                                         path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{gague_metadata[0]}_{gague_metadata[1]}.csv'}"  
+                                        real_rain_add=min_max_inv_transform(B, mmin=0, mmax=3.2).view(1, 1, 64)
+                                        fake_rain_add=min_max_inv_transform(model.fake_B, mmin=0, mmax=3.2).view(1, 1, 64)
+                                        
 
+                                        
                                         assert(len(real_rain_add)==len(fake_rain_add))
 
-                                        cond=np.array([True if r >= 0.4 or f >=0.1 else False for r,f in zip(real_rain_add,fake_rain_add)])
-                                        to_add=np.sum((real_rain_add-fake_rain_add.cpu().numpy())[cond]**2)
+                                        
+                                
+                                        real_rain_add=real_rain_add.cpu().numpy()[0][0]
+                                        fake_rain_add=fake_rain_add.detach().cpu().numpy()[0][0]
+                                    
+#                                         print(f"real_B: {real_rain_add.shape}")
+#                                         print(f"fake_B: {fake_rain_add.shape}")
+                                        
+                                        cond=np.array([True if r >= 0.2 or f >=0.1 else False for r,f in zip(real_rain_add,fake_rain_add)])
+                                        to_add=np.sum((real_rain_add-fake_rain_add)[cond]**2)
 
                                         #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
 
