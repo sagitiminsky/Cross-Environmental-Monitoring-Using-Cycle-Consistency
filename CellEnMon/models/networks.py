@@ -360,8 +360,7 @@ class ResnetGenerator(nn.Module):
                                          bias=use_bias),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-        model += [nn.ReflectionPad1d((0,10))]
-        model += [nn.Conv1d(ngf, output_nc, kernel_size=7, padding=0)]
+        model += [nn.Conv1d(ngf, output_nc, kernel_size=3, padding=3)]
         self.model = nn.Sequential(*model)
         
 
