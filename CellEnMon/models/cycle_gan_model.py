@@ -192,7 +192,7 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
         # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), True)        
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), False)        
         # GAN loss D_B(G_B(B))
         self.bce_criterion = torch.nn.BCELoss()
         self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 0.2 mm/h
@@ -203,7 +203,7 @@ class CycleGANModel(BaseModel):
 #         print(f"D(fake_A): {self.netD_A(self.fake_A).shape}")
         assert(self.rain_rate_prob.shape==self.netD_B(self.fake_B).shape)
 
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rain_rate_prob) + self.loss_bce_B
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), False, weight=self.rain_rate_prob) + self.loss_bce_B
         
         
         #TODO: confusion matrix, f1-score, fss
