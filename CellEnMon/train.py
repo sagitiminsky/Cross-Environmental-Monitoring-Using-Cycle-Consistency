@@ -454,7 +454,6 @@ if __name__ == '__main__':
 
                     # Convert continuous values to binary class labels
                     fake_gauge_vec_det_labels = (fake_gauge_vec_det >= 0.0625).astype(int) # 0.2/3.2=0.0625, ie. we consider a wet event over 0.2 mm/h
-                    fake_gauge_vec_labels = (fake_gauge_vec >= threshold).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
                     
                     CM=confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_det_labels)
@@ -478,11 +477,11 @@ if __name__ == '__main__':
                     
 
         
-                    p=Preprocess(link=link,gauge=gauge, epoch=epoch, detections=fake_gauge_vec_det_labels)
+                    p=Preprocess(link=link,gauge=gauge, epoch=epoch, T=T, real=real_gauge_vec, fake=fake_gauge_vec, detections=fake_gauge_vec_det_labels)
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
 
-                    preprocessed_time=np.asarray(p.excel_data.Time) #2015-01-06 20:30:00
-                    preprocessed_time_wanb=[mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in preprocessed_time]
+                    preprocessed_time=np.asarray(p.excel_data.Time) #16436.00694444
+                    preprocessed_time_wanb=[t for t in preprocessed_time]
                     
                     
                     axs_preprocessed.plot(preprocessed_time_wanb, p.fake, label="CML")
