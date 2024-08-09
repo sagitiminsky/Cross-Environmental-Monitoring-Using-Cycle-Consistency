@@ -146,7 +146,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=True, ini
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netG == 'resnet_9blocks': #<---- selected
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=True, n_blocks=2, direction=direction)
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=True, n_blocks=1, direction=direction)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, direction=direction)
     elif netG == 'unet_128':
@@ -253,7 +253,7 @@ class GANLoss(nn.Module):
             target_tensor = self.fake_label
         return target_tensor.expand_as(prediction)
 
-    def __call__(self, prediction, target_is_real, weight=torch.ones([1], device='cuda')):
+    def __call__(self, prediction, target_is_real, pos_weight=torch.ones([1], device='cuda')):
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
@@ -265,7 +265,7 @@ class GANLoss(nn.Module):
         """
         if self.gan_mode in ['lsgan', 'vanilla']:
             target_tensor = self.get_target_tensor(prediction, target_is_real)
-            self.loss= nn.BCEWithLogitsLoss(weight=weight)
+            self.loss= nn.BCEWithLogitsLoss(pos_weight=pos_weight)
             loss = self.loss(prediction, target_tensor)
         elif self.gan_mode == 'wgangp':
             if target_is_real:
@@ -318,7 +318,7 @@ class ResnetGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=128, padding_type='reflect', direction="AtoB"):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=9, padding_type='reflect', direction="AtoB"):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -361,7 +361,7 @@ class ResnetGenerator(nn.Module):
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
         model += [nn.Conv1d(ngf, output_nc, kernel_size=3, padding=3)]
-        model += [nn.LeakyReLU(True)]
+        model += [nn.Sigmoid()]
         self.model = nn.Sequential(*model)
         
 

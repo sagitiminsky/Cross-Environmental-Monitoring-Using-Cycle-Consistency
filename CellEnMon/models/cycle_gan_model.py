@@ -141,7 +141,7 @@ class CycleGANModel(BaseModel):
         
         
 
-    def backward_D_basic(self, netD, real, fake, weight=torch.ones([1], device='cuda')):
+    def backward_D_basic(self, netD, real, fake, pos_weight=torch.ones([1], device='cuda')):
         """Calculate GAN loss for the discriminator
 
         Parameters:
@@ -154,7 +154,7 @@ class CycleGANModel(BaseModel):
         """
         # Real
         pred_real = netD(real)
-        loss_D_real = self.criterionGAN(pred_real, True, weight=weight)
+        loss_D_real = self.criterionGAN(pred_real, True, pos_weight=pos_weight)
         # Fake
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
@@ -171,7 +171,7 @@ class CycleGANModel(BaseModel):
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B, weight=self.rain_rate_prob) # weight=self.rain_rate_prob
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B, pos_weight=self.rain_rate_prob) # weight=self.rain_rate_prob
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -203,7 +203,7 @@ class CycleGANModel(BaseModel):
 #         print(f"D(fake_A): {self.netD_A(self.fake_A).shape}")
         assert(self.rain_rate_prob.shape==self.netD_B(self.fake_B).shape)
 
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), False, weight=self.rain_rate_prob) + self.loss_bce_B
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), False, pos_weight=self.rain_rate_prob) + self.loss_bce_B
         
         
         #TODO: confusion matrix, f1-score, fss
