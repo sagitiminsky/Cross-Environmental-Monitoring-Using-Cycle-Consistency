@@ -361,7 +361,6 @@ class ResnetGenerator(nn.Module):
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
         model += [nn.Conv1d(ngf, output_nc, kernel_size=3, padding=3)]
-        model += [nn.Sigmoid()]
         self.model = nn.Sequential(*model)
         
 
