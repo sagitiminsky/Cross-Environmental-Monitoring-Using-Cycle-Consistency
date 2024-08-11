@@ -171,7 +171,7 @@ class CycleGANModel(BaseModel):
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B, pos_weight=self.rain_rate_prob) # weight=self.rain_rate_prob
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B, pos_weight=self.rain_rate_prob.mean()) # weight=self.rain_rate_prob
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -193,17 +193,20 @@ class CycleGANModel(BaseModel):
 
         
         self.bce_criterion = torch.nn.BCELoss()
+        self.rr_norm = self.alpha + 1 - self.rain_rate_prob
         self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
         # GAN loss D_B(G_A(A))
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), True, pos_weight=self.rain_rate_prob) + self.loss_bce_B   
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), True, pos_weight=self.rr_norm.mean()) + self.loss_bce_B   
 
         
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
+#         print(f"fake_B: {self.fake_B.shape}")
+#         print(f"fake_A: {self.fake_A.shape}")
 #         print(f"D(fake_B): {self.netD_B(self.fake_B).shape}")
 #         print(f"D(fake_A): {self.netD_A(self.fake_A).shape}")
-
-
-        assert(self.rain_rate_prob.shape==self.netD_B(self.fake_B).shape)
+#         print(f"fake_B * rr_prob: {(self.fake_B * self.rain_rate_prob).shape}")
+#         print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
+        
         # GAN loss D_A(G_B(B))
         self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), True) #pos_weight=self.attenuation_prob 
         
@@ -219,7 +222,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A) #* (self.alpha + 1-self.attenuation_prob.mean())
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) * (self.alpha + 1-self.rain_rate_prob.mean())
+        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B * self.rr_norm, self.real_B * self.rr_norm)
         
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
