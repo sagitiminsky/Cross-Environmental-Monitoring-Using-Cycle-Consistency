@@ -116,7 +116,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     return net
 
 
-def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=True, init_type='normal', init_gain=0.02, gpu_ids=[], direction="AtoB"):
+def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[], direction="AtoB"):
     """Create a generator
 
     Parameters:
@@ -146,7 +146,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=True, ini
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netG == 'resnet_9blocks': #<---- selected
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=True, n_blocks=9, direction=direction)
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, direction=direction)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, direction=direction)
     elif netG == 'unet_128':
@@ -253,7 +253,7 @@ class GANLoss(nn.Module):
             target_tensor = self.fake_label
         return target_tensor.expand_as(prediction)
 
-    def __call__(self, prediction, target_is_real, pos_weight=torch.ones([1], device='cuda')):
+    def __call__(self, prediction, target_is_real, weight=torch.ones([1], device='cuda')):
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
@@ -265,7 +265,7 @@ class GANLoss(nn.Module):
         """
         if self.gan_mode in ['lsgan', 'vanilla']:
             target_tensor = self.get_target_tensor(prediction, target_is_real)
-            self.loss= nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+            self.loss= nn.BCEWithLogitsLoss(weight=weight)
             loss = self.loss(prediction, target_tensor)
         elif self.gan_mode == 'wgangp':
             if target_is_real:
@@ -318,7 +318,7 @@ class ResnetGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=9, padding_type='reflect', direction="AtoB"):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=9, padding_type='replicate', direction="AtoB"):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -341,10 +341,10 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 2
+        n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
-            model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=2, padding=1, bias=use_bias),
+            model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
                       norm_layer(ngf * mult * 2),
                       nn.ReLU(True)]
 
@@ -355,8 +355,8 @@ class ResnetGenerator(nn.Module):
         for i in range(n_downsampling):  # add upsampling layers
             mult = 2 ** (n_downsampling - i)
             model += [nn.ConvTranspose1d(ngf * mult, int(ngf * mult / 2),
-                                         kernel_size=5, stride=2,
-                                         padding=1, output_padding=1,
+                                         kernel_size=5, stride=1,
+                                         padding=0, output_padding=0,
                                          bias=use_bias),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
@@ -411,13 +411,13 @@ class ResnetBlock(nn.Module):
         elif padding_type == 'replicate':
             conv_block += [nn.ReplicationPad1d(1)]
         elif padding_type == 'zero':
-            p = 1
+            p = 0
         else:
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
         conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim), nn.ReLU(True)]
-        if use_dropout:
-            conv_block += [nn.Dropout(0.5)]
+#         if use_dropout:
+#             conv_block += [nn.Dropout(0.5)]
 
         p = 0
         if padding_type == 'reflect':
@@ -425,7 +425,7 @@ class ResnetBlock(nn.Module):
         elif padding_type == 'replicate':
             conv_block += [nn.ReplicationPad1d(1)]
         elif padding_type == 'zero':
-            p = 1
+            p = 0
         else:
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
         conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)]
