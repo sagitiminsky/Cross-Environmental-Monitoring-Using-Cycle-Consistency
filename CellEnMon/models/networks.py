@@ -318,7 +318,7 @@ class ResnetGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm1d, use_dropout=False, n_blocks=9, padding_type='replicate', direction="AtoB"):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='replicate', direction="AtoB"):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -465,9 +465,19 @@ class UnetGenerator(nn.Module):
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
         self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer
 
-    def forward(self, input):
+    def forward(self, input, dir="AtoB"):
         """Standard forward"""
-        return self.model(input)
+        output1 = self.model(input)
+#         print(f"dir:{dir} | {output1.shape}") # AtoB [2, 64], BtoA [4, 64]
+        if dir=="AtoB":
+            res=torch.split(output1, 1, dim=1)
+            reg=res[0]
+            det=res[1]
+
+            # Remove the extra dimension added by split
+            return (reg, torch.sigmoid(det))
+        return output1
+
 
 
 class UnetSkipConnectionBlock(nn.Module):
@@ -477,7 +487,7 @@ class UnetSkipConnectionBlock(nn.Module):
     """
 
     def __init__(self, outer_nc, inner_nc, input_nc=None,
-                 submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm2d, use_dropout=False):
+                 submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm1d, use_dropout=False):
         """Construct a Unet submodule with skip connections.
 
         Parameters:
@@ -493,12 +503,14 @@ class UnetSkipConnectionBlock(nn.Module):
         super(UnetSkipConnectionBlock, self).__init__()
         self.outermost = outermost
         if type(norm_layer) == functools.partial:
-            use_bias = norm_layer.func == nn.InstanceNorm2d
+            use_bias = norm_layer.func == nn.InstanceNorm1d
         else:
-            use_bias = norm_layer == nn.InstanceNorm2d
+            use_bias = norm_layer == nn.InstanceNorm1d
         if input_nc is None:
             input_nc = outer_nc
-        downconv = nn.Conv2d(input_nc, inner_nc, kernel_size=4,
+
+        # Use kernel size of 3, stride of 2, and padding of 1
+        downconv = nn.Conv1d(input_nc, inner_nc, kernel_size=2,
                              stride=2, padding=1, bias=use_bias)
         downrelu = nn.LeakyReLU(0.2, True)
         downnorm = norm_layer(inner_nc)
@@ -506,22 +518,22 @@ class UnetSkipConnectionBlock(nn.Module):
         upnorm = norm_layer(outer_nc)
 
         if outermost:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
-                                        kernel_size=4, stride=2,
+            upconv = nn.ConvTranspose1d(inner_nc * 2, outer_nc,
+                                        kernel_size=2, stride=2,
                                         padding=1)
             down = [downconv]
             up = [uprelu, upconv, nn.Tanh()]
             model = down + [submodule] + up
         elif innermost:
-            upconv = nn.ConvTranspose2d(inner_nc, outer_nc,
-                                        kernel_size=4, stride=2,
+            upconv = nn.ConvTranspose1d(inner_nc, outer_nc,
+                                        kernel_size=3, stride=2,
                                         padding=1, bias=use_bias)
             down = [downrelu, downconv]
             up = [uprelu, upconv, upnorm]
             model = down + up
         else:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
-                                        kernel_size=4, stride=2,
+            upconv = nn.ConvTranspose1d(inner_nc * 2, outer_nc,
+                                        kernel_size=3, stride=2,
                                         padding=1, bias=use_bias)
             down = [downrelu, downconv, downnorm]
             up = [uprelu, upconv, upnorm]
@@ -537,7 +549,13 @@ class UnetSkipConnectionBlock(nn.Module):
         if self.outermost:
             return self.model(x)
         else:   # add skip connections
-            return torch.cat([x, self.model(x)], 1)
+            output = self.model(x)
+            # Adjust the output size if necessary to match the input size
+            if output.shape[-1] != x.shape[-1]:
+                output = nn.functional.interpolate(output, size=x.shape[-1])
+            return torch.cat([x, output], 1)
+
+
 
 
 class NLayerDiscriminator(nn.Module):
