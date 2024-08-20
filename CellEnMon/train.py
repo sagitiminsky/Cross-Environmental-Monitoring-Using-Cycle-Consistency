@@ -78,9 +78,10 @@ all_link_to_gauge_matching ={
 }
 
 validation_link_to_gauge_matching ={
-    "c078-d088": [], 
-    "a473-b119": [], 
-    "b394-ts04": ["LAHAV"]
+#     "c078-d088": [], 
+#     "a473-b119": [], 
+    "b394-ts04": ["LAHAV"],
+    "b451-a350": [],
 
 }
 
@@ -293,8 +294,8 @@ if __name__ == '__main__':
                             
                                 for i in range(1, 5):
                                     if 'A' in key:
-                                        mmin = 0 #model.data_transformation['link']['min'][0].numpy()
-                                        mmax = 7.2 #model.data_transformation['link']['max'][0].numpy()
+                                        mmin = -88.5 #model.data_transformation['link']['min'][0].numpy()
+                                        mmax = 17 #model.data_transformation['link']['max'][0].numpy()
                                         label = DME_KEYS[i]
                                         data_vector = torch.tensor(data[:, i - 1])
                                         
