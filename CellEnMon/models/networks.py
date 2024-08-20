@@ -145,8 +145,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     net = None
     norm_layer = get_norm_layer(norm_type=norm)
 
-    if netG == 'resnet_9blocks': #<---- selected
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, direction=direction)
+    if netG == 'resnet_9blocks':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=1, direction=direction)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, direction=direction)
     elif netG == 'unet_128':
@@ -337,7 +337,7 @@ class ResnetGenerator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
-        model = [nn.Conv1d(input_nc, ngf, kernel_size=7, padding_mode='zeros', bias=use_bias),
+        model = [nn.Conv1d(input_nc, ngf, kernel_size=15, padding_mode='zeros', bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
@@ -360,7 +360,7 @@ class ResnetGenerator(nn.Module):
                                          bias=use_bias),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7)]
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=15)]
         self.model = nn.Sequential(*model)
         
 
@@ -368,14 +368,16 @@ class ResnetGenerator(nn.Module):
         """Standard forward"""
         output1 = self.model(input)
 #         print(f"dir:{dir} | {output1.shape}") # AtoB [2, 64], BtoA [4, 64]
+        sigmoid=nn.Sigmoid()
         if dir=="AtoB":
             res=torch.split(output1, 1, dim=1)
             reg=res[0]
             det=res[1]
 
             # Remove the extra dimension added by split
-            return (reg, torch.sigmoid(det))
-        return output1
+            
+            return (sigmoid(reg), torch.sigmoid(det))
+        return sigmoid(output1)
 
 
 class ResnetBlock(nn.Module):
