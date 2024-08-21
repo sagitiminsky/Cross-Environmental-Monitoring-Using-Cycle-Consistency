@@ -146,7 +146,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netG == 'resnet_9blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=36, direction=direction)
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, direction=direction)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, direction=direction)
     elif netG == 'unet_128':
@@ -376,8 +376,8 @@ class ResnetGenerator(nn.Module):
 
             # Remove the extra dimension added by split
             
-            return (relu(reg), torch.sigmoid(det))
-        return relu(output1)
+            return (reg, torch.sigmoid(det))
+        return output1
 
 
 class ResnetBlock(nn.Module):

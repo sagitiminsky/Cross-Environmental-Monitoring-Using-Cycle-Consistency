@@ -111,8 +111,8 @@ class CycleGANModel(BaseModel):
             self.alpha=0.2
             self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
             self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
-            self.rain_rate_prob = self.alpha + 1 - input['rain_rate_prob'].to(self.device)
-            self.attenuation_prob = self.alpha + 1 - input['attenuation_prob'].to(self.device)
+            self.rain_rate_prob = input['rain_rate_prob'].to(self.device)
+            self.attenuation_prob = input['attenuation_prob'].to(self.device)
 
             
             self.link_norm_metadata=input['link_norm_metadata']
@@ -166,7 +166,7 @@ class CycleGANModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         #fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A, weight=self.attenuation_prob.mean()) #
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A) #
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
@@ -197,7 +197,7 @@ class CycleGANModel(BaseModel):
         self.att_norm = self.alpha + 1 - self.attenuation_prob
         self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
         # GAN loss D_B(G_A(A))
-        self.loss_G_B = self.loss_bce_B * self.rr_norm.mean() #+ self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.mean()) +    
+        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.mean()) #self.loss_bce_B * self.rr_norm.mean() 
 
         
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
@@ -209,7 +209,7 @@ class CycleGANModel(BaseModel):
 #         print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
         
         # GAN loss D_A(G_B(B))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), True, weight=self.attenuation_prob.mean()) #pos_weight=self.attenuation_prob 
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), True) #, weight=self.att_norm.mean()
         
         
         #TODO: confusion matrix, f1-score, fss
@@ -226,7 +226,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B * self.rr_norm, self.real_B * self.rr_norm)
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)
