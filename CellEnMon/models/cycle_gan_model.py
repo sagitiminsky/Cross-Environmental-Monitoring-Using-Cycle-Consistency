@@ -197,7 +197,7 @@ class CycleGANModel(BaseModel):
         self.att_norm = self.alpha + 1 - self.attenuation_prob
         self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
         # GAN loss D_B(G_A(A))
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.mean()) + self.loss_bce_B * self.rr_norm.mean()   
+        self.loss_G_B = self.loss_bce_B * self.rr_norm.mean() #+ self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.mean()) +    
 
         
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
