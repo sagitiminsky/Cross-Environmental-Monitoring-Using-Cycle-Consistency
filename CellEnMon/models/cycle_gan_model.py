@@ -47,7 +47,7 @@ class CycleGANModel(BaseModel):
         """
         BaseModel.__init__(self, opt)
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'mse_A', 'mse_B', 'bce_B']
+        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ['real_A', 'fake_B', 'rec_A', "fake_B_det"]
         visual_names_B = ['real_B', 'fake_A', 'rec_B']
@@ -196,8 +196,11 @@ class CycleGANModel(BaseModel):
         self.rr_norm = self.alpha + 1 - self.rain_rate_prob
         self.att_norm = self.alpha + 1 - self.attenuation_prob
         self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        
+        self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max())
+        
         # GAN loss D_B(G_A(A))
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.mean()) #self.loss_bce_B * self.rr_norm.mean() 
+        self.loss_G_B = self.loss_bce_B * self.rr_norm.max() # + self.loss_G_B_only # +  
 
         
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
@@ -226,7 +229,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B * self.rr_norm, self.real_B * self.rr_norm)
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_G_B #+ self.loss_G_A + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)
@@ -254,5 +257,5 @@ class CycleGANModel(BaseModel):
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
         self.backward_D_A()  # calculate gradients for D_A
         self.backward_D_B()  # calculate graidents for D_B
-        if is_train:
-            self.optimizer_D.step()  # update D_A and D_B's weights
+#         if is_train:
+#             self.optimizer_D.step()  # update D_A and D_B's weights
