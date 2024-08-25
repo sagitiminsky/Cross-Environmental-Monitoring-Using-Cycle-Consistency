@@ -233,6 +233,7 @@ class GANLoss(nn.Module):
             self.loss = nn.MSELoss()
         elif gan_mode == 'vanilla':
             self.loss = nn.BCEWithLogitsLoss()
+#             self.loss = nn.BCELoss()
         elif gan_mode in ['wgangp']:
             self.loss = None
         else:
@@ -255,7 +256,7 @@ class GANLoss(nn.Module):
             target_tensor = self.fake_label
         return target_tensor.expand_as(prediction)
 
-    def __call__(self, prediction, target_is_real, weight=torch.ones([1], device='cuda')):
+    def __call__(self, prediction, target_is_real, weight=torch.ones([1], device='cuda:0')): #
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
@@ -343,7 +344,7 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 1
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
@@ -420,8 +421,8 @@ class ResnetBlock(nn.Module):
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
         conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim), nn.ReLU(True)]
-#         if use_dropout:
-#             conv_block += [nn.Dropout(0.5)]
+        if use_dropout:
+            conv_block += [nn.Dropout(0.3)]
 
         p = 0
         if padding_type == 'reflect':

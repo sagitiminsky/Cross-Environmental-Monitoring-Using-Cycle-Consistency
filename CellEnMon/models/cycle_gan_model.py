@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import itertools
 from .base_model import BaseModel
 from CellEnMon.util.image_pool import SignalPool
@@ -141,7 +142,7 @@ class CycleGANModel(BaseModel):
         
         
 
-    def backward_D_basic(self, netD, real, fake, weight=torch.ones([1], device='cuda')):
+    def backward_D_basic(self, netD, real, fake): #weight=torch.ones([1], device='cuda:0')
         """Calculate GAN loss for the discriminator
 
         Parameters:
@@ -154,10 +155,10 @@ class CycleGANModel(BaseModel):
         """
         # Real
         pred_real = netD(real)
-        loss_D_real = self.criterionGAN(pred_real, True, weight=weight)
+        loss_D_real = self.criterionGAN(pred_real, True) #weight=weight
         # Fake
         pred_fake = netD(fake.detach())
-        loss_D_fake = self.criterionGAN(pred_fake, False, weight=weight)
+        loss_D_fake = self.criterionGAN(pred_fake, False) #weight=weight
         # Combined loss and calculate gradients
         loss_D = loss_D_real + loss_D_fake
         loss_D.backward()
@@ -171,7 +172,7 @@ class CycleGANModel(BaseModel):
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B, weight=self.rain_rate_prob.mean()) # 
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B) # weight=self.rain_rate_prob.mean()
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -192,15 +193,20 @@ class CycleGANModel(BaseModel):
             self.loss_idt_B = 0
 
         
-        self.bce_criterion = torch.nn.BCELoss()
+        
         self.rr_norm = self.alpha + 1 - self.rain_rate_prob
         self.att_norm = self.alpha + 1 - self.attenuation_prob
-        self.loss_bce_B=self.bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        pos_weight = torch.tensor([2.0], dtype=torch.float32, device="cuda:0") # wet event is 10 times more important (!!!)
         
-        self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max())
+        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight) # 
+        bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
+        
+        self.loss_bce_B=bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        
+        self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max()) #
         
         # GAN loss D_B(G_A(A))
-        self.loss_G_B = self.loss_bce_B * self.rr_norm.max() # + self.loss_G_B_only # +  
+        self.loss_G_B = self.loss_bce_B + self.loss_G_B_only
 
         
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
@@ -223,13 +229,13 @@ class CycleGANModel(BaseModel):
         mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
 
         
-        self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A * self.att_norm, self.real_A * self.att_norm)
+        self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B * self.rr_norm, self.real_B * self.rr_norm)
+        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) #* self.rr_norm
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_B #+ self.loss_G_A + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)
@@ -257,5 +263,5 @@ class CycleGANModel(BaseModel):
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
         self.backward_D_A()  # calculate gradients for D_A
         self.backward_D_B()  # calculate graidents for D_B
-#         if is_train:
-#             self.optimizer_D.step()  # update D_A and D_B's weights
+        if is_train:
+            self.optimizer_D.step()  # update D_A and D_B's weights

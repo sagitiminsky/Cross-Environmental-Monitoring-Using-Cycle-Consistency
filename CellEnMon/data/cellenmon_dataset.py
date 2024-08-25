@@ -201,7 +201,7 @@ class CellenmonDataset(BaseDataset):
             B=B.T # (5,256)
 
         A_attenuation_normalized=A #np.array(list(self.dataset.dme.db[selected_link]['data'].values()))
-        A_attenuation=self.min_max_inv_transform(x=A_attenuation_normalized,mmin=0,mmax=7.2)
+        A_attenuation=self.min_max_inv_transform(x=A_attenuation_normalized,mmin=-88.5,mmax=17)
         B_rain_rate_normalized=B #np.array(list(self.dataset.ims.db[selected_gague]['data'].values()))
         B_rain_rate = self.min_max_inv_transform(x=B_rain_rate_normalized,mmin=0,mmax=3.2)
         
