@@ -30,7 +30,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--n_epochs', type=int, default=1000000, help='number of epochs with the initial learning rate')
         parser.add_argument('--n_epochs_decay', type=int, default=100000, help='number of epochs to linearly decay learning rate to zero')
         parser.add_argument('--beta1', type=float, default=0.5, help='momentum term of adam')
-        parser.add_argument('--lr', type=float, default=0.0003, help='initial learning rate for adam') # 0.00001
+        parser.add_argument('--lr', type=float, default=0.001, help='initial learning rate for adam') # 0.00001
         parser.add_argument('--gan_mode', type=str, default='vanilla', help='the type of GAN objective. [vanilla| lsgan | wgangp]. vanilla GAN loss is the cross-entropy objective used in the original GAN paper.')
         parser.add_argument('--pool_size', type=int, default=50, help='the size of image buffer that stores previously generated images')
         parser.add_argument('--lr_policy', type=str, default='step', help='learning rate policy. [linear | step | plateau | cosine]')
