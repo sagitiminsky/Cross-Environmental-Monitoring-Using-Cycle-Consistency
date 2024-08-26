@@ -196,12 +196,12 @@ class CycleGANModel(BaseModel):
         
         self.rr_norm = self.alpha + 1 - self.rain_rate_prob
         self.att_norm = self.alpha + 1 - self.attenuation_prob
-        pos_weight = torch.tensor([2.0], dtype=torch.float32, device="cuda:0") # wet event is 10 times more important (!!!)
+        pos_weight = torch.tensor([38.0], dtype=torch.float32, device="cuda:0") # wet event is 10 times more important (!!!)
         
         bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight) # 
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
-        self.loss_bce_B=bce_criterion(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        self.loss_bce_B=bce_weight_loss(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
         
         self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max()) #
         
@@ -235,7 +235,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) #* self.rr_norm
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_G_B #+ self.loss_G_A + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)

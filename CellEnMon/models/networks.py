@@ -148,7 +148,7 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netG == 'resnet_9blocks':
-        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=3, direction=direction)
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, direction=direction)
     elif netG == 'resnet_6blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, direction=direction)
     elif netG == 'unet_128':
@@ -344,7 +344,7 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 2
+        n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
@@ -422,7 +422,7 @@ class ResnetBlock(nn.Module):
 
         conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim), nn.ReLU(True)]
         if use_dropout:
-            conv_block += [nn.Dropout(0.3)]
+            conv_block += [nn.Dropout(0.1)]
 
         p = 0
         if padding_type == 'reflect':
