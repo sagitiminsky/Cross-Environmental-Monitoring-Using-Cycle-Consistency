@@ -172,7 +172,7 @@ if __name__ == '__main__':
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
             
-            
+            model.train()
             model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
             
@@ -248,22 +248,26 @@ if __name__ == '__main__':
 #                         print("rain_rate_sample")
 #                         print(torch.unsqueeze(B.T,0))
                         
- 
+                        # model.eval()
                         model.set_input(loader,isTrain=False)
-#                         model.eval()
+                        #with torch.no_grad():
+                            
 
-    #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
-    #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
+        #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
+        #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
+                            
+    #                         model.test()
+                        model.test()
                         
-#                         model.test()
-                        model.optimize_parameters(is_train=False)  # calculate loss functions
+                        # model.optimize_parameters(is_train=False)  # calculate loss functions
+                        visuals = model.get_current_visuals()
                         validation_losses = model.get_current_losses(is_train=False) # validation for each batch, i.e 64 samples
 
 
                         if ENABLE_WANDB:
                             # Visualize
                             metadata=[0]*4
-#                             visuals = model.get_current_visuals()
+
             
                             with torch.no_grad():
                                 visuals = OrderedDict([('real_A', torch.unsqueeze(A.T,0)),('fake_B', model.fake_B),('rec_A', model.rec_A), ('real_B',torch.unsqueeze(B.T,0)),('fake_A', model.fake_A),('rec_B', model.rec_B)])
@@ -327,7 +331,7 @@ if __name__ == '__main__':
                                     metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
                                                 (mmin, mmax), x in
                                                 zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
-                                    mask=model.fake_B_det.cpu().detach().numpy()[0][0]
+                                    mask=model.fake_B_det_sigmoid.cpu().detach().numpy()[0][0]
                                     mask=(mask >= 0.0625).astype(int)
                                     model_t=model.t
                                     
@@ -441,7 +445,7 @@ if __name__ == '__main__':
                                         seq_len+=len(cond)
                                         real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
                                         fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
-                                        fake_gauge_vec_det=np.append(fake_gauge_vec_det, model.fake_B_det.cpu().detach().numpy())
+                                        fake_gauge_vec_det=np.append(fake_gauge_vec_det, model.fake_B_det_sigmoid.cpu().detach().numpy())
                                         T=np.append(T,np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t]))
 
 

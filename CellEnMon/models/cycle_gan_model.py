@@ -50,7 +50,7 @@ class CycleGANModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        visual_names_A = ['real_A', 'fake_B', 'rec_A', "fake_B_det"]
+        visual_names_A = ['real_A', 'fake_B', 'rec_A', "fake_B_det", "fake_B_det_sigmoid"]
         visual_names_B = ['real_B', 'fake_A', 'rec_B']
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt_B=G_A(B) ad idt_A=G_A(B)
             visual_names_A.append('idt_B')
@@ -135,6 +135,7 @@ class CycleGANModel(BaseModel):
         fake_B = self.netG_A(self.real_A, dir="AtoB")  # G_A(A)
         self.fake_B=fake_B[0]
         self.fake_B_det = fake_B[1]
+        self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA")
         self.fake_A = self.netG_B(self.real_B,dir="BtoA")  # G_B(B)
         self.rec_B = self.netG_A(self.fake_A,dir="AtoB")[0]  # G_A(G_B(B))
@@ -196,17 +197,19 @@ class CycleGANModel(BaseModel):
         
         self.rr_norm = self.alpha + 1 - self.rain_rate_prob
         self.att_norm = self.alpha + 1 - self.attenuation_prob
-        pos_weight = torch.tensor([38.0], dtype=torch.float32, device="cuda:0") # wet event is 10 times more important (!!!)
+        pos_weight = torch.tensor([20.0], dtype=torch.float32, device="cuda:0") # wet event is x times more important (!!!)
         
-        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight) # 
+
+        targets=(self.real_B > 0.0625).float()
+        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='sum') # << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
-        self.loss_bce_B=bce_weight_loss(self.fake_B_det, (self.real_B>0.0625).float()) # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        self.loss_bce_B=bce_weight_loss(self.fake_B_det, targets) # 0.2/3.2=0.0625, ie. we consider a wet event over 
         
         self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max()) #
         
         # GAN loss D_B(G_A(A))
-        self.loss_G_B = self.loss_bce_B + self.loss_G_B_only
+        self.loss_G_B = self.loss_bce_B #+ self.loss_G_B_only
 
         
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
