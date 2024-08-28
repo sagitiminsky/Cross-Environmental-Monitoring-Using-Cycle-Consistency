@@ -1,5 +1,6 @@
 import os
 import torch
+import torch.nn as nn
 from collections import OrderedDict
 from abc import ABC, abstractmethod
 from torch.optim import lr_scheduler
@@ -35,7 +36,7 @@ def get_scheduler(optimizer, opt):
 
 
 
-class BaseModel(ABC):
+class BaseModel(ABC, nn.Module):
     """This class is an abstract base class (ABC) for models.
     To create a subclass, you need to implement the following five functions:
         -- <__init__>:                      initialize the class; first call BaseModel.__init__(self, opt).
@@ -59,6 +60,7 @@ class BaseModel(ABC):
             -- self.visual_names (str list):        specify the images that you want to display and save.
             -- self.optimizers (optimizer list):    define and initialize optimizers. You can define one optimizer for each network. If two networks are updated at the same time, you can use itertools.chain to group them. See cycle_gan_model.py for an example.
         """
+        super().__init__()
         self.opt = opt
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
