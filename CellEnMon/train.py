@@ -86,6 +86,10 @@ validation_link_to_gauge_matching ={
 }
 
 
+# Threshold for binary classification
+threshold = 0.2
+probability_threshold = 0.001 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+
 # Detection:
 #[[  52 2099]
 #  [   3  150]]
@@ -259,7 +263,7 @@ if __name__ == '__main__':
     #                         model.test()
                         model.test()
                         
-                        # model.optimize_parameters(is_train=False)  # calculate loss functions
+                        model.optimize_parameters(is_train=False)  # calculate loss functions
                         visuals = model.get_current_visuals()
                         validation_losses = model.get_current_losses(is_train=False) # validation for each batch, i.e 64 samples
 
@@ -332,7 +336,7 @@ if __name__ == '__main__':
                                                 (mmin, mmax), x in
                                                 zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
                                     mask=model.fake_B_det_sigmoid.cpu().detach().numpy()[0][0]
-                                    mask=(mask >= 0.0625).astype(int)
+                                    mask=(mask >= probability_threshold).astype(int)
                                     model_t=model.t
                                     
                                     if "fake_B" not in key:
@@ -454,11 +458,12 @@ if __name__ == '__main__':
                             wandb.log({title: fig})
                     
                     
-                    # Threshold for binary classification
-                    threshold = 0.2
+
 
                     # Convert continuous values to binary class labels
-                    fake_gauge_vec_det_labels = (fake_gauge_vec_det >= 0.0625).astype(int) # 0.2/3.2=0.0625, ie. we consider a wet event over 0.2 mm/h
+                    with np.printoptions(threshold=np.inf):
+                        print(f"fake_gauge_vec_det:{fake_gauge_vec_det}")
+                    fake_gauge_vec_det_labels = (fake_gauge_vec_det >= probability_threshold).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
                     
                     CM=confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_det_labels)

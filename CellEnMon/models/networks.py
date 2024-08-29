@@ -365,7 +365,7 @@ class ResnetGenerator(nn.Module):
                                          bias=use_bias),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7), norm_layer(output_nc)] #, 
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7)] #, norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
@@ -381,8 +381,8 @@ class ResnetGenerator(nn.Module):
 
             # Remove the extra dimension added by split
             
-            return (reg, det)
-        return output1
+            return (torch.relu(reg), det)
+        return torch.relu(output1)
 
 
 class ResnetBlock(nn.Module):
