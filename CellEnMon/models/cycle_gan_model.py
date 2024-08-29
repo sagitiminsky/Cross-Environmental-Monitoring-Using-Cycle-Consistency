@@ -200,7 +200,7 @@ class CycleGANModel(BaseModel):
         pos_weight = torch.tensor([19.0], dtype=torch.float32, device="cuda:0") # wet event is x times more important (!!!)
         
 
-        targets=(self.real_B > 0.0625).float() # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        targets=(self.real_B >= 0.0625).float() # 0.2/3.2=0.0625, ie. we consider a wet event over 
         bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='sum') # | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
