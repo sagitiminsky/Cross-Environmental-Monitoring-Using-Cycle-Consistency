@@ -197,21 +197,21 @@ class CycleGANModel(BaseModel):
         
         self.rr_norm = self.alpha + 1 - self.rain_rate_prob
         self.att_norm = self.alpha + 1 - self.attenuation_prob
-        pos_weight = torch.tensor([20.0], dtype=torch.float32, device="cuda:0") # wet event is x times more important (!!!)
+        pos_weight = torch.tensor([19.0], dtype=torch.float32, device="cuda:0") # wet event is x times more important (!!!)
         
 
-        targets=(self.real_B > 0.0625).float()
-        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='sum') # << more numerically stable
+        targets=(self.real_B > 0.0625).float() # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='sum') # | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
-        self.loss_bce_B=bce_weight_loss(self.fake_B_det, targets) # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        self.loss_bce_B=bce_weight_loss(self.fake_B_det, targets) 
         
         self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max()) #
         
         # GAN loss D_B(G_A(A))
         self.loss_G_B = self.loss_bce_B #+ self.loss_G_B_only
 
-        
+        # print(f"self.fake_B_det_sigmoid:{self.fake_B_det_sigmoid}")
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
 #         print(f"fake_B: {self.fake_B.shape}")
 #         print(f"fake_A: {self.fake_A.shape}")
