@@ -88,7 +88,7 @@ validation_link_to_gauge_matching ={
 
 # Threshold for binary classification
 threshold = 0.2
-probability_threshold = 0.001 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+probability_threshold = 0.075 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
 
 # Detection:
 #[[  52 2099]
