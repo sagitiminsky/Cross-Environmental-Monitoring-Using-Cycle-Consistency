@@ -261,7 +261,7 @@ if __name__ == '__main__':
         #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
                             
     #                         model.test()
-                        model.test()
+                        # model.eval()
                         
                         model.optimize_parameters(is_train=False)  # calculate loss functions
                         visuals = model.get_current_visuals()
@@ -449,8 +449,12 @@ if __name__ == '__main__':
                                         seq_len+=len(cond)
                                         real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
                                         fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
-                                        fake_gauge_vec_det=np.append(fake_gauge_vec_det, model.fake_B_det_sigmoid.cpu().detach().numpy())
+                                        sample=model.fake_B_det_sigmoid.cpu().detach().numpy()
+                                        fake_gauge_vec_det=np.append(fake_gauge_vec_det, sample)
                                         T=np.append(T,np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t]))
+
+                                        with np.printoptions(threshold=np.inf):
+                                            print(f"batch #{batch_counter}:{sample}")
 
 
 
@@ -461,8 +465,6 @@ if __name__ == '__main__':
 
 
                     # Convert continuous values to binary class labels
-                    with np.printoptions(threshold=np.inf):
-                        print(f"fake_gauge_vec_det:{fake_gauge_vec_det}")
                     fake_gauge_vec_det_labels = (fake_gauge_vec_det >= probability_threshold).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
                     
