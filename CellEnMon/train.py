@@ -193,6 +193,10 @@ if __name__ == '__main__':
             print(f'End of epoch:{epoch}')
             
         if epoch % 1000 == 0:# and epoch>0:
+            
+            if ENABLE_WANDB:
+                wandb.log({**training_losses})
+            
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
@@ -203,6 +207,7 @@ if __name__ == '__main__':
             
             
             print(f"Validation links:{validation_links}")
+            validation_losses={}
             for link_counter,link in enumerate(validation_links):
                 for gauge in validation_link_to_gauge_matching[link]:
                     print(f"with gauge: {gauge}")
@@ -267,6 +272,10 @@ if __name__ == '__main__':
 
                         if ENABLE_WANDB:
                             # Visualize
+                            for key, value in list(validation_losses.items()):
+                                validation_losses[f"#{batch_counter}-{key}"] = value
+                            wandb.log({**validation_losses})
+
                             metadata=[0]*4
 
             
@@ -436,14 +445,10 @@ if __name__ == '__main__':
 #                                         print(f"real_B: {real_rain_add.shape}")
 #                                         print(f"fake_B: {fake_rain_add.shape}")
                                         
-                                        cond=np.array([True if r >= 0.2 or f >=0.1 else False for r,f in zip(real_rain_add,fake_rain_add)])
-                                        to_add=np.sum((real_rain_add-fake_rain_add)[cond]**2)
+
 
                                         #to_add,seq_len_add,real_vec_add,fake_vec_add,T_add=v.real_and_fake_metric(path_to_real_gauge,file_path)
 
-                                        print(f"to add:{to_add}")
-                                        real_fake_gauge_metric[f"{link}-{gauge}"]+=to_add
-                                        seq_len+=len(cond)
                                         real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
                                         fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
                                         sample=model.fake_B_det_sigmoid.cpu().detach().numpy()
@@ -493,8 +498,8 @@ if __name__ == '__main__':
                     preprocessed_time_wanb=[t for t in preprocessed_time]
                     
                     
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake, label="CML")
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.real, "--", label="Gauge")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, label="CML")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="Gauge")
                     axs_preprocessed.grid()
 #                         axs_preprocessed.xlabel("Time")
 #                         axs_preprocessed.ylabel("Accumulated Rain Rate [mm]")
@@ -515,8 +520,10 @@ if __name__ == '__main__':
 
                     wandb.log({f"Virtual (CML) vs Real (Gauge) - {link}-{gauge}":fig_preprocessed})
                     
-                    if seq_len:
-                        wandb.log({f"RMSE-{link}-{gauge}":np.sqrt(real_fake_gauge_metric[f"{link}-{gauge}"]/seq_len)})
+                    #RMSSE
+                    cond=[True if r >= 0.2 or f >=0.1 else False for r,f in zip(p.real, p.fake)]
+                    N=len(p.fake)
+                    wandb.log({f"RMSSE-{link}-{gauge}":np.sqrt(np.sum((p.real-p.fake)**2)/N)})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))
@@ -539,10 +546,9 @@ if __name__ == '__main__':
 
                 
         
-            if ENABLE_WANDB and epoch>0:
+            if ENABLE_WANDB:
 #                 wandb.log({"Real vs Fake": rain_fig})
                 
-                wandb.log({**training_losses, **validation_losses})
                 path_to_html = f"{v.out_path}/{v.map_name}"
 #                 v.draw_cml_map()
 #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})

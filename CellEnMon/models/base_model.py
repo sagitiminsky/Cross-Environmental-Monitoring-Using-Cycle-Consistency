@@ -172,7 +172,7 @@ class BaseModel(ABC, nn.Module):
 
         for name in self.loss_names:
             if isinstance(name, str):
-                errors_ret[f'{dataset_type_str}/{name}'] = float(getattr(self, f'loss_' + name))  # float(...) works for both scalar tensor and float number
+                errors_ret[f'{dataset_type_str}/{name}'] = float(getattr(self, f'loss_{dataset_type_str}_' + name))  # float(...) works for both scalar tensor and float number
         return errors_ret
 
     def save_networks(self, epoch):
