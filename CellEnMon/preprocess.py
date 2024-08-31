@@ -22,6 +22,9 @@ class Preprocess:
         df.loc[df['RainAmoutPredicted[mm/h]'] < 0.1, 'RainAmoutPredicted[mm/h]'] = 0
         df.loc[df['RainAmoutPredicted[mm/h]'] > 3.2, 'RainAmoutPredicted[mm/h]'] = 3.2
 
+        self.fake=np.asarray(df['RainAmoutPredicted[mm/h]'],dtype=float)
+        self.real=np.asarray(df['RainAmoutGT[mm/h]'],dtype=float)
+
         # Accumulative
         df["RainAmoutPredictedCumSum"]=df['RainAmoutPredicted[mm/h]'].cumsum()
         df["RainAmoutGTCumSum"]=df['RainAmoutGT[mm/h]'].cumsum()
@@ -32,8 +35,8 @@ class Preprocess:
 
         self.excel_data=df
 
-        self.fake = np.asarray(self.excel_data["RainAmoutPredictedCumSum"])
-        self.real = np.asarray(self.excel_data["RainAmoutGTCumSum"])
+        self.fake_cumsum = np.asarray(self.excel_data["RainAmoutPredictedCumSum"])
+        self.real_cumsum = np.asarray(self.excel_data["RainAmoutGTCumSum"])
 
 
 

@@ -24,7 +24,7 @@ def get_norm_layer(norm_type='instance'):
     For BatchNorm, we use learnable affine parameters and track running statistics (mean/stddev).
     For InstanceNorm, we do not use learnable affine parameters. We do not track running statistics.
     """
-    if norm_type == 'batch':
+    if norm_type == 'batch': #https://discuss.pytorch.org/t/nan-when-i-use-batch-normalization-batchnorm1d/322/9
         norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=True)
     elif norm_type == 'instance':
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
@@ -342,15 +342,16 @@ class ResnetGenerator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
+
         model = [nn.Conv1d(input_nc, ngf, kernel_size=7, bias=use_bias),
-                 norm_layer(ngf),
+                 nn.BatchNorm1d(ngf),
                  nn.ReLU(True)]
 
         n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
-                      norm_layer(ngf * mult * 2),
+                      nn.BatchNorm1d(ngf * mult * 2),
                       nn.ReLU(True)]
 
         mult = 2 ** n_downsampling
@@ -363,9 +364,9 @@ class ResnetGenerator(nn.Module):
                                          kernel_size=5, stride=1,
                                          padding=0, output_padding=0,
                                          bias=use_bias),
-                      norm_layer(int(ngf * mult / 2)),
+                      nn.BatchNorm1d(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7)] #, norm_layer(output_nc)
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7), nn.BatchNorm1d(output_nc)] # norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
@@ -381,8 +382,8 @@ class ResnetGenerator(nn.Module):
 
             # Remove the extra dimension added by split
             
-            return (reg, det)
-        return output1
+            return (relu(reg), det)
+        return relu(output1)
 
 
 class ResnetBlock(nn.Module):
@@ -422,7 +423,7 @@ class ResnetBlock(nn.Module):
         else:
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
-        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='valid', bias=use_bias), norm_layer(dim), nn.ReLU(True)]
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='valid', bias=use_bias), nn.BatchNorm1d(dim), nn.ReLU(True)]
         if use_dropout:
             conv_block += [nn.Dropout(0.5)]
 
