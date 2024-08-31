@@ -169,6 +169,7 @@ class BaseModel(ABC, nn.Module):
         """Return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
         errors_ret = OrderedDict()
         dataset_type_str="Train" if is_train else "Validation"
+
         for name in self.loss_names:
             if isinstance(name, str):
                 errors_ret[f'{dataset_type_str}/{name}'] = float(getattr(self, f'loss_' + name))  # float(...) works for both scalar tensor and float number

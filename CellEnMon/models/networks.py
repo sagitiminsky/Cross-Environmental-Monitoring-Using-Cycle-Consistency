@@ -346,7 +346,7 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 2
+        n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
@@ -381,8 +381,8 @@ class ResnetGenerator(nn.Module):
 
             # Remove the extra dimension added by split
             
-            return (torch.relu(reg), det)
-        return torch.relu(output1)
+            return (reg, det)
+        return output1
 
 
 class ResnetBlock(nn.Module):

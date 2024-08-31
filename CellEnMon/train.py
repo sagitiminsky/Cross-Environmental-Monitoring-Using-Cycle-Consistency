@@ -88,7 +88,7 @@ validation_link_to_gauge_matching ={
 
 # Threshold for binary classification
 threshold = 0.2
-probability_threshold = 0.075 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+probability_threshold = 0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
 
 # Detection:
 #[[  52 2099]
@@ -260,10 +260,7 @@ if __name__ == '__main__':
         #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
         #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
                             
-    #                         model.test()
-                        # model.eval()
-                        
-                        model.optimize_parameters(is_train=False)  # calculate loss functions
+                        model.optimize_parameters(is_train=False)
                         visuals = model.get_current_visuals()
                         validation_losses = model.get_current_losses(is_train=False) # validation for each batch, i.e 64 samples
 

@@ -47,8 +47,9 @@ class CycleGANModel(BaseModel):
             opt (Option class)  -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
+        dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
+        self.loss_names = [f"{dataset_type_str}_{loss}" for loss in ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']]
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ['real_A', 'fake_B', 'rec_A', "fake_B_det", "fake_B_det_sigmoid"]
         visual_names_B = ['real_B', 'fake_A', 'rec_B']
@@ -107,6 +108,7 @@ class CycleGANModel(BaseModel):
         self.gague = input['gague']
         self.link = input['link']
         self.t = input['Time']
+        self.dataset_type="Train" if isTrain else "Validation"
         
         if isTrain:
             self.alpha=0.2
@@ -209,7 +211,7 @@ class CycleGANModel(BaseModel):
         self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max()) #
         
         # GAN loss D_B(G_A(A))
-        self.loss_G_B = self.loss_bce_B #+ self.loss_G_B_only
+        self.loss_G_B = self.loss_bce_B + self.loss_G_B_only
 
         # print(f"self.fake_B_det_sigmoid:{self.fake_B_det_sigmoid}")
 #         print(f"rr_prob: {self.rain_rate_prob.shape}")
@@ -238,7 +240,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) #* self.rr_norm
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_B #+ self.loss_G_A + self.loss_cycle_A + self.loss_cycle_B #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_B + self.loss_cycle_A # +  #+ self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A, self.real_A)
         self.loss_mse_B = self.mse(self.fake_B, self.real_B)
@@ -253,20 +255,32 @@ class CycleGANModel(BaseModel):
     def optimize_parameters(self, is_train=True):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         
-
+        dataset_type_str="Train" if is_train else "Validation"
         self.forward()  # compute fake images and reconstruction images.
         # G_A and G_B
         self.set_requires_grad([self.netD_A, self.netD_B], False)  # Ds require no gradients when optimizing Gs
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
-
-        if is_train: 
-            self.backward_G()  # calculate gradients for G_A and G_B
+        self.backward_G()  # calculate gradients for G_A and G_B
+        if is_train:
             self.optimizer_G.step()  # update G_A and G_B's weights
+        
         # D_A and D_B
         self.set_requires_grad([self.netD_A, self.netD_B], True)
-        self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero
-
+        self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero        
+        self.backward_D_A()  # calculate gradients for D_A
+        self.backward_D_B()  # calculate graidents for D_B
         if is_train:
-            self.backward_D_A()  # calculate gradients for D_A
-            self.backward_D_B()  # calculate graidents for D_B
             self.optimizer_D.step()  # update D_A and D_B's weights
+
+
+        #resetting attrs ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
+        setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
+        setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
+        setattr(self,f"loss_{self.dataset_type}_cycle_A",self.loss_cycle_A)
+        setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
+        setattr(self,f"loss_{self.dataset_type}_G_B",self.loss_G_B)
+        setattr(self,f"loss_{self.dataset_type}_cycle_B",self.loss_cycle_B)
+        setattr(self,f"loss_{self.dataset_type}_mse_A",self.loss_mse_A)
+        setattr(self,f"loss_{self.dataset_type}_mse_B",self.loss_mse_B)
+        setattr(self,f"loss_{self.dataset_type}_G_B_only",self.loss_G_B_only)
+        setattr(self,f"loss_{self.dataset_type}_bce_B",self.loss_bce_B)
