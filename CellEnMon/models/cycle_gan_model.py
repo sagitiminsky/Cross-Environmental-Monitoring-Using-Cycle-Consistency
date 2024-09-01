@@ -208,7 +208,7 @@ class CycleGANModel(BaseModel):
         
         self.loss_bce_B=bce_weight_loss(self.fake_B_det, targets) 
         
-        self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max()) #
+        self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max()) # 
         
         # GAN loss D_B(G_A(A))
         self.loss_G_B = self.loss_bce_B + self.loss_G_B_only

@@ -153,10 +153,12 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, direction=direction)
     elif netG == 'resnet_3blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=3, direction=direction)
+    elif netG == 'unet_64':
+        net = UnetGenerator(input_nc, output_nc, 3, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_128':
-        net = UnetGenerator(input_nc, output_nc, 1, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+        net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
-        net = UnetGenerator(input_nc, output_nc, 1, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+        net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -323,7 +325,7 @@ class ResnetGenerator(nn.Module):
     We adapt Torch code and idea from Justin Johnson's neural style transfer project(https://github.com/jcjohnson/fast-neural-style)
     """
 
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='reflect', direction="AtoB"):
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=9, padding_type='zero', direction="AtoB"):
         """Construct a Resnet-based generator
 
         Parameters:
@@ -347,7 +349,7 @@ class ResnetGenerator(nn.Module):
                  nn.BatchNorm1d(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 1
+        n_downsampling = 3
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
@@ -366,7 +368,8 @@ class ResnetGenerator(nn.Module):
                                          bias=use_bias),
                       nn.BatchNorm1d(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7), nn.BatchNorm1d(output_nc)] # norm_layer(output_nc)
+                      
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7)] # norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
@@ -382,8 +385,8 @@ class ResnetGenerator(nn.Module):
 
             # Remove the extra dimension added by split
             
-            return (relu(reg), det)
-        return relu(output1)
+            return (reg, det)
+        return output1
 
 
 class ResnetBlock(nn.Module):
@@ -423,7 +426,7 @@ class ResnetBlock(nn.Module):
         else:
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
-        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='valid', bias=use_bias), nn.BatchNorm1d(dim), nn.ReLU(True)]
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), nn.BatchNorm1d(dim), nn.ReLU(True)]
         if use_dropout:
             conv_block += [nn.Dropout(0.5)]
 
@@ -436,7 +439,7 @@ class ResnetBlock(nn.Module):
             p = 0
         else:
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='valid', bias=use_bias), norm_layer(dim)]
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), norm_layer(dim)]
 
         return nn.Sequential(*conv_block)
 
@@ -584,8 +587,8 @@ class NLayerDiscriminator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
-        kw = 4
-        padw = 1
+        kw = 5
+        padw = 0
         sequence = [nn.Conv1d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw),
                     nn.LeakyReLU(0.2, True)]
         nf_mult = 1

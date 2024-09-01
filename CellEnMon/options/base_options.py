@@ -34,13 +34,13 @@ class BaseOptions():
         parser.add_argument('--output_nc_A', type=int, default=2, help='# of output channels') # in the output we want to duplicate the 64 vector | one for regression the other for classification, so 4x64->2x64
         parser.add_argument('--input_nc_B', type=int, default=1, help='# of input channels')
         parser.add_argument('--output_nc_B', type=int, default=4, help='# of output channels') # here we go from Rain to Att, so 1x64->4x64
-        parser.add_argument('--ngf', type=int, default=1024, help='# of gen filters in the last conv layer')
-        parser.add_argument('--ndf', type=int, default=256, help='# of discrim filters in the first conv layer')
+        parser.add_argument('--ngf', type=int, default=16, help='# of gen filters in the last conv layer')
+        parser.add_argument('--ndf', type=int, default=16, help='# of discrim filters in the first conv layer')
         parser.add_argument('--netD', type=str, default='n_layers',
                             help='specify discriminator architecture [n_layers]. n_layers allows you to specify the layers in the discriminator')
         parser.add_argument('--netG', type=str, default='resnet_9blocks', help='specify generator architecture [n_layers]')
-        parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers')
-        parser.add_argument('--norm', type=str, default='none',
+        parser.add_argument('--n_layers_D', type=int, default=1, help='only used if netD==n_layers')
+        parser.add_argument('--norm', type=str, default='batch',
                             help='instance normalization or batch normalization [instance | batch | none | layer]')
         parser.add_argument('--init_type', type=str, default='kaiming',
                             help='network initialization [normal | xavier | kaiming | orthogonal]')
@@ -53,7 +53,7 @@ class BaseOptions():
         parser.add_argument('--serial_batches', action='store_true', default=True,
                             help='if true, takes images in order to make batches, otherwise takes them randomly')
         parser.add_argument('--num_threads', default=4, type=int, help='# threads for loading data')
-        parser.add_argument('--batch_size', type=int, default=2, help='input batch size')
+        parser.add_argument('--batch_size', type=int, default=1, help='input batch size')
         # parser.add_argument('--load_size', type=int, default=286, help='scale images to this size')
         # parser.add_argument('--crop_size', type=int, default=256, help='then crop to this size')
         parser.add_argument('--max_dataset_size', type=int, default=float("inf"),
