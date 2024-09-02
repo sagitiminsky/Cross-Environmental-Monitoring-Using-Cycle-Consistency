@@ -131,16 +131,27 @@ class CycleGANModel(BaseModel):
             self.data_transformation = input['data_transformation']
             self.metadata_transformation = input['metadata_transformation']
             
+    def norm_zero_one(self,x):
+        epsilon=1e-6
+        min_val = torch.min(x,dim=2)[0].unsqueeze(2).repeat(1,1,64)
+        max_val = torch.max(x,dim=2)[0].unsqueeze(2).repeat(1,1,64)
+        
+        return (x - min_val) / (max_val - min_val + epsilon)
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""          
+        
+        ## >> B
         fake_B = self.netG_A(self.real_A, dir="AtoB")  # G_A(A)
-        self.fake_B=fake_B[0]
+
+        self.fake_B=self.norm_zero_one(fake_B[0])
         self.fake_B_det = fake_B[1]
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
-        self.rec_A = self.netG_B(self.fake_B, dir="BtoA")
-        self.fake_A = self.netG_B(self.real_B,dir="BtoA")  # G_B(B)
-        self.rec_B = self.netG_A(self.fake_A,dir="AtoB")[0]  # G_A(G_B(B))
+
+        ## >> A
+        self.rec_A = self.norm_zero_one(self.netG_B(self.fake_B, dir="BtoA"))
+        self.fake_A = self.norm_zero_one(self.netG_B(self.real_B,dir="BtoA"))  # G_B(B)
+        self.rec_B = self.norm_zero_one(self.netG_A(self.fake_A,dir="AtoB")[0])  # G_A(G_B(B))
         
         
         
