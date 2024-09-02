@@ -369,7 +369,7 @@ class ResnetGenerator(nn.Module):
                       nn.BatchNorm1d(int(ngf * mult / 2)),
                       nn.ReLU(True)]
                       
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7)] # norm_layer(output_nc)
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7), norm_layer(output_nc)] # 
         self.model = nn.Sequential(*model)
         
 
@@ -587,8 +587,8 @@ class NLayerDiscriminator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
-        kw = 5
-        padw = 0
+        kw = 4
+        padw = 1
         sequence = [nn.Conv1d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw),
                     nn.LeakyReLU(0.2, True)]
         nf_mult = 1
@@ -613,6 +613,7 @@ class NLayerDiscriminator(nn.Module):
             
 
         sequence += [nn.Conv1d(ndf * nf_mult, 1, kernel_size=7, stride=1, padding=0)]  # output 1 channel prediction map
+        sequence += [nn.Sigmoid()]
 #         sequence += [nn.ConvTranspose1d(in_channels=1, out_channels=input_nc, kernel_size=8, stride=8, padding=1, output_padding=1)]
 
 #         sequence += [nn.ReflectionPad1d((0,1))]
@@ -621,7 +622,7 @@ class NLayerDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         out=self.model(input)
-        #print(f"D: {out.shape}")
+        # print(f"D: {out.shape}")
         return self.model(input)
 
 
