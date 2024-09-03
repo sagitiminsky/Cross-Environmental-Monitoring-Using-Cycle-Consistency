@@ -25,7 +25,7 @@ def get_norm_layer(norm_type='instance'):
     For InstanceNorm, we do not use learnable affine parameters. We do not track running statistics.
     """
     if norm_type == 'batch': #https://discuss.pytorch.org/t/nan-when-i-use-batch-normalization-batchnorm1d/322/9
-        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=True)
+        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=False)
     elif norm_type == 'instance':
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
     elif norm_type == 'none':
@@ -349,7 +349,7 @@ class ResnetGenerator(nn.Module):
                  nn.BatchNorm1d(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 1
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
@@ -369,7 +369,7 @@ class ResnetGenerator(nn.Module):
                       nn.BatchNorm1d(int(ngf * mult / 2)),
                       nn.ReLU(True)]
                       
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7), norm_layer(output_nc)] # 
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7),] #   norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
@@ -439,7 +439,7 @@ class ResnetBlock(nn.Module):
             p = 0
         else:
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), norm_layer(dim)]
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias),norm_layer(dim)] #
 
         return nn.Sequential(*conv_block)
 
@@ -613,7 +613,7 @@ class NLayerDiscriminator(nn.Module):
             
 
         sequence += [nn.Conv1d(ndf * nf_mult, 1, kernel_size=7, stride=1, padding=0)]  # output 1 channel prediction map
-        sequence += [nn.Sigmoid()]
+        # sequence += [nn.Sigmoid()]
 #         sequence += [nn.ConvTranspose1d(in_channels=1, out_channels=input_nc, kernel_size=8, stride=8, padding=1, output_padding=1)]
 
 #         sequence += [nn.ReflectionPad1d((0,1))]
