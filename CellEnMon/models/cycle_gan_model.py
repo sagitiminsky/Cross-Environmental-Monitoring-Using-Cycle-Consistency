@@ -83,7 +83,7 @@ class CycleGANModel(BaseModel):
             self.fake_B_pool = SignalPool(opt.pool_size)  # create signal buffer to store previously generated signals
             # define loss functions
             self.criterionGAN = GANLoss(opt.gan_mode).to(self.device)  # define GAN loss.
-            self.criterionCycle = torch.nn.L1Loss()
+            self.criterionCycle = torch.nn.L1Loss(reduction='none')
             self.criterionIdt = torch.nn.L1Loss()
             self.mse = torch.nn.MSELoss()
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
@@ -169,10 +169,10 @@ class CycleGANModel(BaseModel):
         """
         # Real
         pred_real = netD(real)
-        loss_D_real = self.criterionGAN(pred_real, True) #weight=weight
+        loss_D_real = self.criterionGAN(pred_real, True)
         # Fake
         pred_fake = netD(fake.detach())
-        loss_D_fake = self.criterionGAN(pred_fake, False) #weight=weight
+        loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
         loss_D = loss_D_real + loss_D_fake
         loss_D.backward()
@@ -214,27 +214,32 @@ class CycleGANModel(BaseModel):
         
 
         targets=(self.real_B >= 0.0625).float() # 0.2/3.2=0.0625, ie. we consider a wet event over 
-        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight) #, reduction='sum' | << more numerically stable
+        bce_weight_loss=nn.BCEWithLogitsLoss(reduction='none') #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
-        self.loss_bce_B=bce_weight_loss(self.fake_B_det, targets) 
+        self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * self.rr_norm)
         
-        self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True, weight=self.rr_norm.max()) # 
+        self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True) # weight=self.rr_norm.max()
         
         # GAN loss D_B(G_A(A))
         self.loss_G_B = self.loss_bce_B + self.loss_G_B_only
 
+        # print(self.real_A.shape)
+        # print(self.real_B.shape)
+        # print(self.fake_A.shape)
+        # print(self.fake_B.shape)
+        # assert(False)
         # print(f"self.fake_B_det_sigmoid:{self.fake_B_det_sigmoid}")
-#         print(f"rr_prob: {self.rain_rate_prob.shape}")
-#         print(f"fake_B: {self.fake_B.shape}")
-#         print(f"fake_A: {self.fake_A.shape}")
-#         print(f"D(fake_B): {self.netD_B(self.fake_B).shape}")
-#         print(f"D(fake_A): {self.netD_A(self.fake_A).shape}")
-#         print(f"fake_B * rr_prob: {(self.fake_B * self.rain_rate_prob).shape}")
-#         print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
+        # print(f"rr_prob: {self.rain_rate_prob.shape}")
+        # print(f"fake_B: {self.fake_B.shape}")
+        # print(f"fake_A: {self.fake_A.shape}")
+        # print(f"D(fake_B): {self.netD_B(self.fake_B).shape}")
+        # print(f"D(fake_A): {self.netD_A(self.fake_A).shape}")
+        # print(f"fake_B * rr_prob: {(self.fake_B * self.rain_rate_prob).shape}")
+        # print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
         
         # GAN loss D_A(G_B(B))
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), True) #, weight=self.att_norm.mean()
+        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_A), True) #weight=self.rr_norm.max(), weight=self.att_norm.mean()
         
         
         #TODO: confusion matrix, f1-score, fss
@@ -245,10 +250,10 @@ class CycleGANModel(BaseModel):
         mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
 
         
-        self.loss_cycle_A = lambda_A * self.criterionCycle(self.rec_A, self.real_A) #* self.att_norm
+        self.loss_cycle_A = lambda_A * torch.sum(self.criterionCycle(self.rec_A, self.real_A) * self.rr_norm) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * self.criterionCycle(self.rec_B, self.real_B) #* self.rr_norm
+        self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B, self.real_B) * self.rr_norm) #* self.rr_norm
         
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_B + self.loss_cycle_A # +  #+ self.loss_idt_A + self.loss_idt_B
