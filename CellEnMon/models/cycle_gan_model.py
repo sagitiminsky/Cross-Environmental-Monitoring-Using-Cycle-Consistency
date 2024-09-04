@@ -218,7 +218,7 @@ class CycleGANModel(BaseModel):
         
 
         targets=(self.real_B >= 0.0625).float() # 0.2/3.2=0.0625, ie. we consider a wet event over 
-        bce_weight_loss=nn.BCEWithLogitsLoss(reduction='none') #,  | << more numerically stable
+        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none') #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
         self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * self.rr_norm)
