@@ -15,7 +15,7 @@ class Preprocess:
         self.link = link.replace("-","_")
         self.gauge=gauge
                 
-        d = {'Time':T, 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake*detections }
+        d = {'Time':T, 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake * detections } #
         df = pd.DataFrame(data=d)
 
         # Replace neg fake values with zero

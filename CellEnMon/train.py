@@ -88,7 +88,7 @@ validation_link_to_gauge_matching ={
 
 # Threshold for binary classification
 threshold = 0.2
-probability_threshold = 0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+probability_threshold = 0.2 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
 
 # Detection:
 #[[  52 2099]
@@ -280,7 +280,7 @@ if __name__ == '__main__':
 
             
                             with torch.no_grad():
-                                visuals = OrderedDict([('real_A', torch.unsqueeze(A.T,0)),('fake_B', model.fake_B),('rec_A', model.rec_A), ('real_B',torch.unsqueeze(B.T,0)),('fake_A', model.fake_A),('rec_B', model.rec_B)])
+                                visuals = OrderedDict([('real_A', torch.unsqueeze(A.T,0)),('fake_B', model.fake_B_sigmoid),('rec_A', model.rec_A_sigmoid), ('real_B',torch.unsqueeze(B.T,0)),('fake_A', model.fake_A_sigmoid),('rec_B', model.rec_B_sigmoid)])
             
             
                             fig, axs = plt.subplots(2, 3, figsize=(15, 15))
@@ -346,6 +346,9 @@ if __name__ == '__main__':
                                     model_t=model.t
                                     
                                     if "fake_B" not in key:
+
+
+
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
@@ -355,7 +358,7 @@ if __name__ == '__main__':
                                                 label=label
                                                 )
                                     else:
-                                        cmap=["red" if m else "black" for m in mask]
+                                        cmap="red" #["red" if m else "black" for m in mask]
                                         
                                         ax.scatter([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
@@ -464,8 +467,6 @@ if __name__ == '__main__':
                             wandb.log({title: fig})
                     
                     
-
-
                     # Convert continuous values to binary class labels
                     fake_gauge_vec_det_labels = (fake_gauge_vec_det >= probability_threshold).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
