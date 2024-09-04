@@ -51,8 +51,8 @@ class CycleGANModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        visual_names_A = ['real_A', 'fake_B', 'rec_A', "fake_B_det", "fake_B_det_sigmoid"]
-        visual_names_B = ['real_B', 'fake_A', 'rec_B']
+        visual_names_A = ['real_A', 'fake_B_sigmoid', 'rec_A_sigmoid', "fake_B_det", "fake_B_det_sigmoid"]
+        visual_names_B = ['real_B', 'fake_A_sigmoid', 'rec_B_sigmoid']
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt_B=G_A(B) ad idt_A=G_A(B)
             visual_names_A.append('idt_B')
             visual_names_B.append('idt_A')
@@ -145,13 +145,17 @@ class CycleGANModel(BaseModel):
         fake_B = self.netG_A(self.real_A, dir="AtoB")  # G_A(A)
 
         self.fake_B=fake_B[0] #self.norm_zero_one()
+        self.fake_B_sigmoid=torch.sigmoid(self.fake_B)
         self.fake_B_det = fake_B[1]
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
 
         ## >> A
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
+        self.rec_A_sigmoid=torch.sigmoid(self.rec_A)
         self.fake_A = self.netG_B(self.real_B,dir="BtoA") #self.norm_zero_one()  # G_B(B)
+        self.fake_A_sigmoid=torch.sigmoid(self.fake_A)
         self.rec_B = self.netG_A(self.fake_A,dir="AtoB")[0] #self.norm_zero_one()  # G_A(G_B(B))
+        self.rec_B_sigmoid=torch.sigmoid(self.rec_B)
         
         
         
@@ -222,7 +226,7 @@ class CycleGANModel(BaseModel):
         self.loss_G_B_only=self.criterionGAN(self.netD_B(self.fake_B), True) # weight=self.rr_norm.max()
         
         # GAN loss D_B(G_A(A))
-        self.loss_G_B = self.loss_bce_B + self.loss_G_B_only
+        self.loss_G_B = self.loss_G_B_only + self.loss_bce_B
 
         # print(self.real_A.shape)
         # print(self.real_B.shape)
@@ -250,16 +254,16 @@ class CycleGANModel(BaseModel):
         mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
 
         
-        self.loss_cycle_A = lambda_A * torch.sum(self.criterionCycle(self.rec_A, self.real_A) * self.rr_norm) #* self.att_norm
+        self.loss_cycle_A = lambda_A * torch.sum(self.criterionCycle(self.rec_A_sigmoid, self.real_A) * self.rr_norm) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B, self.real_B) * self.rr_norm) #* self.rr_norm
+        self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * self.rr_norm) #* self.rr_norm
         
         # combined loss and calculate gradients
         self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_B + self.loss_cycle_A # +  #+ self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
-        self.loss_mse_A = self.mse(self.fake_A, self.real_A)
-        self.loss_mse_B = self.mse(self.fake_B, self.real_B)
+        self.loss_mse_A = self.mse(self.fake_A_sigmoid, self.real_A)
+        self.loss_mse_B = self.mse(self.fake_B_sigmoid, self.real_B)
    
     
     def min_max_inv_transform(self,x, mmin, mmax):

@@ -25,7 +25,7 @@ def get_norm_layer(norm_type='instance'):
     For InstanceNorm, we do not use learnable affine parameters. We do not track running statistics.
     """
     if norm_type == 'batch': #https://discuss.pytorch.org/t/nan-when-i-use-batch-normalization-batchnorm1d/322/9
-        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=False)
+        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=True)
     elif norm_type == 'instance':
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
     elif norm_type == 'none':
@@ -260,7 +260,7 @@ class GANLoss(nn.Module):
             target_tensor = self.fake_label
         return target_tensor.expand_as(prediction)
 
-    def __call__(self, prediction, target_is_real, weight=torch.ones([1], device='cuda:0')): #
+    def __call__(self, prediction, target_is_real): #
         """Calculate loss given Discriminator's output and grount truth labels.
 
         Parameters:
@@ -272,7 +272,6 @@ class GANLoss(nn.Module):
         """
         if self.gan_mode in ['lsgan', 'vanilla']:
             target_tensor = self.get_target_tensor(prediction, target_is_real)
-            self.loss= nn.BCEWithLogitsLoss(weight=weight)
             loss = self.loss(prediction, target_tensor)
         elif self.gan_mode == 'wgangp':
             if target_is_real:
@@ -340,20 +339,20 @@ class ResnetGenerator(nn.Module):
         assert(n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
         if type(norm_layer) == functools.partial:
-            use_bias = norm_layer.func == nn.InstanceNorm2d
+            use_bias = norm_layer.func == nn.InstanceNorm1d
         else:
-            use_bias = norm_layer == nn.InstanceNorm2d
+            use_bias = norm_layer == nn.InstanceNorm1d
 
 
-        model = [nn.Conv1d(input_nc, ngf, kernel_size=7, bias=use_bias),
-                 nn.BatchNorm1d(ngf),
+        model = [nn.Conv1d(input_nc, ngf, kernel_size=7, bias=True),
+                 norm_layer(ngf),
                  nn.ReLU(True)]
 
         n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
-                      nn.BatchNorm1d(ngf * mult * 2),
+                      norm_layer(ngf * mult * 2),
                       nn.ReLU(True)]
 
         mult = 2 ** n_downsampling
@@ -366,7 +365,7 @@ class ResnetGenerator(nn.Module):
                                          kernel_size=5, stride=1,
                                          padding=0, output_padding=0,
                                          bias=use_bias),
-                      nn.BatchNorm1d(int(ngf * mult / 2)),
+                      norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
                       
         model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7),] #   norm_layer(output_nc)
@@ -426,7 +425,7 @@ class ResnetBlock(nn.Module):
         else:
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
-        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), nn.BatchNorm1d(dim), nn.ReLU(True)]
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), norm_layer(dim), nn.ReLU(True)]
         if use_dropout:
             conv_block += [nn.Dropout(0.5)]
 
@@ -439,7 +438,7 @@ class ResnetBlock(nn.Module):
             p = 0
         else:
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias),norm_layer(dim)] #
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), norm_layer(dim)] #
 
         return nn.Sequential(*conv_block)
 
@@ -583,9 +582,9 @@ class NLayerDiscriminator(nn.Module):
         """
         super(NLayerDiscriminator, self).__init__()
         if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
-            use_bias = norm_layer.func == nn.InstanceNorm2d
+            use_bias = norm_layer.func == nn.InstanceNorm1d
         else:
-            use_bias = norm_layer == nn.InstanceNorm2d
+            use_bias = norm_layer == nn.InstanceNorm1d
 
         kw = 4
         padw = 1
