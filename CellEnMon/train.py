@@ -358,7 +358,7 @@ if __name__ == '__main__':
                                                 label=label
                                                 )
                                     else:
-                                        cmap="red" #["red" if m else "black" for m in mask]
+                                        cmap=["red" if m else "black" for m in mask]
                                         
                                         ax.scatter([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
