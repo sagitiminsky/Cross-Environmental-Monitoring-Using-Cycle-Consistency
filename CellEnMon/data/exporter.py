@@ -64,15 +64,9 @@ class Domain:
         return ((x - mmin) / (mmax - mmin + epsilon))
 
     def normalizer(self, mat):
-        min = mat.min()
-        max = mat.max()
-        epsilon=1e-6
-        if max - min == 0:
-            mat = 0
-            min = 0 
-            max = epsilon
-        else:
-            mat=(mat - min) / (max - min)
+        min = -88.5 if self.db_type=="dme" else 0
+        max = 17 if self.db_type=="dme" else 3.3
+        mat=(mat - min) / (max - min)
 
         return max, min, mat
 
