@@ -308,14 +308,14 @@ if __name__ == '__main__':
                             
                                 for i in range(4):
                                     if 'A' in key:
-                                        mmin = -88.5 #model.data_transformation['link']['min'][0].numpy()
-                                        mmax = 17 #model.data_transformation['link']['max'][0].numpy()
+                                        mmin = model.data_transformation['link']['min'][0].detach().cpu() #-88.5 
+                                        mmax = model.data_transformation['link']['max'][0].detach().cpu() #17 #
                                         label = DME_KEYS[i]
                                         data_vector = torch.tensor(data[i])
                                         
                                     else:
-                                        mmin = 0 #model.data_transformation['gague']['min'][0].numpy()
-                                        mmax = 3.2 #model.data_transformation['gague']['max'][0].numpy()
+                                        mmin = model.data_transformation['gague']['min'][0].detach().cpu() #0
+                                        mmax = model.data_transformation['gague']['max'][0].detach().cpu() # 3.2
                                         mmin_B=mmin
                                         mmax_B=mmax
                                         label = IMS_KEYS[0]
@@ -433,8 +433,8 @@ if __name__ == '__main__':
                                     if True: #is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
                                         print("Virtual link is in range with real gauge...")
 #                                         path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{gague_metadata[0]}_{gague_metadata[1]}.csv'}"  
-                                        real_rain_add=min_max_inv_transform(B, mmin=0, mmax=3.2).view(1, 1, 64)
-                                        fake_rain_add=min_max_inv_transform(model.fake_B_sigmoid, mmin=0, mmax=3.2).view(1, 1, 64)
+                                        real_rain_add=min_max_inv_transform(B, mmin=mmin, mmax=mmax).view(1, 1, 64)
+                                        fake_rain_add=min_max_inv_transform(model.fake_B_sigmoid, mmin=mmin, mmax=mmax).view(1, 1, 64)
                                         
 
                                         
