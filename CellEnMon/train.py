@@ -434,7 +434,7 @@ if __name__ == '__main__':
                                         print("Virtual link is in range with real gauge...")
 #                                         path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{gague_metadata[0]}_{gague_metadata[1]}.csv'}"  
                                         real_rain_add=min_max_inv_transform(B, mmin=0, mmax=3.2).view(1, 1, 64)
-                                        fake_rain_add=min_max_inv_transform(model.fake_B, mmin=0, mmax=3.2).view(1, 1, 64)
+                                        fake_rain_add=min_max_inv_transform(model.fake_B_sigmoid, mmin=0, mmax=3.2).view(1, 1, 64)
                                         
 
                                         
@@ -522,9 +522,9 @@ if __name__ == '__main__':
                     wandb.log({f"Virtual (CML) vs Real (Gauge) - {link}-{gauge}":fig_preprocessed})
                     
                     #RMSSE
-                    cond=[True if r >= 0.2 or f >=0.1 else False for r,f in zip(p.real, p.fake)]
+                    cond=[True if r >= 0.2 or f >= 0.1 else False for r,f in zip(p.real, p.fake)]
                     N=len(p.fake)
-                    wandb.log({f"RMSSE-{link}-{gauge}":np.sqrt(np.sum((p.real-p.fake)**2)/N)})
+                    wandb.log({f"RMSSE-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake)**2)/N)})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))
