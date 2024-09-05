@@ -25,7 +25,7 @@ def get_norm_layer(norm_type='instance'):
     For InstanceNorm, we do not use learnable affine parameters. We do not track running statistics.
     """
     if norm_type == 'batch': #https://discuss.pytorch.org/t/nan-when-i-use-batch-normalization-batchnorm1d/322/9
-        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=False)
+        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=True)
     elif norm_type == 'instance':
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
     elif norm_type == 'none':
@@ -338,13 +338,10 @@ class ResnetGenerator(nn.Module):
         """
         assert(n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
-        if type(norm_layer) == functools.partial:
-            use_bias = norm_layer.func == nn.InstanceNorm1d
-        else:
-            use_bias = norm_layer == nn.InstanceNorm1d
 
+        use_bias=True
 
-        model = [nn.Conv1d(input_nc, ngf, kernel_size=7, bias=True),
+        model = [nn.Conv1d(input_nc, ngf, kernel_size=7, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
