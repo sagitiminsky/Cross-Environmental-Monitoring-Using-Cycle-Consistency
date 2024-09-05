@@ -190,15 +190,15 @@ class CellenmonDataset(BaseDataset):
         if self.opt.is_only_dynamic:
             A = A.reshape(4, self.opt.slice_dist)
             B = B.reshape(1, self.opt.slice_dist)
-        else:
+        # else:
             
-            A=A.reshape(self.opt.slice_dist,4)
-            B=B.reshape(self.opt.slice_dist,1)
-            for a, b in zip(data_dict_A['norm_metadata'], data_dict_B['norm_metadata']):
-                A, B = self.pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
+        #     A=A.reshape(self.opt.slice_dist,4)
+        #     B=B.reshape(self.opt.slice_dist,1)
+        #     for a, b in zip(data_dict_A['norm_metadata'], data_dict_B['norm_metadata']):
+        #         A, B = self.pad_with_respect_to_direction(A, B, RIGHT, value_a=a, value_b=b)
 
-            A=A.T # (8,256)
-            B=B.T # (5,256)
+        #     A=A.T # (8,256)
+        #     B=B.T # (5,256)
 
         A_attenuation_normalized=A #np.array(list(self.dataset.dme.db[selected_link]['data'].values()))
         A_attenuation=self.min_max_inv_transform(x=A_attenuation_normalized,mmin=-88.5,mmax=17)
