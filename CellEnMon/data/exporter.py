@@ -60,15 +60,20 @@ class Domain:
         return y
 
     def norm(self, x, mmin, mmax):
-        if mmin == mmax:
-            return 0
-        else:
-            return ((x - mmin) / (mmax - mmin))
+        epsilon=1e-6
+        return ((x - mmin) / (mmax - mmin + epsilon))
 
     def normalizer(self, mat):
         min = mat.min()
         max = mat.max()
-        mat = 0 if max - min == 0 else ((mat - min) / (max - min))
+        epsilon=1e-6
+        if max - min == 0:
+            mat = 0
+            min = 0 
+            max = epsilon
+        else:
+            mat=(mat - min) / (max - min)
+
         return max, min, mat
 
 

@@ -47,6 +47,7 @@ class CycleGANModel(BaseModel):
             opt (Option class)  -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
+        self.epsilon=1e-2
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
@@ -104,7 +105,7 @@ class CycleGANModel(BaseModel):
         """
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample" if AtoB else 'rain_rate_sample'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device)
+        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) + self.epsilon
         self.gague = input['gague']
         self.link = input['link']
         self.t = input['Time']
@@ -140,11 +141,10 @@ class CycleGANModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""          
-        
         ## >> B
-        fake_B = self.netG_A(self.real_A, dir="AtoB")  # G_A(A)
+        fake_B = self.netG_A(self.real_A, dir="AtoB")   # G_A(A)
 
-        self.fake_B=fake_B[0] #self.norm_zero_one()
+        self.fake_B=fake_B[0] + self.epsilon #self.norm_zero_one()
         self.fake_B_sigmoid=torch.sigmoid(self.fake_B)
         self.fake_B_det = fake_B[1]
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
