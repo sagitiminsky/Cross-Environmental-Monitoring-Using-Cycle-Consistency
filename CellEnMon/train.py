@@ -89,7 +89,7 @@ validation_link_to_gauge_matching ={
 # RUN threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
 # Threshold for binary classification
 threshold = float(os.environ["threshold"]) #0.2
-probability_threshold = float(os.environ["probability_threshold"]) #0.5 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
 
 # Detection:
 #[[  52 2099]
@@ -258,14 +258,14 @@ if __name__ == '__main__':
 #                         print("rain_rate_sample")
 #                         print(torch.unsqueeze(B.T,0))
                         
-                        # model.eval()
+                        
                         model.set_input(loader,isTrain=False)
                         #with torch.no_grad():
                             
 
         #                     print(f"Slected link:{model.link} | Selected gauge:{model.gague}")
         #                     print(f"Validation dataset B:{data_B.db_normalized.keys()}")
-                            
+                        # model.eval()    
                         model.optimize_parameters(is_train=False)
                         visuals = model.get_current_visuals()
                         validation_losses = model.get_current_losses(is_train=False) # validation for each batch, i.e 64 samples
