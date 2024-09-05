@@ -85,10 +85,10 @@ validation_link_to_gauge_matching ={
 
 }
 
-
+# RUN threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
 # Threshold for binary classification
-threshold = 0.2
-probability_threshold = 0.2 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+threshold = float(os.environ["threshold"]) #0.2
+probability_threshold = float(os.environ["probability_threshold"]) #0.5 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
 
 # Detection:
 #[[  52 2099]
@@ -297,8 +297,8 @@ if __name__ == '__main__':
 #                                     N = 8 if 'A' in key else 5
 
                                 # Plot Data
-                                data = visuals[key][0].cpu().detach().numpy().T
-                                assert(data.shape == (64,N))
+                                data = visuals[key][0].cpu().detach().numpy()
+                                assert(data.shape == (N,64))
                                 
                 
 
@@ -306,12 +306,12 @@ if __name__ == '__main__':
 #                                     print(f"{key}")
 #                                     print(data)
                             
-                                for i in range(1, 5):
+                                for i in range(4):
                                     if 'A' in key:
                                         mmin = -88.5 #model.data_transformation['link']['min'][0].numpy()
                                         mmax = 17 #model.data_transformation['link']['max'][0].numpy()
                                         label = DME_KEYS[i]
-                                        data_vector = torch.tensor(data[:, i - 1])
+                                        data_vector = torch.tensor(data[i])
                                         
                                     else:
                                         mmin = 0 #model.data_transformation['gague']['min'][0].numpy()
@@ -320,27 +320,27 @@ if __name__ == '__main__':
                                         mmax_B=mmax
                                         label = IMS_KEYS[1]
                                         # Convert the desired part of the data to a PyTorch tensor
-                                        data_vector = torch.tensor(data.T[0])
+                                        data_vector = torch.tensor(data[0])
 #                                         data_vector[data_vector < 0.1] = 0
 
     
 #                                     data_vector = torch.clamp(data_vector, min=0, max=1)
 
                     
-                                    metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
-                                    metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
-                                    metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
-                                    metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
+                                    # metadata_lat_max = float(model.metadata_transformation['metadata_lat_max'])
+                                    # metadata_lat_min = float(model.metadata_transformation['metadata_lat_min'])
+                                    # metadata_long_max = float(model.metadata_transformation['metadata_long_max'])
+                                    # metadata_long_min = float(model.metadata_transformation['metadata_long_min'])
 
-                                    metadata_inv_zip = [
-                                        (metadata_long_max, metadata_long_min),
-                                        (metadata_lat_max, metadata_lat_min),
-                                        (metadata_long_max, metadata_long_min),
-                                        (metadata_lat_max, metadata_lat_min)
-                                    ]
-                                    metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
-                                                (mmin, mmax), x in
-                                                zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
+                                    # metadata_inv_zip = [
+                                    #     (metadata_long_max, metadata_long_min),
+                                    #     (metadata_lat_max, metadata_lat_min),
+                                    #     (metadata_long_max, metadata_long_min),
+                                    #     (metadata_lat_max, metadata_lat_min)
+                                    # ]
+                                    # metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
+                                    #             (mmin, mmax), x in
+                                    #             zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
                                     mask=model.fake_B_det_sigmoid.cpu().detach().numpy()[0][0]
                                     mask=(mask >= probability_threshold).astype(int)
                                     model_t=model.t
