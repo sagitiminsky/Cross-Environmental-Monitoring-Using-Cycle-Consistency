@@ -101,8 +101,8 @@ probability_threshold = float(os.environ["probability_threshold"]) #0.5 # a*e^(-
 #Formatting Date
 date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
 
-DME_KEYS = {1: 'PowerTLTMmax[dBm]', 2: 'PowerTLTMmin[dBm]', 3: 'PowerRLTMmax[dBm]', 4: 'PowerRLTMmin[dBm]'}
-IMS_KEYS = {1: 'RainAmout[mm/h]'}
+DME_KEYS = {0: 'PowerTLTMmax[dBm]', 1: 'PowerTLTMmin[dBm]', 2: 'PowerRLTMmax[dBm]', 3: 'PowerRLTMmin[dBm]'}
+IMS_KEYS = {0: 'RainAmout[mm/h]'}
 
 
 def toggle(t):
@@ -318,7 +318,7 @@ if __name__ == '__main__':
                                         mmax = 3.2 #model.data_transformation['gague']['max'][0].numpy()
                                         mmin_B=mmin
                                         mmax_B=mmax
-                                        label = IMS_KEYS[1]
+                                        label = IMS_KEYS[0]
                                         # Convert the desired part of the data to a PyTorch tensor
                                         data_vector = torch.tensor(data[0])
 #                                         data_vector[data_vector < 0.1] = 0

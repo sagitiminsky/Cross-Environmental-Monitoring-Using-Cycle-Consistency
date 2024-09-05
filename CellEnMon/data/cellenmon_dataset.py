@@ -20,6 +20,7 @@ from math import radians, cos, sin, asin, sqrt
 import torch.nn.functional as F
 from datetime import datetime
 import config
+import os
 
 # from data.image_folder import make_dataset
 # from PIL import Image
@@ -188,8 +189,16 @@ class CellenmonDataset(BaseDataset):
         B = torch.Tensor(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]))
         
         if self.opt.is_only_dynamic:
-            A = A.reshape(4, self.opt.slice_dist)
-            B = B.reshape(1, self.opt.slice_dist)
+            A = A.T
+            B = B.unsqueeze(0)
+
+        assert(A.shape==((4,self.opt.slice_dist)))
+        assert(B.shape==((1,self.opt.slice_dist)))
+
+
+        if "DEBUG" in os.environ and int(os.environ["DEBUG"]):
+            print(f"A: {A}")
+            print(f"B: {B}")
         # else:
             
         #     A=A.reshape(self.opt.slice_dist,4)
