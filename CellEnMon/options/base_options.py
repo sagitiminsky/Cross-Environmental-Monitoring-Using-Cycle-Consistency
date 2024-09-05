@@ -46,7 +46,7 @@ class BaseOptions():
                             help='network initialization [normal | xavier | kaiming | orthogonal]')
         parser.add_argument('--init_gain', type=float, default=0.02,
                             help='scaling factor for normal, xavier and orthogonal.')
-        parser.add_argument('--no_dropout', action='store_true', default=True, help='no dropout for the generator')
+        parser.add_argument('--no_dropout', action='store_true', default=False, help='no dropout for the generator')
         # dataset parameters
         parser.add_argument('--dataset_mode', type=str, default='cellenmon', help='chooses how datasets are loaded. [unaligned | aligned | single | colorization]')
         parser.add_argument('--direction', type=str, default='AtoB', help='AtoB or BtoA')
