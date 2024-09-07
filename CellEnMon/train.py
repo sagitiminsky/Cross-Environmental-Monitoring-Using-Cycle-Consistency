@@ -193,7 +193,7 @@ if __name__ == '__main__':
         if epoch%100==0:
             print(f'End of epoch:{epoch}')
             
-        if epoch % 1000 == 0:# and epoch>0:
+        if epoch % 1000 == 0: #and epoch>0
             
             if ENABLE_WANDB:
                 wandb.log({**training_losses})
