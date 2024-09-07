@@ -155,7 +155,7 @@ class Extractor:
     def stats(self):
         #rain
         wet_events_hist = self.calculate_wet_events_histogram()
-        wet_events_precentage = len(wet_events_hist[wet_events_hist > 0]) / len(wet_events_hist)
+        wet_events_precentage = len(wet_events_hist[wet_events_hist > 0.2]) / len(wet_events_hist)
 
         counts, bins = np.histogram(wet_events_hist)
         counts = [x / sum(counts) for x in counts]
