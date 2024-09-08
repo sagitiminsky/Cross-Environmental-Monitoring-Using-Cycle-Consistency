@@ -187,12 +187,12 @@ class CycleGANModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         #fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A) #
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A_sigmoid) #
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B) # weight=self.rain_rate_prob.mean()
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B_sigmoid) # weight=self.rain_rate_prob.mean()
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -221,12 +221,12 @@ class CycleGANModel(BaseModel):
         
 
         targets=(self.real_B >= 0.0625).float() # 0.2/3.2=0.0625, ie. we consider a wet event over 
-        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none') #pos_weight=pos_weight,  | << more numerically stable
+        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none') #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
         self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * self.rr_norm)
         
-        self.D_B=self.netD_B(self.fake_B)
+        self.D_B=self.netD_B(self.fake_B_sigmoid)
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
         
         # GAN loss D_B(G_A(A))
@@ -251,7 +251,7 @@ class CycleGANModel(BaseModel):
             print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
         
         # GAN loss D_A(G_B(B))
-        self.D_A=self.netD_A(self.fake_A)
+        self.D_A=self.netD_A(self.fake_A_sigmoid)
         self.loss_G_A = self.criterionGAN(self.D_A, True) #weight=self.rr_norm.max(), weight=self.att_norm.mean()
         
         
@@ -269,7 +269,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * self.rr_norm) #* self.rr_norm
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_B + self.loss_cycle_A # +  #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_G_B + self.loss_G_A + self.loss_cycle_B + self.loss_cycle_A #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A_sigmoid, self.real_A)

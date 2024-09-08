@@ -198,7 +198,7 @@ def define_D(input_nc, ndf, netD, n_layers_D=4, norm='batch', init_type='normal'
     norm_layer = get_norm_layer(norm_type=norm)
 
     if netD == 'basic':  # default PatchGAN classifier
-        net = NLayerDiscriminator(input_nc, ndf, n_layers=6, norm_layer=norm_layer)
+        net = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer)
     elif netD == 'n_layers':  # more options #<---- selected
         net = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer)
     elif netD == 'pixel':     # classify if each pixel is real or fake
@@ -576,6 +576,11 @@ class NLayerDiscriminator(nn.Module):
             ndf (int)       -- the number of filters in the last conv layer
             n_layers (int)  -- the number of conv layers in the discriminator
             norm_layer      -- normalization layer
+
+            n_layers 6: 13-9-4
+            n_layers 3: 15-17-2
+
+
         """
         super(NLayerDiscriminator, self).__init__()
         if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
@@ -583,7 +588,7 @@ class NLayerDiscriminator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
-        model = [nn.Conv1d(input_nc, ndf, kernel_size=13, bias=use_bias),
+        model = [nn.Conv1d(input_nc, ndf, kernel_size=15, bias=use_bias),
                  norm_layer(ndf),
                  nn.LeakyReLU(0.2, True),
                  nn.Dropout(0.5)
@@ -591,13 +596,13 @@ class NLayerDiscriminator(nn.Module):
 
         for i in range(n_layers):  # add downsampling layers
             mult = 2 ** i
-            model += [nn.Conv1d(ndf * mult, ndf * mult * 2, kernel_size=9, stride=1, padding=0, bias=use_bias),
+            model += [nn.Conv1d(ndf * mult, ndf * mult * 2, kernel_size=17, stride=1, padding=0, bias=use_bias),
                       norm_layer(ndf * mult * 2),
                       nn.LeakyReLU(0.2, True),
                       nn.Dropout(0.5)
             ]
 
-        model += [nn.Conv1d(ndf * mult * 2, 1, kernel_size=4, stride=1, padding=0)]  # output 1 channel prediction map
+        model += [nn.Conv1d(ndf * mult * 2, 1, kernel_size=2, stride=1, padding=0)]  # output 1 channel prediction map
         # sequence += [nn.Conv1d(1, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
         self.model = nn.Sequential(*model)
 
