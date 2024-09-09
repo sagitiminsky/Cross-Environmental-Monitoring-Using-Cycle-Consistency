@@ -196,10 +196,7 @@ if __name__ == '__main__':
         if epoch%100==0 and epoch>0: # TRAIN
             print(f'End of epoch:{epoch}')
 
-            for key in current_losses:
-                training_losses[key] = training_losses[key]/(100*len(train_dataset))
             
-            wandb.log({**training_losses})
             
             
         if epoch % 1000 == 0 and epoch>0: # VALIDATION
@@ -556,7 +553,10 @@ if __name__ == '__main__':
         
             if ENABLE_WANDB:
 #                 wandb.log({"Real vs Fake": rain_fig})
-                
+                for key in current_losses:
+                    training_losses[key] = training_losses[key]/(1000*len(train_dataset))
+            
+                wandb.log({**training_losses})
                 path_to_html = f"{v.out_path}/{v.map_name}"
 #                 v.draw_cml_map()
 #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
