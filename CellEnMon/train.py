@@ -25,6 +25,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 import numpy as np
 from matplotlib import colors
+from collections import defaultdict
 
 ENABLE_WANDB = True
 GROUPS = {
@@ -160,7 +161,7 @@ if __name__ == '__main__':
     
     
     for epoch in range(train_opt.n_epochs + train_opt.n_epochs_decay):
-        
+        training_losses=defaultdict(float)
 #         direction = "AtoB" if (epoch // 10) % 2 == 0 else "BtoA"
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()  # timer for data loading per iteration
@@ -188,16 +189,22 @@ if __name__ == '__main__':
 
             iter_data_time = time.time()
         
-        training_losses = model.get_current_losses(is_train=True)
+            current_losses=model.get_current_losses(is_train=True)
+            for key in current_losses:
+                training_losses[key] += current_losses[key]
         
-        if epoch%100==0:
+        if epoch%100==0 and epoch>0: # TRAIN
             print(f'End of epoch:{epoch}')
+
+            for key in current_losses:
+                training_losses[key] = training_losses[key]/(100*len(train_dataset))
             
-        if epoch % 1000 == 0: #and epoch>0
+            wandb.log({**training_losses})
             
-            if ENABLE_WANDB:
-                wandb.log({**training_losses})
             
+        if epoch % 1000 == 0 and epoch>0: # VALIDATION
+            
+
             print("Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
@@ -208,7 +215,6 @@ if __name__ == '__main__':
             
             
             print(f"Validation links:{validation_links}")
-            validation_losses={}
             for link_counter,link in enumerate(validation_links):
                 for gauge in validation_link_to_gauge_matching[link]:
                     print(f"with gauge: {gauge}")
