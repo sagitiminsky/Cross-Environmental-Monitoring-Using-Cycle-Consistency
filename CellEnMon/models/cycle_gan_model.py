@@ -50,7 +50,7 @@ class CycleGANModel(BaseModel):
         self.noise = torch.rand(64, device="cuda:0")*0.03 #0.1/3.2
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only'] #'D_A', 'D_B', 'G_A',
+        self.loss_names = ['D_A', 'D_B', 'G_A','cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only'] #
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ['real_A', 'fake_B_sigmoid', 'rec_A_sigmoid', "fake_B_det", "fake_B_det_sigmoid"]
         visual_names_B = ['real_B', 'fake_A_sigmoid', 'rec_B_sigmoid']
@@ -175,10 +175,10 @@ class CycleGANModel(BaseModel):
         """
         # Real
         pred_real = netD(real)
-        loss_D_real = self.criterionGAN(pred_real, True)*0
+        loss_D_real = self.criterionGAN(pred_real, True)
         # Fake
         pred_fake = netD(fake.detach())
-        loss_D_fake = self.criterionGAN(pred_fake, False)*0
+        loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
         loss_D = loss_D_real + loss_D_fake
         if self.isTrain:
@@ -231,7 +231,7 @@ class CycleGANModel(BaseModel):
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
         
         # GAN loss D_B(G_A(A))
-        self.loss_G_B =  self.loss_bce_B #self.loss_G_B_only
+        self.loss_G_B =  self.loss_bce_B + self.loss_G_B_only
 
         if "DEBUG" in os.environ and int(os.environ["DEBUG"]):
             print(f"real A:{self.real_A.shape}")
@@ -270,7 +270,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * self.rr_norm) #* self.rr_norm
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_G_B + self.loss_cycle_B + self.loss_cycle_A #+ self.loss_G_A + self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_G_B + self.loss_cycle_B + self.loss_cycle_A + self.loss_G_A #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A_sigmoid, self.real_A)
@@ -301,16 +301,16 @@ class CycleGANModel(BaseModel):
 
         self.set_requires_grad([self.netD_A, self.netD_B], True)
         self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero        
-        # self.backward_D_A()  # calculate gradients for D_A
-        # self.backward_D_B()  # calculate graidents for D_B
-        # if self.isTrain:
-        #     self.optimizer_D.step()  # update D_A and D_B's weights
+        self.backward_D_A()  # calculate gradients for D_A
+        self.backward_D_B()  # calculate graidents for D_B
+        if self.isTrain:
+            self.optimizer_D.step()  # update D_A and D_B's weights
 
 
-        ##resetting attrs ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
-        # setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
-        # setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
-        # setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
+        #resetting attrs ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
+        setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
+        setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
+        setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
 
         setattr(self,f"loss_{self.dataset_type}_cycle_A",self.loss_cycle_A)
         setattr(self,f"loss_{self.dataset_type}_G_B",self.loss_G_B)
