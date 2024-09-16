@@ -153,6 +153,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, direction=direction)
     elif netG == 'resnet_3blocks':
         net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=3, direction=direction)
+    elif netG == 'resnet_1blocks':
+        net = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=1, direction=direction)
     elif netG == 'unet_64':
         net = UnetGenerator(input_nc, output_nc, 3, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_128':
@@ -345,7 +347,7 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 2
+        n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=5, stride=1, padding=0, bias=use_bias),
@@ -591,7 +593,7 @@ class NLayerDiscriminator(nn.Module):
         model = [nn.Conv1d(input_nc, ndf, kernel_size=15, bias=use_bias),
                  norm_layer(ndf),
                  nn.LeakyReLU(0.2, True),
-                 nn.Dropout(0.5)
+                #  nn.Dropout(0.5)
                  ]
 
         for i in range(n_layers):  # add downsampling layers
@@ -599,7 +601,7 @@ class NLayerDiscriminator(nn.Module):
             model += [nn.Conv1d(ndf * mult, ndf * mult * 2, kernel_size=17, stride=1, padding=0, bias=use_bias),
                       norm_layer(ndf * mult * 2),
                       nn.LeakyReLU(0.2, True),
-                      nn.Dropout(0.5)
+                    #   nn.Dropout(0.5)
             ]
 
         model += [nn.Conv1d(ndf * mult * 2, 1, kernel_size=2, stride=1, padding=0)]  # output 1 channel prediction map
