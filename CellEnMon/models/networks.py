@@ -590,7 +590,7 @@ class NLayerDiscriminator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
-        model = [nn.Conv1d(input_nc, ndf, kernel_size=15, bias=use_bias),
+        model = [nn.Conv1d(input_nc, ndf, kernel_size=13, bias=use_bias),
                  norm_layer(ndf),
                  nn.LeakyReLU(0.2, True),
                 #  nn.Dropout(0.5)
@@ -598,13 +598,13 @@ class NLayerDiscriminator(nn.Module):
 
         for i in range(n_layers):  # add downsampling layers
             mult = 2 ** i
-            model += [nn.Conv1d(ndf * mult, ndf * mult * 2, kernel_size=17, stride=1, padding=0, bias=use_bias),
+            model += [nn.Conv1d(ndf * mult, ndf * mult * 2, kernel_size=9, stride=1, padding=0, bias=use_bias),
                       norm_layer(ndf * mult * 2),
                       nn.LeakyReLU(0.2, True),
                     #   nn.Dropout(0.5)
             ]
 
-        model += [nn.Conv1d(ndf * mult * 2, 1, kernel_size=2, stride=1, padding=0)]  # output 1 channel prediction map
+        model += [nn.Conv1d(ndf * mult * 2, 1, kernel_size=4, stride=1, padding=0)]  # output 1 channel prediction map
         # sequence += [nn.Conv1d(1, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
         self.model = nn.Sequential(*model)
 
