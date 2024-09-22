@@ -270,7 +270,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * self.rr_norm) #* self.rr_norm
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_cycle_B + self.loss_cycle_A + self.loss_bce_B + 0.1 * (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_cycle_B + self.loss_cycle_A + self.loss_bce_B + self.loss_G_B_only + self.loss_G_A #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A_sigmoid, self.real_A)
