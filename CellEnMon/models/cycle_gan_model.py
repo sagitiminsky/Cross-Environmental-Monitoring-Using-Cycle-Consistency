@@ -47,10 +47,11 @@ class CycleGANModel(BaseModel):
             opt (Option class)  -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
-        self.noise = torch.rand(64, device="cuda:0")*0.03 #0.1/3.2
+        self.noise = torch.zeros(64, device="cuda:0")
+        self.noise[0]=0.01
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['D_A', 'D_B', 'G_A','cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only'] #
+        self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B'] #'D_A', 'D_B', 'G_A','G_B_only'
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ['real_A', 'fake_B_sigmoid', 'rec_A_sigmoid', "fake_B_det", "fake_B_det_sigmoid"]
         visual_names_B = ['real_B', 'fake_A_sigmoid', 'rec_B_sigmoid']
@@ -105,7 +106,7 @@ class CycleGANModel(BaseModel):
         """
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample" if AtoB else 'rain_rate_sample'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) #+ self.noise
+        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) + self.noise
         self.gague = input['gague']
         self.link = input['link']
         self.t = input['Time']
@@ -217,11 +218,11 @@ class CycleGANModel(BaseModel):
         
         self.rr_norm = self.alpha + 1 - self.rain_rate_prob
         self.att_norm = self.alpha + 1 - self.attenuation_prob
-        const=81.66 if self.dataset_type=="Train" else 33.44
+        const=81.66 if self.dataset_type=="Train" else 1 #33.44
         pos_weight = torch.tensor([const], dtype=torch.float32, device="cuda:0") # wet event is x times more important (!!!)
         
 
-        targets=(self.real_B >= 0.0625).float() # 0.2/3.2=0.0625, ie. we consider a wet event over 
+        targets=(self.real_B >= 0.0909).float() # 0.3/3.3=0.0909, ie. we consider a wet event over 
         bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none') #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
@@ -270,7 +271,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * self.rr_norm) #* self.rr_norm
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_cycle_B + self.loss_cycle_A + self.loss_bce_B + self.loss_G_B_only + self.loss_G_A #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_cycle_B + self.loss_cycle_A + self.loss_bce_B #+ 0.001 * (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A_sigmoid, self.real_A)
@@ -299,18 +300,18 @@ class CycleGANModel(BaseModel):
         
         # D_A and D_B
 
-        self.set_requires_grad([self.netD_A, self.netD_B], True)
-        self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero        
-        self.backward_D_A()  # calculate gradients for D_A
-        self.backward_D_B()  # calculate graidents for D_B
-        if self.isTrain:
-            self.optimizer_D.step()  # update D_A and D_B's weights
+        # self.set_requires_grad([self.netD_A, self.netD_B], True)
+        # self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero        
+        # self.backward_D_A()  # calculate gradients for D_A
+        # self.backward_D_B()  # calculate graidents for D_B
+        # if self.isTrain:
+        #     self.optimizer_D.step()  # update D_A and D_B's weights
 
 
         #resetting attrs ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
-        setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
-        setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
-        setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
+        # setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
+        # setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
+        # setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
 
         setattr(self,f"loss_{self.dataset_type}_cycle_A",self.loss_cycle_A)
         setattr(self,f"loss_{self.dataset_type}_G_B",self.loss_G_B)

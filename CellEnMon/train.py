@@ -87,9 +87,10 @@ validation_link_to_gauge_matching ={
 
 }
 
-# RUN threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
+#[9.76205359e-01 1.34832568e+01 1.05645701e-03]
+#threshold=0.3 probability_threshold=0.016 python3 CellEnMon/train.py
 # Threshold for binary classification
-threshold = float(os.environ["threshold"]) #0.2
+threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
 
 # Detection:
