@@ -226,7 +226,12 @@ class CycleGANModel(BaseModel):
         bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none') #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
-        self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * self.rr_norm)
+        #adjust for type-1 erros
+        adjusted_weights=self.rr_norm.clone()
+        adjusted_weights[(self.fake_B_det_sigmoid > 0.016) & (targets==0)] *= 5
+
+        
+        self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * adjusted_weights)
         
         self.D_B=self.netD_B(self.fake_B_sigmoid)
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
@@ -265,7 +270,7 @@ class CycleGANModel(BaseModel):
         mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
 
         
-        self.loss_cycle_A = lambda_A * torch.sum(self.criterionCycle(self.rec_A_sigmoid, self.real_A) * self.rr_norm) #* self.att_norm
+        self.loss_cycle_A = lambda_A * torch.sum(self.criterionCycle(self.rec_A_sigmoid, self.real_A)) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
         self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * self.rr_norm) #* self.rr_norm

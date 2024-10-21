@@ -92,6 +92,7 @@ validation_link_to_gauge_matching ={
 # Threshold for binary classification
 threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+DO_VALIDATION_EACH_ITERS=10000
 
 # Detection:
 #[[  52 2099]
@@ -200,7 +201,7 @@ if __name__ == '__main__':
             
             
             
-        if epoch % 1000 == 0 and epoch>0: # VALIDATION
+        if epoch % DO_VALIDATION_EACH_ITERS == 0 and epoch>0: # VALIDATION
             
 
             print(f"Validation in progress... Current lr is: {model.optimizers[0].param_groups[0]['lr']}")
@@ -313,7 +314,7 @@ if __name__ == '__main__':
                             
                                 for i in range(4):
                                     if 'A' in key:
-                                        mmin = -88.5 
+                                        mmin = -45.3 
                                         mmax = 17 
                                         label = DME_KEYS[i]
                                         data_vector = torch.tensor(data[i])
@@ -555,7 +556,7 @@ if __name__ == '__main__':
             if ENABLE_WANDB:
 #                 wandb.log({"Real vs Fake": rain_fig})
                 for key in current_losses:
-                    training_losses[key] = training_losses[key]/(1000*len(train_dataset))
+                    training_losses[key] = training_losses[key]/(DO_VALIDATION_EACH_ITERS*len(train_dataset))
             
                 wandb.log({**training_losses})
                 path_to_html = f"{v.out_path}/{v.map_name}"
