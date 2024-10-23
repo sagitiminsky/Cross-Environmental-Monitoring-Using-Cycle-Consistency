@@ -106,7 +106,7 @@ class CycleGANModel(BaseModel):
         """
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample" if AtoB else 'rain_rate_sample'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) + self.noise
+        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) #+ self.noise
         self.gague = input['gague']
         self.link = input['link']
         self.t = input['Time']
@@ -228,7 +228,7 @@ class CycleGANModel(BaseModel):
         
         #adjust for type-1 erros
         adjusted_weights=self.rr_norm.clone()
-        adjusted_weights[(self.fake_B_det_sigmoid > 0.016) & (targets==0)] *= 5
+        adjusted_weights[(self.fake_B_det_sigmoid > 0.016) & (targets==0)] *= 10
 
         
         self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * adjusted_weights)
