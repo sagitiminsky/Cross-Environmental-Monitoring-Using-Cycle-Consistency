@@ -47,8 +47,7 @@ class CycleGANModel(BaseModel):
             opt (Option class)  -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
-        self.noise = torch.zeros(64, device="cuda:0")
-        self.noise[0]=0.01
+        self.noise = torch.ones(64, device="cuda:0")*0.01
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B'] #'D_A', 'D_B', 'G_A','G_B_only'
@@ -106,7 +105,7 @@ class CycleGANModel(BaseModel):
         """
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample" if AtoB else 'rain_rate_sample'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) #+ self.noise
+        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) + self.noise
         self.gague = input['gague']
         self.link = input['link']
         self.t = input['Time']
@@ -114,7 +113,7 @@ class CycleGANModel(BaseModel):
         self.isTrain=isTrain
         
         if isTrain:
-            self.alpha=0.2
+            self.alpha=0.02
             self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
             self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
             self.rain_rate_prob = input['rain_rate_prob'].to(self.device)
@@ -222,13 +221,13 @@ class CycleGANModel(BaseModel):
         pos_weight = torch.tensor([const], dtype=torch.float32, device="cuda:0") # wet event is x times more important (!!!)
         
 
-        targets=(self.real_B >= 0.0909).float() # 0.3/3.3=0.0909, ie. we consider a wet event over 
-        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction='none') #,  | << more numerically stable
+        targets=(self.real_B >= 0.06).float() # 0.2/3.3=0.06, ie. we consider a wet event over 
+        bce_weight_loss=nn.BCEWithLogitsLoss(pos_weight=self.rr_norm, reduction='none') #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
         #adjust for type-1 erros
         adjusted_weights=self.rr_norm.clone()
-        adjusted_weights[(self.fake_B_det_sigmoid > 0.016) & (targets==0)] *= 10
+        adjusted_weights[(self.fake_B_det_sigmoid > 0.016) & (targets==0)] *= 100
 
         
         self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * adjusted_weights)
@@ -273,10 +272,10 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = lambda_A * torch.sum(self.criterionCycle(self.rec_A_sigmoid, self.real_A)) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * self.rr_norm) #* self.rr_norm
+        self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * adjusted_weights) #* self.rr_norm
         
         # combined loss and calculate gradients
-        self.loss_G = self.loss_cycle_B + self.loss_cycle_A + self.loss_bce_B #+ 0.001 * (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_cycle_B + self.loss_cycle_A + self.loss_bce_B #+ 0.1 * (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
         self.loss_mse_A = self.mse(self.fake_A_sigmoid, self.real_A)
