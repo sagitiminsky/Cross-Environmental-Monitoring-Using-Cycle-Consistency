@@ -88,7 +88,7 @@ validation_link_to_gauge_matching ={
 }
 
 #[9.76205359e-01 1.34832568e+01 1.05645701e-03]
-#threshold=0.3 probability_threshold=0.016 python3 CellEnMon/train.py
+#threshold=0.2 probability_threshold=0.016 python3 CellEnMon/train.py
 # Threshold for binary classification
 threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
@@ -314,7 +314,7 @@ if __name__ == '__main__':
                             
                                 for i in range(4):
                                     if 'A' in key:
-                                        mmin = -45.3 
+                                        mmin = -88.5 
                                         mmax = 17 
                                         label = DME_KEYS[i]
                                         data_vector = torch.tensor(data[i])
@@ -462,7 +462,7 @@ if __name__ == '__main__':
                                         fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
                                         sample=model.fake_B_det_sigmoid.cpu().detach().numpy()
                                         fake_gauge_vec_det=np.append(fake_gauge_vec_det, sample)
-                                        T=np.append(T,np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model.t]))
+                                        T=np.append(T,np.array(model.t))
 
                                         with np.printoptions(threshold=np.inf):
                                             print(f"batch #{batch_counter}:{sample}")
@@ -472,12 +472,17 @@ if __name__ == '__main__':
 ############################
                             wandb.log({title: fig})
                     
-                    
+
                     # Convert continuous values to binary class labels
                     fake_gauge_vec_det_labels = (fake_gauge_vec_det >= probability_threshold).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
+
+                    p=Preprocess(link=link,gauge=gauge, epoch=epoch, T=T, real=real_gauge_vec, fake=fake_gauge_vec, detections=fake_gauge_vec_det_labels)
+                    fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
-                    CM=confusion_matrix(real_gauge_vec_labels,fake_gauge_vec_det_labels)
+
+                    
+                    CM=confusion_matrix(real_gauge_vec_labels, p.detections)
                     
                     # Create subplots for given confusion matrices
                     f, axes = plt.subplots(1, 1, figsize=(15, 15))
@@ -493,16 +498,15 @@ if __name__ == '__main__':
 
                     
                     wandb.log({f"Confusion Matrix":f})
-                    wandb.log({"f1-score Detection": f1_score(fake_gauge_vec_det_labels, real_gauge_vec_labels)})
+                    wandb.log({"f1-score Detection": f1_score(p.detections, real_gauge_vec_labels)})
                     wandb.log({"Acc": (CM[0][0]+CM[1][1])/(CM[0][0]+CM[0][1]+CM[1][0]+CM[1][1])})
                     
 
         
-                    p=Preprocess(link=link,gauge=gauge, epoch=epoch, T=T, real=real_gauge_vec, fake=fake_gauge_vec, detections=fake_gauge_vec_det_labels)
-                    fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
 
-                    preprocessed_time=np.asarray(p.excel_data.Time) #16436.00694444
-                    preprocessed_time_wanb=[t for t in preprocessed_time]
+
+                    preprocessed_time=np.asarray(T) #16436.00694444
+                    preprocessed_time_wanb=[mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in T]
                     
                     
                     axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, label="CML")
@@ -539,11 +543,11 @@ if __name__ == '__main__':
                     
 #                     model.setup(train_opt)  # get ready for regular train setup: load and print networks; create schedulers
 
-                    rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
-                    rain_axs[link_counter].plot(T, fake_gauge_vec, marker='x',linestyle='dashed',linewidth=0.0,markersize=2,label="Fake")
-                    rain_axs[link_counter].set_title(f"{link}-{gauge}")
-                    rain_axs[link_counter].xaxis.set_major_formatter(date_format)
-                    print(f"Done Preprocessing Link #{link_counter+1}/{len(validation_links)}")
+                    # rain_axs[link_counter].plot(T, real_gauge_vec, marker='o',linestyle='dashed',linewidth=0.0,markersize=4,label="Real")
+                    # rain_axs[link_counter].plot(T, p.fake, marker='x',linestyle='dashed',linewidth=0.0,markersize=2,label="Fake")
+                    # rain_axs[link_counter].set_title(f"{link}-{gauge}")
+                    # rain_axs[link_counter].xaxis.set_major_formatter(date_format)
+                    # print(f"Done Preprocessing Link #{link_counter+1}/{len(validation_links)}")
 
 
     #                     wandb.log({f"{link}-{'260'}" : wandb.plot.line_series(xs=range(len(T)), ys=[real_gauge_vec, fake_gauge_vec],keys=["real", "fake"],title=f"{link}-{'260'}",xname="Timestamp")})

@@ -7,6 +7,8 @@ root="CellEnMon/datasets/ims"
 content=sorted(os.listdir(f"{root}/01012015_01022015/predict/only_dynamic"))
 # content.remove(".ipynb_checkpoints")
 import glob
+import matplotlib.dates as mpl_dates
+
 
 
 class Preprocess:
@@ -14,16 +16,30 @@ class Preprocess:
         
         self.link = link.replace("-","_")
         self.gauge=gauge
-                
-        d = {'Time':T, 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake * detections } #
+
+
+        # ####
+        df_detections = pd.DataFrame(data={'Time': T, 'Detections': detections })
+        
+
+        detections = np.asarray(df_detections['Detections'],dtype=float)
+        # ### 
+        
+
+        
+        d = {'Time':pd.to_datetime(T), 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake * detections, 'Detections':detections }
         df = pd.DataFrame(data=d)
+
+
+
 
         # Replace neg fake values with zero
         df.loc[df['RainAmoutPredicted[mm/h]'] < 0.1, 'RainAmoutPredicted[mm/h]'] = 0
-        df.loc[df['RainAmoutPredicted[mm/h]'] > 3.2, 'RainAmoutPredicted[mm/h]'] = 3.2
+        # df.loc[df['RainAmoutPredicted[mm/h]'] > 3.2, 'RainAmoutPredicted[mm/h]'] = 3.2
 
         self.fake=np.asarray(df['RainAmoutPredicted[mm/h]'],dtype=float)
         self.real=np.asarray(df['RainAmoutGT[mm/h]'],dtype=float)
+        self.detections = np.asarray(df["Detections"], dtype=float)
 
         # Accumulative
         df["RainAmoutPredictedCumSum"]=df['RainAmoutPredicted[mm/h]'].cumsum()
