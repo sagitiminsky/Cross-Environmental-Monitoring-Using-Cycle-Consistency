@@ -165,7 +165,7 @@ class CycleGANModel(BaseModel):
         self.rec_B_det=rec_B[1]
         self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
 
-        self.rec_B_sigmoid = self.norm_zero_one(rec_B[0]) * (self.rec_B_det_sigmoid)  #self.norm_zero_one()  # G_A(G_B(B))
+        self.rec_B_sigmoid = self.norm_zero_one(rec_B[0]) #* (self.rec_B_det_sigmoid > 0.5)  #self.norm_zero_one()  # G_A(G_B(B))
         
         
 
