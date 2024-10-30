@@ -20,8 +20,6 @@ class Preprocess:
 
         # ####
         df_detections = pd.DataFrame(data={'Time': T, 'Detections': detections })
-        
-
         detections = np.asarray(df_detections['Detections'],dtype=float)
         # ### 
         

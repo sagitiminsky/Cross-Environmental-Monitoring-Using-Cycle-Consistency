@@ -287,8 +287,18 @@ if __name__ == '__main__':
             
                             with torch.no_grad():
                                 visuals = OrderedDict([('real_A', torch.unsqueeze(A.T,0)),('fake_B', model.fake_B_sigmoid),('rec_A', model.rec_A_sigmoid), ('real_B',torch.unsqueeze(B.T,0)),('fake_A', model.fake_A_sigmoid),('rec_B', model.rec_B_sigmoid)])
-            
-            
+
+                            real_A=visuals['real_A'][0].cpu().detach().numpy()
+                            real_A_unnorm=min_max_inv_transform(real_A, mmin=-88.5, mmax=17)
+                            mmin_real_A=np.min(real_A_unnorm)
+                            mmax_real_A=np.max(real_A_unnorm)
+
+                            real_B=visuals['real_B'][0].cpu().detach().numpy()
+                            real_B_unnorm=min_max_inv_transform(real_B, mmin=0, mmax=3.3)
+                            mmin_real_B=np.min(real_B_unnorm)
+                            mmax_real_B=np.max(real_B_unnorm)
+
+
                             fig, axs = plt.subplots(2, 3, figsize=(15, 15))
                             title = f'{batch_counter}:{link}<->{gauge}'
 
@@ -314,14 +324,14 @@ if __name__ == '__main__':
                             
                                 for i in range(4): #This is only validaiton
                                     if 'A' in key:
-                                        mmin = -88.5 if 'real' in key else -53
-                                        mmax = 17
+                                        mmin = -88.5 if 'real' in key else mmin_real_A
+                                        mmax = 17 if 'real' in key else mmax_real_A
                                         label = DME_KEYS[i]
                                         data_vector = torch.tensor(data[i])
                                         
                                     else:
                                         mmin = 0 
-                                        mmax = 3.3 
+                                        mmax = 3.3 if 'real' in key else mmax_real_B
                                         mmin_B=mmin
                                         mmax_B=mmax
                                         label = IMS_KEYS[0]
@@ -439,17 +449,13 @@ if __name__ == '__main__':
                                     if True: #is_virtual_gauge_within_radius_with_real_gauge: #and is_virtual_gauge_within_radius_with_link
                                         print("Virtual link is in range with real gauge...")
 #                                         path_to_real_gauge=f"{real_gauge_folder}/{f'{gauge}_{gague_metadata[0]}_{gague_metadata[1]}.csv'}"  
-                                        real_rain_add=min_max_inv_transform(B, mmin=mmin, mmax=mmax).view(1, 1, 64)
+                                        real_rain_add=min_max_inv_transform(model.real_B, mmin=0, mmax=3.3).view(1, 1, 64)
                                         fake_rain_add=min_max_inv_transform(model.fake_B_sigmoid, mmin=mmin, mmax=mmax).view(1, 1, 64)
-                                        
 
-                                        
-                                        assert(len(real_rain_add)==len(fake_rain_add))
-
-                                        
-                                
                                         real_rain_add=real_rain_add.cpu().numpy()[0][0]
                                         fake_rain_add=fake_rain_add.detach().cpu().numpy()[0][0]
+
+                                        
                                     
 #                                         print(f"real_B: {real_rain_add.shape}")
 #                                         print(f"fake_B: {fake_rain_add.shape}")
