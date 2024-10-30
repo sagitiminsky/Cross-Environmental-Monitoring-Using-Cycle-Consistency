@@ -312,10 +312,10 @@ if __name__ == '__main__':
 #                                     print(f"{key}")
 #                                     print(data)
                             
-                                for i in range(4):
+                                for i in range(4): #This is only validaiton
                                     if 'A' in key:
-                                        mmin = -88.5 
-                                        mmax = 17 
+                                        mmin = -88.5 if 'real' in A else -53
+                                        mmax = 17
                                         label = DME_KEYS[i]
                                         data_vector = torch.tensor(data[i])
                                         
