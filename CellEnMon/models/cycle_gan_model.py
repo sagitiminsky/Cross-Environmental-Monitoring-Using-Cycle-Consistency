@@ -105,7 +105,7 @@ class CycleGANModel(BaseModel):
         """
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample" if AtoB else 'rain_rate_sample'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) + self.noise
+        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) #+ self.noise
         self.gague = input['gague']
         self.link = input['link']
         self.t = input['Time']
@@ -151,13 +151,13 @@ class CycleGANModel(BaseModel):
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
         
         self.fake_B=fake_B[0]
-        self.fake_B_sigmoid=torch.sigmoid(self.fake_B) * (self.fake_B_det_sigmoid)
+        self.fake_B_sigmoid=self.norm_zero_one(self.fake_B) * (self.fake_B_det_sigmoid > 0.5) 
 
         ## >> A
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
-        self.rec_A_sigmoid=torch.sigmoid(self.rec_A)
+        self.rec_A_sigmoid=self.norm_zero_one(self.rec_A)
         self.fake_A = self.netG_B(self.real_B,dir="BtoA") #self.norm_zero_one()  # G_B(B)
-        self.fake_A_sigmoid=torch.sigmoid(self.fake_A)
+        self.fake_A_sigmoid=self.norm_zero_one(self.fake_A)
 
 
         rec_B=self.netG_A(self.fake_A,dir="AtoB")
@@ -165,8 +165,7 @@ class CycleGANModel(BaseModel):
         self.rec_B_det=rec_B[1]
         self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
 
-        self.rec_B_sigmoid = torch.sigmoid(rec_B[0]) * (self.rec_B_det_sigmoid)  #self.norm_zero_one()  # G_A(G_B(B))
-        
+        self.rec_B_sigmoid = self.norm_zero_one(rec_B[0]) * (self.rec_B_det_sigmoid)  #self.norm_zero_one()  # G_A(G_B(B))
         
         
 
@@ -289,7 +288,7 @@ class CycleGANModel(BaseModel):
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = self.loss_bce_B + self.loss_cycle_B # |  | self.loss_cycle_A | (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_bce_B + 100 * self.loss_cycle_B + self.loss_cycle_A # |  | self.loss_cycle_A | (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
 
