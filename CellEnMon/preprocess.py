@@ -25,7 +25,7 @@ class Preprocess:
         
 
         
-        d = {'Time':pd.to_datetime(T), 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake * detections, 'Detections':detections }
+        d = {'Time':pd.to_datetime(T), 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake , 'Detections':detections } #* detections
         df = pd.DataFrame(data=d)
 
 

@@ -7,6 +7,9 @@ from .networks import define_G, define_D, GANLoss
 import numpy as np
 import os
 
+threshold = float(os.environ["threshold"])
+probability_threshold = float(os.environ["probability_threshold"])
+
 class CycleGANModel(BaseModel):
     """
     This class implements the CycleGAN model, for learning CML-to-Gauge translation without paired data.
@@ -151,7 +154,7 @@ class CycleGANModel(BaseModel):
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
         
         self.fake_B=fake_B[0]
-        self.fake_B_sigmoid=self.norm_zero_one(self.fake_B) * (self.fake_B_det_sigmoid > 0.5) 
+        self.fake_B_sigmoid=self.norm_zero_one(self.fake_B) #* (self.fake_B_det_sigmoid > probability_threshold) 
 
         ## >> A
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
@@ -239,8 +242,8 @@ class CycleGANModel(BaseModel):
         adjusted_weights=self.rr_norm.clone()
         adjusted_weights[(self.fake_B_det_sigmoid > 0.016) & (targets==0)] = 1
 
-        self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * adjusted_fake_weights) \
-        + torch.sum(bce_weight_loss(self.rec_B_det, targets) * adjusted_rec_weights)
+        self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets)) \
+        # + torch.sum(bce_weight_loss(self.rec_B_det, targets) * adjusted_rec_weights)
         
         self.D_B=self.netD_B(self.fake_B_sigmoid)
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
@@ -288,7 +291,7 @@ class CycleGANModel(BaseModel):
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = self.loss_bce_B + 100 * self.loss_cycle_B + self.loss_cycle_A # |  | self.loss_cycle_A | (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_cycle_B + self.loss_cycle_A # self.loss_bce_B + |  | self.loss_cycle_A | (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
 
