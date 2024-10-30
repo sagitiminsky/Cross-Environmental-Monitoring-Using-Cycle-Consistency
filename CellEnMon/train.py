@@ -358,7 +358,8 @@ if __name__ == '__main__':
                                     #             (mmin, mmax), x in
                                     #             zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
                                     mask=model.fake_B_det_sigmoid.cpu().detach().numpy()[0][0]
-                                    mask=(mask >= probability_threshold).astype(int)
+                                    fake_B=model.fake_B_sigmoid.cpu().detach().numpy()[0][0]
+                                    mask=[True]*len(fake_B) #((mask >= probability_threshold) & (fake_B > 0.01)).astype(int)
                                     model_t=model.t
                                     
                                     if "fake_B" not in key:
@@ -480,7 +481,7 @@ if __name__ == '__main__':
                     
 
                     # Convert continuous values to binary class labels
-                    fake_gauge_vec_det_labels = (fake_gauge_vec_det >= probability_threshold).astype(int)
+                    fake_gauge_vec_det_labels = ((fake_gauge_vec_det >= probability_threshold) & (fake_gauge_vec>0.01)).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
 
                     p=Preprocess(link=link,gauge=gauge, epoch=epoch, T=T, real=real_gauge_vec, fake=fake_gauge_vec, detections=fake_gauge_vec_det_labels)
