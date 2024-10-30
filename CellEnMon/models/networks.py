@@ -343,11 +343,11 @@ class ResnetGenerator(nn.Module):
 
         use_bias=True
 
-        model = [nn.Conv1d(input_nc, ngf, kernel_size=3, bias=use_bias),
+        model = [nn.Conv1d(input_nc, ngf, kernel_size=15, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 1
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2, kernel_size=3, stride=1, padding=0, bias=use_bias),
@@ -368,7 +368,7 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
         
         
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=3),] #   norm_layer(output_nc)
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=15),] #   norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 

@@ -27,7 +27,7 @@ import numpy as np
 from matplotlib import colors
 from collections import defaultdict
 
-ENABLE_WANDB = True
+ENABLE_WANDB = bool(os.environ["ENABLE_WANDB"])
 GROUPS = {
     "DEBUG": {0: "DEBUG"},
     "DYNAMIC_ONLY": {0: "lower metrics", 1: "without RR", 2: "with RR and inv_dist", 3: "with RR only"},
@@ -92,7 +92,7 @@ validation_link_to_gauge_matching ={
 # Threshold for binary classification
 threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
-ITERS_BETWEEN_VALIDATIONS=10000
+ITERS_BETWEEN_VALIDATIONS=int(os.environ["ITERS_BETWEEN_VALIDATIONS"])
 
 # Detection:
 #[[  52 2099]
