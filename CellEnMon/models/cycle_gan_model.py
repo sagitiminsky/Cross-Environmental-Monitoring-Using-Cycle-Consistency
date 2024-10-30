@@ -232,17 +232,13 @@ class CycleGANModel(BaseModel):
         adjusted_fake_weights=self.rr_norm.clone()
         adjusted_rec_weights=self.rr_norm.clone()
 
-        targets = (self.real_B >= 0.016).float() # 0.3/3.3=0.016, ie. we consider a wet event over 
-        
-        adjusted_fake_weights[(self.fake_B_det_sigmoid > 0.5) & (targets==0)] *= 10
-        adjusted_rec_weights[(self.rec_B_det_sigmoid > 0.5) & (targets==0)] *= 10
-
-        
-
-        
-        bce_weight_loss = nn.BCEWithLogitsLoss(pos_weight=self.rr_norm, reduction='none') #,  | << more numerically stable
+        targets=(self.real_B >= 0.06).float() # 0.2/3.3=0.06, ie. we consider a wet event over 
+        bce_weight_loss=nn.BCEWithLogitsLoss(reduction='none') #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
+        #adjust for type-1 erros
+        adjusted_weights=self.rr_norm.clone()
+        adjusted_weights[(self.fake_B_det_sigmoid > 0.016) & (targets==0)] = 1
 
         self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets) * adjusted_fake_weights) \
         + torch.sum(bce_weight_loss(self.rec_B_det, targets) * adjusted_rec_weights)
@@ -287,10 +283,10 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = lambda_A * torch.sum(self.criterionCycle(self.rec_A_sigmoid, self.real_A)) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B) * adjusted_rec_weights) # * adjusted_weights)
+        self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B)) # * adjusted_weights)
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
-        self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B) * adjusted_rec_weights)
+        self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
         self.loss_G = self.loss_bce_B + self.loss_cycle_B # |  | self.loss_cycle_A | (self.loss_G_B_only + self.loss_G_A) #+ self.loss_idt_A + self.loss_idt_B
