@@ -81,9 +81,9 @@ all_link_to_gauge_matching ={
 validation_link_to_gauge_matching ={
 #     "c078-d088": [], 
 #     "a473-b119": [], 
-    "b394-ts04": ["LAHAV"],
+    "b394-ts04": [], "LAHAV"
     "b451-a350": [],
-    "b459-a690": [],
+    "b459-a690": [], #<-- also in validation
 
 }
 
@@ -471,8 +471,8 @@ if __name__ == '__main__':
                                         fake_gauge_vec_det=np.append(fake_gauge_vec_det, sample)
                                         T=np.append(T,np.array(model.t))
 
-                                        with np.printoptions(threshold=np.inf):
-                                            print(f"batch #{batch_counter}:{sample}")
+                                        # with np.printoptions(threshold=np.inf):
+                                        #     print(f"batch #{batch_counter}:{sample}")
 
 
 
