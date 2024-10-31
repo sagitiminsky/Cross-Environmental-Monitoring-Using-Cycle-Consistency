@@ -257,7 +257,14 @@ class Extractor:
             
             #Conditional dataset
             validation_data["LAHAV"]=training_data["LAHAV"]
+            validation_data["NEOT SMADAR"]=training_data["NEOT SMADAR"]
+            
+            #train pop
             training_data.pop("LAHAV",None)
+            training_data.pop("NEOT SMADAR",None)
+
+            #validation poop
+            validation_data.pop("ZOMVET HANEGEV",None)
             
             dataset = training_data if is_train else validation_data
                             
