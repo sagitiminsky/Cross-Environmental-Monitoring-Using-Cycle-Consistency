@@ -53,7 +53,7 @@ class CycleGANModel(BaseModel):
         self.noise = torch.rand(64, device="cuda:0") * 0.01
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B', 'D_A', 'D_B', 'G_A','G_B_only'] # 
+        self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B'] #  'D_A', 'D_B', 'G_A','G_B_only'
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ['real_A', 'fake_B_sigmoid', 'rec_A_sigmoid', "fake_B_det", "fake_B_det_sigmoid"]
         visual_names_B = ['real_B', 'fake_A_sigmoid', 'rec_B_sigmoid']
@@ -150,7 +150,7 @@ class CycleGANModel(BaseModel):
 
         relu=nn.ReLU()
         
-        self.fake_B_det = fake_B[1]
+        self.fake_B_det = self.norm_zero_one(fake_B[1])
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
         
         self.fake_B=fake_B[0]
@@ -234,13 +234,13 @@ class CycleGANModel(BaseModel):
         adjusted_fake_weights=self.rr_norm.clone()
         adjusted_rec_weights=self.rr_norm.clone()
 
-        targets=(self.real_B >= 0.06).float() # 0.2/3.3=0.06, ie. we consider a wet event over 
+        targets=(self.real_B >= threshold/3.3).float() # 0.2/3.3=0.06, ie. we consider a wet event over 
         bce_weight_loss=nn.BCEWithLogitsLoss(reduction='none') #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
         #adjust for type-1 erros
         adjusted_weights=self.rr_norm.clone()
-        adjusted_weights[(self.fake_B_det_sigmoid > 0.016) & (targets==0)] = 1
+        # adjusted_weights[(self.fake_B_det_sigmoid > 0.06) & (targets==0)] = 1
 
         self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets)) \
         # + torch.sum(bce_weight_loss(self.rec_B_det, targets) * adjusted_rec_weights)
@@ -291,7 +291,7 @@ class CycleGANModel(BaseModel):
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = self.loss_cycle_B + self.loss_cycle_A +self.loss_G_B_only + self.loss_G_A #+ ()# self.loss_bce_B + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_bce_B + self.loss_cycle_B + self.loss_cycle_A # self.loss_G_B_only + self.loss_G_A+ ()#  + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
 
@@ -319,18 +319,18 @@ class CycleGANModel(BaseModel):
         
         # D_A and D_B
 
-        self.set_requires_grad([self.netD_A, self.netD_B], True)
-        self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero        
-        self.backward_D_A()  # calculate gradients for D_A
-        self.backward_D_B()  # calculate graidents for D_B
-        if self.isTrain:
-            self.optimizer_D.step()  # update D_A and D_B's weights
+        # self.set_requires_grad([self.netD_A, self.netD_B], True)
+        # self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero        
+        # self.backward_D_A()  # calculate gradients for D_A
+        # self.backward_D_B()  # calculate graidents for D_B
+        # if self.isTrain:
+        #     self.optimizer_D.step()  # update D_A and D_B's weights
 
 
         #resetting attrs ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
-        setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
-        setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
-        setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
+        # setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
+        # setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
+        # setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
 
         setattr(self,f"loss_{self.dataset_type}_cycle_A",self.loss_cycle_A)
         setattr(self,f"loss_{self.dataset_type}_G_B",self.loss_G_B)
