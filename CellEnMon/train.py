@@ -40,11 +40,17 @@ GROUPS = {
     "Dynamic Dutch": {0:"first try"},
     "Real Validation": {0:"last try", 1:"last last try"},
     "Last Try":{0:"last last try"},
-    "Frontiers":{0:"first try", 1:"start training on Israel data"}
+    "Frontiers":{0:"first try", 1:"start training on Israel data"},
+    "Lahav":{0:"GAN+Cycle", 1:"Cycle"},
+    "Neot Smadar":{0:"GAN+Cycle",1:"Cycle"},
+    "1L1G": {0:"Cycle+Detector"},
+    #...
+    "9L6G": {0:"Cycle+Detector"},
+
 }
 
-SELECTED_GROUP_NAME = "Frontiers"
-SELECT_JOB = 1
+SELECTED_GROUP_NAME = os.environ["SELECTED_GROUP_NAME"]
+SELECT_JOB = int(os.environ["SELECT_JOB"])
 
 
 # gauges in train dataset:dict_keys(['ZOMET HANEGEV', 'BEER SHEVA', 'EZUZ', 'NEOT SMADAR', 'SEDE BOQER', 'PARAN'])
@@ -81,9 +87,8 @@ all_link_to_gauge_matching ={
 validation_link_to_gauge_matching ={
 #     "c078-d088": [], 
 #     "a473-b119": [], 
-    "b394-ts04": [], "LAHAV"
-    "b451-a350": [],
-    "b459-a690": [], #<-- also in validation
+    "b394-ts04": [], #"LAHAV"
+    "b459-a690": ["NEOT SMADAR"],
 
 }
 
@@ -204,7 +209,7 @@ if __name__ == '__main__':
         if epoch % ITERS_BETWEEN_VALIDATIONS == 0 and epoch>0: # VALIDATION
             
 
-            print(f"Validation in progress... Current lr is: {model.optimizers[0].param_groups[0]['lr']}")
+            print(f"Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
             k=train_opt.slice_dist
@@ -357,12 +362,13 @@ if __name__ == '__main__':
                                     # metadata = ["{:.4f}".format(min_max_inv_transform(x, mmin=mmin, mmax=mmax)) for
                                     #             (mmin, mmax), x in
                                     #             zip(metadata_inv_zip, visuals[key][0][:,0][-4:].cpu().detach().numpy())]
-                                    mask=model.fake_B_det_sigmoid.cpu().detach().numpy()[0][0]
-                                    fake_B=model.fake_B_sigmoid.cpu().detach().numpy()[0][0]
-                                    mask=[True]*len(fake_B) #((mask >= probability_threshold) & (fake_B > 0.01)).astype(int)
+
                                     model_t=model.t
                                     
                                     if "fake_B" not in key:
+
+                                        mask=model.fake_B_det_sigmoid.cpu().detach().numpy()[0][0]
+                                        mask=((mask >= probability_threshold)).astype(int)
 
 
 
@@ -471,8 +477,8 @@ if __name__ == '__main__':
                                         fake_gauge_vec_det=np.append(fake_gauge_vec_det, sample)
                                         T=np.append(T,np.array(model.t))
 
-                                        # with np.printoptions(threshold=np.inf):
-                                        #     print(f"batch #{batch_counter}:{sample}")
+                                        with np.printoptions(threshold=np.inf):
+                                            print(f"batch #{batch_counter}:{sample}")
 
 
 
@@ -481,7 +487,7 @@ if __name__ == '__main__':
                     
 
                     # Convert continuous values to binary class labels
-                    fake_gauge_vec_det_labels = ((fake_gauge_vec_det >= probability_threshold) & (fake_gauge_vec>0.01)).astype(int)
+                    fake_gauge_vec_det_labels = ((fake_gauge_vec_det >= probability_threshold)).astype(int)
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
 
                     p=Preprocess(link=link,gauge=gauge, epoch=epoch, T=T, real=real_gauge_vec, fake=fake_gauge_vec, detections=fake_gauge_vec_det_labels)
@@ -573,6 +579,6 @@ if __name__ == '__main__':
                 path_to_html = f"{v.out_path}/{v.map_name}"
 #                 v.draw_cml_map()
 #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
-
+            print(print(f"Validation cycle end..."))
 
     model.save_networks("latest")
