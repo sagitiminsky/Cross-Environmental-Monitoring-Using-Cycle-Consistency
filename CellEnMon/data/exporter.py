@@ -263,7 +263,7 @@ class Extractor:
             training_data.pop("LAHAV",None)
             training_data.pop("NEOT SMADAR",None)
 
-            #validation poop
+            #validation pop
             validation_data.pop("ZOMVET HANEGEV",None)
             
             dataset = training_data if is_train else validation_data
