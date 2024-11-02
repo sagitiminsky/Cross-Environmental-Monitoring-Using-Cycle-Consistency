@@ -154,7 +154,7 @@ class CycleGANModel(BaseModel):
         self.fake_B_det_sigmoid = self.fake_B_det
         
         self.fake_B=fake_B[0]
-        self.fake_B_sigmoid=self.norm_zero_one(self.fake_B) #* (self.fake_B_det_sigmoid > probability_threshold) 
+        self.fake_B_sigmoid=self.norm_zero_one(self.fake_B) * (self.fake_B_det_sigmoid > probability_threshold) 
 
         ## >> A
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
@@ -291,7 +291,7 @@ class CycleGANModel(BaseModel):
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = 0.1*self.loss_bce_B + 10*self.loss_cycle_B + 10*self.loss_cycle_A # self.loss_G_B_only + self.loss_G_A+ ()#  + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_bce_B + self.loss_cycle_B + 0.1*self.loss_cycle_A # self.loss_G_B_only + self.loss_G_A+ ()#  + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
 
