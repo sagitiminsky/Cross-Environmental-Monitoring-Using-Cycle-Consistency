@@ -41,8 +41,8 @@ GROUPS = {
     "Real Validation": {0:"last try", 1:"last last try"},
     "Last Try":{0:"last last try"},
     "Frontiers":{0:"first try", 1:"start training on Israel data"},
-    "Lahav":{0:"GAN+Cycle", 1:"Cycle"},
-    "Neot Smadar":{0:"GAN+Cycle",1:"Cycle"},
+    "Lahav":{0:"GAN+Cycle", 1:"Cycle", 2:"Cycle+Detector"},
+    "Neot Smadar":{0:"GAN+Cycle",1:"Cycle", 2:"Cycle+Detector"},
     "1L1G": {0:"Cycle+Detector"},
     #...
     "9L6G": {0:"Cycle+Detector"},
@@ -87,8 +87,8 @@ all_link_to_gauge_matching ={
 validation_link_to_gauge_matching ={
 #     "c078-d088": [], 
 #     "a473-b119": [], 
-    "b394-ts04": [], #"LAHAV"
-    "b459-a690": ["NEOT SMADAR"],
+    "b394-ts04": ["LAHAV"], #""
+    "b459-a690": [], #"NEOT SMADAR"
 
 }
 
