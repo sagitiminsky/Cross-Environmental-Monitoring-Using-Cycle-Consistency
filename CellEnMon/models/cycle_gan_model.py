@@ -141,12 +141,7 @@ class CycleGANModel(BaseModel):
         min_val = torch.min(x)
         max_val = torch.max(x)
 
-        a=(x - min_val) / (max_val - min_val + epsilon)
-        
-        new_min = -50.8 if self.db_type=="dme" else 0
-        new_max = 17 if self.db_type=="dme" else 3.3
-
-        return (new_max-new_min) * a + b_min 
+        return (x - min_val) / (max_val - min_val + epsilon)
 
         
 
