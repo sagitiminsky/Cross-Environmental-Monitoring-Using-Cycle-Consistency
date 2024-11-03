@@ -136,12 +136,19 @@ class CycleGANModel(BaseModel):
             self.data_transformation = input['data_transformation']
             self.metadata_transformation = input['metadata_transformation']
             
-    def norm_zero_one(self,x):
+    def norm_zero_one(self,x,db_type):
         epsilon=1e-6
         min_val = torch.min(x)
         max_val = torch.max(x)
+
+        a=(x - min_val) / (max_val - min_val + epsilon)
         
-        return (x - min_val) / (max_val - min_val + epsilon)
+        new_min = -50.8 if self.db_type=="dme" else 0
+        new_max = 17 if self.db_type=="dme" else 3.3
+
+        return (new_max-new_min) * a + b_min 
+
+        
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""          
@@ -158,7 +165,7 @@ class CycleGANModel(BaseModel):
 
         ## >> A
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
-        self.rec_A_sigmoid=self.norm_zero_one(self.rec_A)
+        self.rec_A_sigmoid=torch.sigmoid(self.rec_A)
         self.fake_A = self.netG_B(self.real_B,dir="BtoA") #self.norm_zero_one()  # G_B(B)
         self.fake_A_sigmoid=self.norm_zero_one(self.fake_A)
 
@@ -168,7 +175,7 @@ class CycleGANModel(BaseModel):
         self.rec_B_det=rec_B[1]
         self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
 
-        self.rec_B_sigmoid = self.norm_zero_one(rec_B[0]) #* (self.rec_B_det_sigmoid > 0.5)  #self.norm_zero_one()  # G_A(G_B(B))
+        self.rec_B_sigmoid = torch.sigmoid(rec_B[0]) * (self.rec_B_det_sigmoid > probability_threshold)  #self.norm_zero_one()  # G_A(G_B(B))
         
         
 
@@ -243,7 +250,7 @@ class CycleGANModel(BaseModel):
         # adjusted_weights[(self.fake_B_det_sigmoid > 0.06) & (targets==0)] = 1
 
         self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets)) \
-        # + torch.sum(bce_weight_loss(self.rec_B_det, targets) * adjusted_rec_weights)
+        + torch.sum(bce_weight_loss(self.rec_B_det, targets))
         
         self.D_B=self.netD_B(self.fake_B_sigmoid)
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
