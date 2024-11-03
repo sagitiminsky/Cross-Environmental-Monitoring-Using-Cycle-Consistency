@@ -87,7 +87,7 @@ all_link_to_gauge_matching ={
 validation_link_to_gauge_matching ={
 #     "c078-d088": [], 
 #     "a473-b119": [], 
-    "b394-ts04": ["LAHAV"], #""
+    "b394-ts04": ["LAHAV"], #
     "b459-a690": [], #"NEOT SMADAR"
 
 }
@@ -159,8 +159,10 @@ if __name__ == '__main__':
         validation_opt)  # create a validation dataset given opt.dataset_mode and other options
     
     print(f"gauges in validation dataset:{validation_dataset.dataset.dataset.ims.db.keys()}")
+    # print(f"norm min-max:{validation_dataset.dataset.dataset.data_dict_B['data_min']}-{validation_dataset.dataset.dataset.data_dict_B['data_max']}")
+
     print(f"links in validation dataset:{validation_dataset.dataset.dataset.dme.db.keys()}")
-    
+    # print(f"norm min-max:{train_dataset.data_dict_B['data_min']}-{train_dataset.data_dict_B['data_max']}")
 
     model = models.create_model(train_opt)  # create a model given opt.model and other options
     model.setup(train_opt)  # regular setup: load and print networks; create schedulers
@@ -329,14 +331,14 @@ if __name__ == '__main__':
                             
                                 for i in range(4): #This is only validaiton
                                     if 'A' in key:
-                                        mmin = -88.5 if 'real' in key else mmin_real_A
-                                        mmax = 17 if 'real' in key else mmax_real_A
+                                        mmin = -88.5 #if 'real' in key else mmin_real_A
+                                        mmax = 17 #if 'real' in key else mmax_real_A
                                         label = DME_KEYS[i]
                                         data_vector = torch.tensor(data[i])
                                         
                                     else:
                                         mmin = 0 
-                                        mmax = 3.3 if 'real' in key else mmax_real_B
+                                        mmax = 3.3 #if 'real' in key else mmax_real_B
                                         mmin_B=mmin
                                         mmax_B=mmax
                                         label = IMS_KEYS[0]

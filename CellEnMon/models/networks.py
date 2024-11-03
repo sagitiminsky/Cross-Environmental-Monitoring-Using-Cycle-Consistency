@@ -368,7 +368,7 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
         
         
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7),] #   norm_layer(output_nc)
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7),norm_layer(output_nc)] #   
         self.model = nn.Sequential(*model)
         
 
