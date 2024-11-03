@@ -26,6 +26,8 @@ class Domain:
         self.metadata_long_min = sys.maxsize
         self.metadata_lat_max = -sys.maxsize
         self.metadata_lat_min = sys.maxsize
+        self.mmin=-88.5 if self.db_type=="dme" else 0
+        self.mmax=17 if self.db_type=="dme" else 3.3
 
         # Data Normalization
         for station_name, value in db.items():
@@ -64,8 +66,8 @@ class Domain:
         return ((x - mmin) / (mmax - mmin + epsilon))
 
     def normalizer(self, mat):
-        min = -88.5 if self.db_type=="dme" else 0
-        max = 17 if self.db_type=="dme" else 3.3
+        min = self.mmin
+        max = self.mmax
         mat=(mat - min) / (max - min)
 
         return max, min, mat
