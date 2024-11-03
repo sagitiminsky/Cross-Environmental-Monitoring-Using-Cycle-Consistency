@@ -150,8 +150,8 @@ class CycleGANModel(BaseModel):
 
         relu=nn.ReLU()
         
-        self.fake_B_det = self.norm_zero_one(fake_B[1])
-        self.fake_B_det_sigmoid = self.fake_B_det
+        self.fake_B_det = fake_B[1]
+        self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
         
         self.fake_B=fake_B[0]
         self.fake_B_sigmoid=self.norm_zero_one(self.fake_B) * (self.fake_B_det_sigmoid > probability_threshold) 

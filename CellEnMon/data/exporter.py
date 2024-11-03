@@ -26,6 +26,8 @@ class Domain:
         self.metadata_long_min = sys.maxsize
         self.metadata_lat_max = -sys.maxsize
         self.metadata_lat_min = sys.maxsize
+        self.data_min=999
+        self.data_max=-999
 
         # Data Normalization
         for station_name, value in db.items():
@@ -38,8 +40,11 @@ class Domain:
             }
             # Find min-max for metadata normalization
             self.metadata_min_max_finder(value['metadata'])
+            self.data_min=min(self.data_min)
+            self.data_min=max(self.data_max)
 
         self.df = pd.DataFrame.from_dict(self.db_normalized)
+        print(f"min-max:{self.data_min}-{self.data_max}")
 
     def metadata_normalization(self):
         for station_name, value in self.db.items():
