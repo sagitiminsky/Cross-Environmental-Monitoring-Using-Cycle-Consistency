@@ -295,15 +295,15 @@ if __name__ == '__main__':
                             with torch.no_grad():
                                 visuals = OrderedDict([('real_A', torch.unsqueeze(A.T,0)),('fake_B', model.fake_B_sigmoid),('rec_A', model.rec_A_sigmoid), ('real_B',torch.unsqueeze(B.T,0)),('fake_A', model.fake_A_sigmoid),('rec_B', model.rec_B_sigmoid)])
 
-                            real_A=visuals['real_A'][0].cpu().detach().numpy()
-                            real_A_unnorm=min_max_inv_transform(real_A, mmin=-88.5, mmax=17)
-                            mmin_real_A=np.min(real_A_unnorm)
-                            mmax_real_A=np.max(real_A_unnorm)
+                            rec_A=visuals['rec_A'][0].cpu().detach().numpy()
+                            rec_A_unnorm=min_max_inv_transform(rec_A, mmin=-50.8, mmax=17)
+                            mmin_rec_A=np.min(rec_A_unnorm)
+                            mmax_rec_A=np.max(rec_A_unnorm)
 
-                            real_B=visuals['real_B'][0].cpu().detach().numpy()
-                            real_B_unnorm=min_max_inv_transform(real_B, mmin=0, mmax=3.3)
-                            mmin_real_B=np.min(real_B_unnorm)
-                            mmax_real_B=np.max(real_B_unnorm)
+                            rec_B=visuals['rec_B'][0].cpu().detach().numpy()
+                            rec_B_unnorm=min_max_inv_transform(rec_B, mmin=0, mmax=3.3)
+                            mmin_rec_B=np.min(rec_B_unnorm)
+                            mmax_rec_B=np.max(rec_B_unnorm)
 
 
                             fig, axs = plt.subplots(2, 3, figsize=(15, 15))
@@ -331,14 +331,14 @@ if __name__ == '__main__':
                             
                                 for i in range(4): #This is only validaiton
                                     if 'A' in key:
-                                        mmin = -88.5 #if 'real' in key else mmin_real_A
-                                        mmax = 17 #if 'real' in key else mmax_real_A
+                                        mmin = mmin_rec_A if 'fake' in key else -50.8
+                                        mmax = mmax_rec_A if 'fake' in key else 17
                                         label = DME_KEYS[i]
                                         data_vector = torch.tensor(data[i])
                                         
                                     else:
                                         mmin = 0 
-                                        mmax = 3.3 #if 'real' in key else mmax_real_B
+                                        mmax = mmax_rec_B if 'fake' in key else 3.3
                                         mmin_B=mmin
                                         mmax_B=mmax
                                         label = IMS_KEYS[0]
