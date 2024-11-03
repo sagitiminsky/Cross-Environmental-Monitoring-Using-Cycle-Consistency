@@ -40,11 +40,11 @@ class Domain:
             }
             # Find min-max for metadata normalization
             self.metadata_min_max_finder(value['metadata'])
-            self.data_min=min(self.data_min)
-            self.data_min=max(self.data_max)
+            self.data_min=min(self.data_min, data_min)
+            self.data_max=max(self.data_max, data_max)
 
         self.df = pd.DataFrame.from_dict(self.db_normalized)
-        print(f"min-max:{self.data_min}-{self.data_max}")
+        print(f"min-max:{self.data_min},{self.data_max}")
 
     def metadata_normalization(self):
         for station_name, value in self.db.items():
@@ -69,8 +69,8 @@ class Domain:
         return ((x - mmin) / (mmax - mmin + epsilon))
 
     def normalizer(self, mat):
-        min = self.mmin
-        max = self.mmax
+        min = -88.5 if self.db_type=="dme" else 0
+        max = 17 if self.db_type=="dme" else 3.3
         mat=(mat - min) / (max - min)
 
         return max, min, mat
