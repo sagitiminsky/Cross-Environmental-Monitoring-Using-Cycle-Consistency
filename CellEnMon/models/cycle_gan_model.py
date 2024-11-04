@@ -136,10 +136,18 @@ class CycleGANModel(BaseModel):
             self.data_transformation = input['data_transformation']
             self.metadata_transformation = input['metadata_transformation']
             
-    def norm_zero_one(self,x,db_type):
+    def dynamic_norm_zero_one(self,x): #db_type
         epsilon=1e-6
         min_val = torch.min(x)
         max_val = torch.max(x)
+
+        # global_min = -50.8 if db_type=="dme" else 0
+        # global_max = 17 if db_type=="dme" else 3.3
+
+        
+        # # Clipping min_val and max_val
+        # min_val = min_val if min_val < global_min else global_min
+        # max_val = max_val if max_val > global_max else global_max
 
         return (x - min_val) / (max_val - min_val + epsilon)
 
