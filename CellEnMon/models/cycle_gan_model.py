@@ -171,15 +171,19 @@ class CycleGANModel(BaseModel):
         self.fake_B_det = fake_B[1]
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
         
-        self.fake_B=fake_B[0]
-        self.fake_B_sigmoid=self.dynamic_norm_zero_one(self.fake_B, db_type="B") * (self.fake_B_det_sigmoid > probability_threshold) 
 
-        ## >> A
-        self.fake_A = self.netG_B(self.real_B,dir="BtoA") #self.norm_zero_one()  # G_B(B)
-        self.fake_A_sigmoid=self.dynamic_norm_zero_one(self.fake_A, db_type="A")
+        ## >> Fake
+        self.fake_B=fake_B[0]
+        self.fake_B_sigmoid=torch.sigmoid(self.fake_B)# * (self.fake_B_det_sigmoid > probability_threshold) 
+
         
+        self.fake_A = self.netG_B(self.real_B,dir="BtoA") #self.norm_zero_one()  # G_B(B)
+        self.fake_A_sigmoid=torch.sigmoid(self.fake_A)
+        
+
+        ## >> Rec
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
-        self.rec_A_sigmoid=self.dynamic_norm_zero_one(self.rec_A, db_type="A")
+        self.rec_A_sigmoid=torch.sigmoid(self.rec_A)
 
 
         rec_B=self.netG_A(self.fake_A,dir="AtoB")
@@ -187,7 +191,7 @@ class CycleGANModel(BaseModel):
         self.rec_B_det=rec_B[1]
         self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
 
-        self.rec_B_sigmoid = self.dynamic_norm_zero_one(rec_B[0],db_type="B") * (self.rec_B_det_sigmoid > probability_threshold)  #self.norm_zero_one()  # G_A(G_B(B))
+        self.rec_B_sigmoid = torch.sigmoid(rec_B[0]) * (self.rec_B_det_sigmoid > probability_threshold)  #self.norm_zero_one()  # G_A(G_B(B))
         
         
 
@@ -242,9 +246,7 @@ class CycleGANModel(BaseModel):
             self.loss_idt_A = 0
             self.loss_idt_B = 0
 
-        
-        
-        self.rr_norm = self.rain_rate_prob if self.dataset_type=="Train" else torch.ones([64], device='cuda:0')  #self.alpha + 1 - 
+        self.rr_norm = self.rain_rate_prob
         self.att_norm = self.alpha + 1 - self.attenuation_prob
         const=81.66 if self.dataset_type=="Train" else 1 #33.44
         pos_weight = torch.tensor([const], dtype=torch.float32, device="cuda:0") # wet event is x times more important (!!!)
@@ -310,7 +312,7 @@ class CycleGANModel(BaseModel):
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = self.loss_bce_B + self.loss_cycle_B + 0.1*self.loss_cycle_A # self.loss_G_B_only + self.loss_G_A+ ()#  + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_bce_B + self.loss_cycle_B + self.loss_cycle_A # self.loss_G_B_only + self.loss_G_A+ ()#  + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
 

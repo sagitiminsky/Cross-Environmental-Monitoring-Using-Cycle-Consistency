@@ -214,6 +214,11 @@ class CellenmonDataset(BaseDataset):
         B_rain_rate_normalized=B #np.array(list(self.dataset.ims.db[selected_gague]['data'].values()))
         B_rain_rate = self.min_max_inv_transform(x=B_rain_rate_normalized,mmin=data_dict_B['data_min'],mmax=data_dict_B['data_max'])
         
+        a=9.89754031e-01
+        b=1.53177582e+01
+        c=3.89253869e-04
+
+
         return {
             'A': A,
             'B': B,
@@ -237,8 +242,8 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
             
-            'attenuation_prob': self.func_fit(x=A_attenuation, a=self.dataset.attenuation_a, b=self.dataset.attenuation_b,c=self.dataset.attenuation_c),
-            'rain_rate_prob': self.func_fit(x=B_rain_rate, a=self.dataset.rain_a, b=self.dataset.rain_b, c=self.dataset.rain_c),
+            'attenuation_prob': self.func_fit(x=A_attenuation, a=a, b=b,c=c),
+            'rain_rate_prob': self.func_fit(x=B_rain_rate, a=a, b=b, c=c),
             
 #             'a_rain': self.dataset.a,
 #             'b_rain': self.dataset.b,
