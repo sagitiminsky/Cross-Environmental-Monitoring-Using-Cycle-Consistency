@@ -50,6 +50,7 @@ class CycleGANModel(BaseModel):
             opt (Option class)  -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
+        self.epsilon=1e-6
         self.noise = torch.rand(64, device="cuda:0") * 0.01
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
@@ -135,19 +136,26 @@ class CycleGANModel(BaseModel):
 
             self.data_transformation = input['data_transformation']
             self.metadata_transformation = input['metadata_transformation']
-            
-    def dynamic_norm_zero_one(self,x): #db_type
+
+    def dynamic_norm_zero_one(self,x, db_type): #
         epsilon=1e-6
         min_val = torch.min(x)
         max_val = torch.max(x)
 
-        # global_min = -50.8 if db_type=="dme" else 0
-        # global_max = 17 if db_type=="dme" else 3.3
+        global_min = -50.8 if db_type=="dme" else 0
+        global_max = 17 if db_type=="dme" else 3.3
 
         
-        # # Clipping min_val and max_val
-        # min_val = min_val if min_val < global_min else global_min
-        # max_val = max_val if max_val > global_max else global_max
+        # Clipping min_val and max_val
+        min_val = min_val if min_val < global_min else global_min
+        max_val = max_val if max_val > global_max else global_max
+
+        return (x - min_val) / (max_val - min_val + epsilon)
+
+    def norm_zero_one(self,x):
+        epsilon=1e-6
+        min_val = torch.min(x)
+        max_val = torch.max(x)
 
         return (x - min_val) / (max_val - min_val + epsilon)
 
@@ -164,13 +172,14 @@ class CycleGANModel(BaseModel):
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
         
         self.fake_B=fake_B[0]
-        self.fake_B_sigmoid=self.norm_zero_one(self.fake_B) * (self.fake_B_det_sigmoid > probability_threshold) 
+        self.fake_B_sigmoid=self.dynamic_norm_zero_one(self.fake_B, db_type="B") * (self.fake_B_det_sigmoid > probability_threshold) 
 
         ## >> A
-        self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
-        self.rec_A_sigmoid=torch.sigmoid(self.rec_A)
         self.fake_A = self.netG_B(self.real_B,dir="BtoA") #self.norm_zero_one()  # G_B(B)
-        self.fake_A_sigmoid=self.norm_zero_one(self.fake_A)
+        self.fake_A_sigmoid=self.dynamic_norm_zero_one(self.fake_A, db_type="A")
+        
+        self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
+        self.rec_A_sigmoid=self.dynamic_norm_zero_one(self.rec_A, db_type="A")
 
 
         rec_B=self.netG_A(self.fake_A,dir="AtoB")
@@ -178,7 +187,7 @@ class CycleGANModel(BaseModel):
         self.rec_B_det=rec_B[1]
         self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
 
-        self.rec_B_sigmoid = torch.sigmoid(rec_B[0]) * (self.rec_B_det_sigmoid > probability_threshold)  #self.norm_zero_one()  # G_A(G_B(B))
+        self.rec_B_sigmoid = self.dynamic_norm_zero_one(rec_B[0],db_type="B") * (self.rec_B_det_sigmoid > probability_threshold)  #self.norm_zero_one()  # G_A(G_B(B))
         
         
 
@@ -235,7 +244,7 @@ class CycleGANModel(BaseModel):
 
         
         
-        self.rr_norm = self.alpha + 1 - self.rain_rate_prob
+        self.rr_norm = self.rain_rate_prob if self.dataset_type=="Train" else torch.ones([64], device='cuda:0')  #self.alpha + 1 - 
         self.att_norm = self.alpha + 1 - self.attenuation_prob
         const=81.66 if self.dataset_type=="Train" else 1 #33.44
         pos_weight = torch.tensor([const], dtype=torch.float32, device="cuda:0") # wet event is x times more important (!!!)
@@ -245,7 +254,7 @@ class CycleGANModel(BaseModel):
         adjusted_rec_weights=self.rr_norm.clone()
 
         targets=(self.real_B >= threshold/3.3).float() # 0.2/3.3=0.06, ie. we consider a wet event over 
-        bce_weight_loss=nn.BCEWithLogitsLoss(reduction='none') #,  | << more numerically stable
+        bce_weight_loss=nn.BCEWithLogitsLoss(reduction='none', weight = self.rr_norm) #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
         #adjust for type-1 erros
