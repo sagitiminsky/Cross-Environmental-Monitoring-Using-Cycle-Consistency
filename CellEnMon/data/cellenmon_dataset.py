@@ -251,7 +251,7 @@ class CellenmonDataset(BaseDataset):
     def func_fit(self, x, a, b, c):
         x=torch.from_numpy(np.array(x))
         b=torch.from_numpy(np.array(b))
-        return a * torch.exp(-b * x) + c
+        return torch.log(1 + a * torch.exp(b * x) + c)
 
     def __len__(self):
         """Return the total number of images."""
