@@ -159,6 +159,10 @@ class CycleGANModel(BaseModel):
 
         return (x - min_val) / (max_val - min_val + epsilon)
 
+
+    def logistic_cdf(self, x):
+        return 1 / (1 + torch.exp(-x / threshold))
+
         
 
     def forward(self):
@@ -174,16 +178,16 @@ class CycleGANModel(BaseModel):
 
         ## >> Fake
         self.fake_B=fake_B[0]
-        self.fake_B_sigmoid=torch.sigmoid(self.fake_B)# * (self.fake_B_det_sigmoid > probability_threshold) 
+        self.fake_B_sigmoid=self.logistic_cdf(self.fake_B)# * (self.fake_B_det_sigmoid > probability_threshold) 
 
         
         self.fake_A = self.netG_B(self.real_B,dir="BtoA") #self.norm_zero_one()  # G_B(B)
-        self.fake_A_sigmoid=torch.sigmoid(self.fake_A)
+        self.fake_A_sigmoid=self.logistic_cdf(self.fake_A)
         
 
         ## >> Rec
         self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
-        self.rec_A_sigmoid=torch.sigmoid(self.rec_A)
+        self.rec_A_sigmoid=self.logistic_cdf(self.rec_A)
 
 
         rec_B=self.netG_A(self.fake_A,dir="AtoB")
@@ -191,7 +195,7 @@ class CycleGANModel(BaseModel):
         self.rec_B_det=rec_B[1]
         self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
 
-        self.rec_B_sigmoid = torch.sigmoid(rec_B[0]) * (self.rec_B_det_sigmoid > probability_threshold)  #self.norm_zero_one()  # G_A(G_B(B))
+        self.rec_B_sigmoid = self.logistic_cdf(rec_B[0])# * (self.rec_B_det_sigmoid > probability_threshold)  #self.norm_zero_one()  # G_A(G_B(B))
         
         
 
@@ -302,11 +306,11 @@ class CycleGANModel(BaseModel):
         mmin=torch.Tensor(self.data_transformation['link']['min']).cuda()
         mmax=torch.Tensor(self.data_transformation['link']['max']).cuda()
 
-        
-        self.loss_cycle_A = lambda_A * torch.sum(self.criterionCycle(self.rec_A_sigmoid, self.real_A)) #* self.att_norm
+        L1=torch.nn.L1Loss(reduction='none',)
+        self.loss_cycle_A = lambda_A * torch.sum(L1(self.rec_A_sigmoid, self.real_A)) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = lambda_B * torch.sum(self.criterionCycle(self.rec_B_sigmoid, self.real_B)) # * adjusted_weights)
+        self.loss_cycle_B = lambda_B * torch.sum(L1(self.rec_B_sigmoid, self.real_B) * self.rr_norm) # * adjusted_weights)
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
