@@ -56,8 +56,8 @@ class CycleGANModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B'] #  'D_A', 'D_B', 'G_A','G_B_only'
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        visual_names_A = ['real_A', 'fake_B_sigmoid', 'rec_A_sigmoid', "fake_B_det", "fake_B_det_sigmoid"]
-        visual_names_B = ['real_B', 'fake_A_sigmoid', 'rec_B_sigmoid']
+        visual_names_A = ['real_A', 'fake_B_sigmoid', 'rec_A_sigmoid', "fake_B_det"]
+        visual_names_B = ['real_B', 'fake_A_sigmoid', 'rec_B_sigmoid',"fake_B_det_sigmoid","rec_B_det_sigmoid"]
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt_B=G_A(B) ad idt_A=G_A(B)
             visual_names_A.append('idt_B')
             visual_names_B.append('idt_A')
@@ -115,12 +115,12 @@ class CycleGANModel(BaseModel):
         self.t = input['Time']
         self.dataset_type="Train" if isTrain else "Validation"
         self.isTrain=isTrain
+        self.rain_rate_prob = input['rain_rate_prob'].to(self.device)
         
         if isTrain:
             self.alpha=0.02
             self.metadata_A = input['metadata_A' if AtoB else 'metadata_B'].to(self.device)
             self.metadata_B = input['metadata_B' if AtoB else 'metadata_A'].to(self.device)
-            self.rain_rate_prob = input['rain_rate_prob'].to(self.device)
             self.attenuation_prob = input['attenuation_prob'].to(self.device)
 
             
@@ -266,9 +266,9 @@ class CycleGANModel(BaseModel):
         bce_weight_loss=nn.BCEWithLogitsLoss(reduction='none', weight = self.rr_norm) #,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
-        #adjust for type-1 erros
+        #adjust for type-1 and type-2 erros
         adjusted_weights=self.rr_norm.clone()
-        # adjusted_weights[(self.fake_B_det_sigmoid > 0.06) & (targets==0)] = 1
+        # adjusted_weights[(self.fake_B_det_sigmoid <= probability_threshold ) & (targets=1)] = some_large_number
 
         self.loss_bce_B=torch.sum(bce_weight_loss(self.fake_B_det, targets)) \
         + torch.sum(bce_weight_loss(self.rec_B_det, targets))

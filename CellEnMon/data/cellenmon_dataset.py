@@ -31,6 +31,8 @@ RIGHT = (0, 1, 0, 0)
 UP = (0, 0, 1, 0)
 DOWN = (0, 0, 0, 1)
 
+LAMBDA=int(os.environ["LAMBDA"])
+
 
 class CellenmonDataset(BaseDataset):
     """A template dataset class for you to implement custom datasets."""
@@ -209,12 +211,10 @@ class CellenmonDataset(BaseDataset):
         #     A=A.T # (8,256)
         #     B=B.T # (5,256)
 
-        A_attenuation_normalized=A #np.array(list(self.dataset.dme.db[selected_link]['data'].values()))
-        A_attenuation=self.min_max_inv_transform(x=A_attenuation_normalized,mmin=-50.8,mmax=17)
-        B_rain_rate_normalized=B #np.array(list(self.dataset.ims.db[selected_gague]['data'].values()))
-        B_rain_rate = self.min_max_inv_transform(x=B_rain_rate_normalized,mmin=0,mmax=3.3)
+        A_attenuation=self.min_max_inv_transform(x=A,mmin=-50.8,mmax=17)
+        B_rain_rate = self.min_max_inv_transform(x=B,mmin=0,mmax=3.3)
         
-        a=0.27299873
+        a=LAMBDA
 
         return {
             'A': A,
@@ -253,7 +253,7 @@ class CellenmonDataset(BaseDataset):
     def func_fit(self, x, a):
         x=torch.from_numpy(np.array(x))
         b=torch.from_numpy(np.array(a))
-        return (a * torch.exp(-x*a))
+        return 1/(a * torch.exp(-x*a))
 
     def __len__(self):
         """Return the total number of images."""
