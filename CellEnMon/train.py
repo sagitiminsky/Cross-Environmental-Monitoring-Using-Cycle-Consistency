@@ -51,6 +51,7 @@ GROUPS = {
 
 SELECTED_GROUP_NAME = os.environ["SELECTED_GROUP_NAME"]
 SELECT_JOB = int(os.environ["SELECT_JOB"])
+LAMBDA=int(os.environ["LAMBDA"])
 
 
 # gauges in train dataset:dict_keys(['ZOMET HANEGEV', 'BEER SHEVA', 'EZUZ', 'NEOT SMADAR', 'SEDE BOQER', 'PARAN'])
@@ -129,6 +130,11 @@ LEFT = (1, 0, 0, 0)
 RIGHT = (0, 1, 0, 0)
 UP = (0, 0, 1, 0)
 DOWN = (0, 0, 0, 1)
+
+def func_fit(x, a):
+    x=torch.from_numpy(np.array(x))
+    b=torch.from_numpy(np.array(a))
+    return 1/(a * torch.exp(-x*a))
 
 
 def pad_with_respect_to_direction( A, B, dir, value_a, value_b):
@@ -257,8 +263,18 @@ if __name__ == '__main__':
                     
                         except RuntimeError:
                             break
-                    
-                        loader={"link":link, "attenuation_sample":torch.unsqueeze(A.T,0), "gague":gauge, "rain_rate_sample":torch.unsqueeze(B.T,0), "Time":slice_time}                      
+
+                        
+                        attenuation_sample=torch.unsqueeze(A.T,0)
+                        attenuation_sample_unnormalized = min_max_inv_transform(attenuation_sample,mmin=-50.8,mmax=17)
+                        rain_sample=torch.unsqueeze(B.T,0)
+                        rain_sample_unnormalized = min_max_inv_transform(rain_sample,mmin=0,mmax=3.3)
+                        loader={"link":link, "attenuation_sample":attenuation_sample,\
+                         "gague":gauge,\
+                         "rain_rate_sample":rain_sample,\
+                         "Time":slice_time,\
+                         "rain_rate_prob": func_fit(rain_sample_unnormalized,LAMBDA)
+                        }                      
                         model.set_input(loader,isTrain=False)
                             
                         model.optimize_parameters(is_train=False)
@@ -276,7 +292,18 @@ if __name__ == '__main__':
 
             
                             with torch.no_grad():
-                                visuals = OrderedDict([('real_A', torch.unsqueeze(A.T,0)),('fake_B', model.fake_B_sigmoid),('rec_A', model.rec_A_sigmoid), ('real_B',torch.unsqueeze(B.T,0)),('fake_A', model.fake_A_sigmoid),('rec_B', model.rec_B_sigmoid)])
+                                visuals = OrderedDict(
+                                [
+                                    ('real_A', torch.unsqueeze(A.T,0)),\
+                                    ('fake_B', model.fake_B_sigmoid),\
+                                    ('rec_A', model.rec_A_sigmoid),\
+                                    ('real_B',torch.unsqueeze(B.T,0)),\
+                                    ('fake_A', model.fake_A_sigmoid),\
+                                    ('rec_B', model.rec_B_sigmoid),\
+                                    ('fake_B_det_sigmoid', model.fake_B_det_sigmoid),\
+                                    ('rec_B_det_sigmoid', model.rec_B_det_sigmoid)
+                                ]
+                            )
                             
                             real_rain_add=visuals['real_B'][0].cpu().detach().numpy()
                             fake_rain_add=visuals['fake_B'][0].cpu().detach().numpy()
@@ -348,8 +375,12 @@ if __name__ == '__main__':
                                         else:
                                             mask=rec_detection
                                         
-                                        mask=((mask >= probability_threshold)).astype(int)
+                                        print(mask)
+                                        mask=(mask >= probability_threshold).astype(int)
                                         cmap=["red" if m else "black" for m in mask]
+
+                                        print(mask)
+                                        assert(False)
                                         
                                         ax.scatter([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
@@ -452,7 +483,7 @@ if __name__ == '__main__':
                 
             if ENABLE_WANDB:
                 for key in current_losses:
-                    training_losses[key] = training_losses[key]/(ITERS_BETWEEN_VALIDATIONS * len(train_dataset))
+                    training_losses[key] = training_losses[key]/(ITERS_BETWEEN_VALIDATIONS)
             
                 wandb.log({**training_losses})
                 path_to_html = f"{v.out_path}/{v.map_name}"
