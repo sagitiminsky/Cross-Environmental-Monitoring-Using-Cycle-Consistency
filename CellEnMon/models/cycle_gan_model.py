@@ -161,7 +161,7 @@ class CycleGANModel(BaseModel):
 
 
     def logistic_cdf(self, x):
-        return 1 / (1 + torch.exp(-x / threshold))
+        return 1 / (1 + torch.exp(-x / 3.3))
 
         
 

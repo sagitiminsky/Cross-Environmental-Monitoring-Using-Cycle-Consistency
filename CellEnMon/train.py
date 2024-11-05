@@ -332,7 +332,7 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if "fake_B" not in key and "rec_B" not in key:
+                                    if key!="fake_B" and key!="rec_B":
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
@@ -345,8 +345,6 @@ if __name__ == '__main__':
                                         
                                         if key=="fake_B":
                                             mask=fake_detection
-                                            with np.printoptions(threshold=np.inf):
-                                                print(f"batch #{batch_counter}:{fake_detection}")
                                         else:
                                             mask=rec_detection
                                         
@@ -369,11 +367,14 @@ if __name__ == '__main__':
 
                                     
                                 ax.xaxis.set_major_formatter(date_format)
+                            
 
 
 
 
-                            wandb.log({title: fig})
+                        wandb.log({title: fig})
+                        with np.printoptions(threshold=np.inf):
+                            print(f"batch #{batch_counter}:{fake_detection}")
                     
 
                     
