@@ -155,7 +155,7 @@ class Extractor:
         return np.array([y for x in self.dme.db for y in list(self.dme.db[x]['data'].values())])[:,-1]
 
     def func_fit(self, x, a):
-        return a * np.exp(-a * x)
+        return a * np.exp(-x * a)
 
     def stats(self):
         #rain
