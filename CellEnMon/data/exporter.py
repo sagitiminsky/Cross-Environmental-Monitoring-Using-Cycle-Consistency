@@ -154,8 +154,8 @@ class Extractor:
     def calculate_attenuation_events_histogram(self):
         return np.array([y for x in self.dme.db for y in list(self.dme.db[x]['data'].values())])[:,-1]
 
-    def func_fit(self, x, a, b, c):
-        return a * np.exp(-b * x) + c
+    def func_fit(self, x, a, b):
+        return a * np.exp(-b * x)
 
     def stats(self):
         #rain
@@ -172,7 +172,7 @@ class Extractor:
 #         plt.grid(color='gray', linestyle='-', linewidth=0.5)
         # Plotting exp. fit
         popt, pcov = curve_fit(self.func_fit, bins[:-1], counts / sum(counts))
-        self.rain_a, self.rain_b, self.rain_c = popt
+        self.rain_a, self.rain_b = popt
 #         plt.plot(bins, self.func_fit(bins, *popt), 'r-',
 #                  label='fit[a * exp(-b * x) + c]: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
 #         plt.yscale("log")
@@ -183,7 +183,7 @@ class Extractor:
         attenuation_events_precentage=len(attenuation_events_hist[attenuation_events_hist>0])/len(attenuation_events_hist)
         counts, bins = np.histogram(attenuation_events_hist)
         counts = [x / sum(counts) for x in counts]
-        self.attenuation_a, self.attenuation_b, self.attenuation_c = popt
+        self.attenuation_a, self.attenuation_b = popt
     
         print(
             f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \

@@ -242,8 +242,8 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
             
-            'attenuation_prob': self.func_fit(x=A_attenuation, a=a, b=b,c=c),
-            'rain_rate_prob': self.func_fit(x=B_rain_rate, a=a, b=b, c=c),
+            'attenuation_prob': self.func_fit(x=A_attenuation, a=a, b=b),
+            'rain_rate_prob': self.func_fit(x=B_rain_rate, a=a, b=b),
             
 #             'a_rain': self.dataset.a,
 #             'b_rain': self.dataset.b,
@@ -253,10 +253,10 @@ class CellenmonDataset(BaseDataset):
     def min_max_inv_transform(self,x, mmin, mmax):
         return x * (mmax - mmin) + mmin
     
-    def func_fit(self, x, a, b, c):
+    def func_fit(self, x, a, b):
         x=torch.from_numpy(np.array(x))
         b=torch.from_numpy(np.array(b))
-        return torch.log(1 + a * torch.exp(b * x) + c)
+        return 1/(a * torch.exp(-b * x))
 
     def __len__(self):
         """Return the total number of images."""
