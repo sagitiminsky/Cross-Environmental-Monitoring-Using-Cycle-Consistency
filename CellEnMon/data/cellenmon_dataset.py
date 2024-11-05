@@ -210,9 +210,9 @@ class CellenmonDataset(BaseDataset):
         #     B=B.T # (5,256)
 
         A_attenuation_normalized=A #np.array(list(self.dataset.dme.db[selected_link]['data'].values()))
-        A_attenuation=self.min_max_inv_transform(x=A_attenuation_normalized,mmin=data_dict_A['data_min'],mmax=data_dict_A['data_max'])
+        A_attenuation=self.min_max_inv_transform(x=A_attenuation_normalized,mmin=-50.8,mmax=17)
         B_rain_rate_normalized=B #np.array(list(self.dataset.ims.db[selected_gague]['data'].values()))
-        B_rain_rate = self.min_max_inv_transform(x=B_rain_rate_normalized,mmin=data_dict_B['data_min'],mmax=data_dict_B['data_max'])
+        B_rain_rate = self.min_max_inv_transform(x=B_rain_rate_normalized,mmin=0,mmax=3.3)
         
         a=0.27299873
 
@@ -253,7 +253,7 @@ class CellenmonDataset(BaseDataset):
     def func_fit(self, x, a):
         x=torch.from_numpy(np.array(x))
         b=torch.from_numpy(np.array(a))
-        return 1/(a * torch.exp(-b * x))
+        return (a * torch.exp(-x*a))
 
     def __len__(self):
         """Return the total number of images."""
