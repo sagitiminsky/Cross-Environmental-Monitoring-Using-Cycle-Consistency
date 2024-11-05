@@ -375,12 +375,9 @@ if __name__ == '__main__':
                                         else:
                                             mask=rec_detection
                                         
-                                        print(mask)
+                                        
                                         mask=(mask >= probability_threshold).astype(int)
                                         cmap=["red" if m else "black" for m in mask]
-
-                                        print(mask)
-                                        assert(False)
                                         
                                         ax.scatter([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
