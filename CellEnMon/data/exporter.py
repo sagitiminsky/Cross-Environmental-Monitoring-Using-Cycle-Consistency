@@ -154,8 +154,8 @@ class Extractor:
     def calculate_attenuation_events_histogram(self):
         return np.array([y for x in self.dme.db for y in list(self.dme.db[x]['data'].values())])[:,-1]
 
-    def func_fit(self, x, a, b):
-        return a * np.exp(-b * x)
+    def func_fit(self, x, a):
+        return a * np.exp(-a * x)
 
     def stats(self):
         #rain
@@ -164,26 +164,28 @@ class Extractor:
 
         counts, bins = np.histogram(wet_events_hist)
         counts = [x / sum(counts) for x in counts]
-#         plt.hist(bins[:-1], bins, weights=counts, rwidth=0.7, label="Rain Rate Histogram")
 
-#         plt.title("Rain Rate All of Israel")
-#         plt.xlabel("Rain Rate [mm/h]")
-#         plt.ylabel("$f_{RR}(r)$")
-#         plt.grid(color='gray', linestyle='-', linewidth=0.5)
+        # plt.hist(bins[:-1], bins, weights=counts, rwidth=0.7, label="Rain Rate Histogram")
+        # plt.title("Rain Rate All of Israel")
+        # plt.xlabel("Rain Rate [mm/h]")
+        # plt.ylabel("$f_{RR}(r)$")
+        # plt.grid(color='gray', linestyle='-', linewidth=0.5)
+
         # Plotting exp. fit
         popt, pcov = curve_fit(self.func_fit, bins[:-1], counts / sum(counts))
-        self.rain_a, self.rain_b = popt
-#         plt.plot(bins, self.func_fit(bins, *popt), 'r-',
-#                  label='fit[a * exp(-b * x) + c]: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
-#         plt.yscale("log")
-#         plt.legend()
+        self.rain_a = popt
+        # plt.plot(bins, self.func_fit(bins, *popt), 'r-',
+        #          label='fit[a * exp(-a * x) ]: a=%5.3f' % tuple(popt))
+        # plt.yscale("log")
+        # plt.legend()
+        
         
         #attenuation
         attenuation_events_hist=self.calculate_attenuation_events_histogram()
         attenuation_events_precentage=len(attenuation_events_hist[attenuation_events_hist>0])/len(attenuation_events_hist)
         counts, bins = np.histogram(attenuation_events_hist)
         counts = [x / sum(counts) for x in counts]
-        self.attenuation_a, self.attenuation_b = popt
+        self.attenuation_a = popt
     
         print(
             f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
@@ -384,7 +386,9 @@ class Extractor:
 
 if __name__ == "__main__":
     dataset = Extractor(is_train=IS_TRAIN)
-    #dataset.stats()
     #dataset.visualize_dme(link_name='a459-6879')
     #dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
-    #plt.show()
+
+    dataset.stats()
+    plt.show()
+    

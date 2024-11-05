@@ -214,10 +214,7 @@ class CellenmonDataset(BaseDataset):
         B_rain_rate_normalized=B #np.array(list(self.dataset.ims.db[selected_gague]['data'].values()))
         B_rain_rate = self.min_max_inv_transform(x=B_rain_rate_normalized,mmin=data_dict_B['data_min'],mmax=data_dict_B['data_max'])
         
-        a=9.89754031e-01
-        b=1.53177582e+01
-        c=3.89253869e-04
-
+        a=0.27299873
 
         return {
             'A': A,
@@ -242,8 +239,8 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
             
-            'attenuation_prob': self.func_fit(x=A_attenuation, a=a, b=b),
-            'rain_rate_prob': self.func_fit(x=B_rain_rate, a=a, b=b),
+            'attenuation_prob': self.func_fit(x=A_attenuation, a=a),
+            'rain_rate_prob': self.func_fit(x=B_rain_rate, a=a),
             
 #             'a_rain': self.dataset.a,
 #             'b_rain': self.dataset.b,
@@ -253,9 +250,9 @@ class CellenmonDataset(BaseDataset):
     def min_max_inv_transform(self,x, mmin, mmax):
         return x * (mmax - mmin) + mmin
     
-    def func_fit(self, x, a, b):
+    def func_fit(self, x, a):
         x=torch.from_numpy(np.array(x))
-        b=torch.from_numpy(np.array(b))
+        b=torch.from_numpy(np.array(a))
         return 1/(a * torch.exp(-b * x))
 
     def __len__(self):
