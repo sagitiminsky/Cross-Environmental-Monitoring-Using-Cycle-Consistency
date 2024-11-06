@@ -49,9 +49,7 @@ GROUPS = {
 
 }
 
-SELECTED_GROUP_NAME = os.environ["SELECTED_GROUP_NAME"]
-SELECT_JOB = int(os.environ["SELECT_JOB"])
-LAMBDA=int(os.environ["LAMBDA"])
+
 
 
 # gauges in train dataset:dict_keys(['ZOMET HANEGEV', 'BEER SHEVA', 'EZUZ', 'NEOT SMADAR', 'SEDE BOQER', 'PARAN'])
@@ -93,12 +91,17 @@ validation_link_to_gauge_matching ={
 
 }
 
-#[9.76205359e-01 1.34832568e+01 1.05645701e-03]
-#threshold=0.3 probability_threshold=0.5 python3 CellEnMon/train.py
-# Threshold for binary classification
+
+### TO RUN:
+# LAMBDA=2 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ITERS_BETWEEN_VALIDATIONS=1000 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
+
+# Environment Variables
 threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
 ITERS_BETWEEN_VALIDATIONS=int(os.environ["ITERS_BETWEEN_VALIDATIONS"])
+SELECTED_GROUP_NAME = os.environ["SELECTED_GROUP_NAME"]
+SELECT_JOB = int(os.environ["SELECT_JOB"])
+LAMBDA=int(os.environ["LAMBDA"])
 
 # Detection:
 #[[  52 2099]
@@ -359,7 +362,7 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if key!="fake_B" and key!="rec_B":
+                                    if key!="fake_B": #and key!="rec_B":
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
