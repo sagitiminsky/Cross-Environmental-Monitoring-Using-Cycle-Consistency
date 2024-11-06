@@ -109,7 +109,7 @@ class CycleGANModel(BaseModel):
         """
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample" if AtoB else 'rain_rate_sample'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) #+ self.noise
+        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) + self.noise
         self.gague = input['gague']
         self.link = input['link']
         self.t = input['Time']
@@ -196,8 +196,9 @@ class CycleGANModel(BaseModel):
         self.rec_B_det=rec_B[1]
         self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
         #self.rec_B_with_detection=torch.sigmoid(rec_B[0]) * (self.rec_B_det_sigmoid > probability_threshold)
-
-        self.rec_B_sigmoid = self.logistic_cdf(rec_B[0])
+        
+        self.rec_B=rec_B[0]
+        self.rec_B_sigmoid = self.logistic_cdf(self.rec_B)
 
         
         
@@ -316,7 +317,7 @@ class CycleGANModel(BaseModel):
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = self.loss_bce_B + self.loss_cycle_B + self.loss_cycle_A # self.loss_G_B_only + self.loss_G_A+ ()#  + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
+        self.loss_G = self.loss_bce_B + self.loss_cycle_B + self.loss_cycle_A # + self.loss_G_B_only + self.loss_G_A+ ()#  + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
         if self.isTrain:
             self.loss_G.backward()
 

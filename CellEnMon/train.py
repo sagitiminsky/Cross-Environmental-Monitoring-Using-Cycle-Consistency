@@ -483,7 +483,7 @@ if __name__ == '__main__':
                 
             if ENABLE_WANDB:
                 for key in current_losses:
-                    training_losses[key] = training_losses[key]/(ITERS_BETWEEN_VALIDATIONS)
+                    training_losses[key] = training_losses[key]/(ITERS_BETWEEN_VALIDATIONS*len(train_dataset))
             
                 wandb.log({**training_losses})
                 path_to_html = f"{v.out_path}/{v.map_name}"
