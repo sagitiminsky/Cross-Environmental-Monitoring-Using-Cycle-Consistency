@@ -161,7 +161,7 @@ class CycleGANModel(BaseModel):
 
 
     def logistic_cdf(self, x):
-        return 1 / (1 + torch.exp(-x / 10))
+        return 1 / (1 + torch.exp(-x / 2))
 
         
 
@@ -187,11 +187,11 @@ class CycleGANModel(BaseModel):
         
 
         ## >> Rec
-        self.rec_A = self.netG_B(self.fake_B, dir="BtoA") #self.norm_zero_one()
+        self.rec_A = self.netG_B(self.fake_B_sigmoid, dir="BtoA") #self.norm_zero_one()
         self.rec_A_sigmoid=self.logistic_cdf(self.rec_A)
 
 
-        rec_B=self.netG_A(self.fake_A,dir="AtoB")
+        rec_B=self.netG_A(self.fake_A_sigmoid,dir="AtoB")
 
         self.rec_B_det=rec_B[1]
         self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
@@ -266,7 +266,7 @@ class CycleGANModel(BaseModel):
 
 
         targets=(self.real_B >= threshold/3.3).float() # 0.2/3.3=0.06, ie. we consider a wet event over 
-        bce_weight_loss=nn.BCEWithLogitsLoss(reduction='sum', weight = self.rr_norm) #,  | << more numerically stable
+        bce_weight_loss=nn.BCEWithLogitsLoss(reduction='sum', weight = self.rr_norm) # ,  | << more numerically stable
         bce_criterion = torch.nn.BCELoss(weight=self.rr_norm)
         
         #adjust for type-1 and type-2 erros
@@ -276,7 +276,7 @@ class CycleGANModel(BaseModel):
         self.loss_bce_B=(bce_weight_loss(self.fake_B_det, targets)) \
         # + torch.sum(bce_weight_loss(self.rec_B_det, targets))
         
-        self.D_B=self.netD_B(self.fake_B_with_detection)
+        self.D_B=self.netD_B(self.fake_B_sigmoid)
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
         
         # GAN loss D_B(G_A(A))
