@@ -227,7 +227,7 @@ class CycleGANModel(BaseModel):
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
-        loss_D = (loss_D_real + loss_D_fake)/self.L
+        loss_D = 1/(torch.log(1+0.03*self.L))*(loss_D_real + loss_D_fake)
         if self.isTrain:
             loss_D.backward()
         return loss_D
@@ -290,7 +290,7 @@ class CycleGANModel(BaseModel):
         self.loss_bce_rec_B  = fake_bce_weight_loss(self.rec_B_det, targets)
         self.loss_bce_B = self.loss_bce_fake_B + self.loss_bce_rec_B
         
-        self.D_B=self.netD_B(self.fake_B_with_detection)
+        self.D_B=self.netD_B(self.fake_B_sigmoid)
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
 
         # GAN loss D_B(G_A(A))
@@ -328,14 +328,20 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = L1(self.rec_A_sigmoid, self.real_A) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = L1(self.rec_B_with_detection, self.real_B) # * adjusted_weights)
+        self.loss_cycle_B = L1(self.fake_B_sigmoid, self.real_B) # * adjusted_weights)
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
-        self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B) * adjusted_rec_weights)
+        self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = 1/(torch.log(1+0.03*self.L))*(self.loss_cycle_B + self.loss_cycle_A + self.loss_G_B_only + self.loss_G_A) #0.001 * self.loss_bce_B + + ()#  + |  | self.loss_cycle_A |  #+ self.loss_idt_A + self.loss_idt_B
-        #self.loss_bce_B +
+        self.loss_G = 1/(torch.log(1+0.03*self.L))*\
+            (self.loss_bce_B +\
+            10*self.loss_cycle_B +\
+            10*self.loss_cycle_A +\
+            self.loss_G_B_only +\
+            self.loss_G_A) 
+        
+        
         if self.isTrain:
             self.loss_G.backward()
 

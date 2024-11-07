@@ -31,7 +31,7 @@ RIGHT = (0, 1, 0, 0)
 UP = (0, 0, 1, 0)
 DOWN = (0, 0, 0, 1)
 
-LAMBDA=int(os.environ["LAMBDA"])
+LAMBDA=float(os.environ["LAMBDA"])
 
 
 class CellenmonDataset(BaseDataset):
