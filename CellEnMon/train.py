@@ -101,7 +101,7 @@ probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-
 ITERS_BETWEEN_VALIDATIONS=int(os.environ["ITERS_BETWEEN_VALIDATIONS"])
 SELECTED_GROUP_NAME = os.environ["SELECTED_GROUP_NAME"]
 SELECT_JOB = int(os.environ["SELECT_JOB"])
-LAMBDA=int(os.environ["LAMBDA"])
+LAMBDA=float(os.environ["LAMBDA"])
 
 # Detection:
 #[[  52 2099]
