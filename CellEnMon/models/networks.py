@@ -417,30 +417,30 @@ class ResnetBlock(nn.Module):
         Returns a conv block (with a conv layer, a normalization layer, and a non-linearity layer (ReLU))
         """
         conv_block = []
-        # p = 0
-        # if padding_type == 'reflect':
-        #     conv_block += [nn.ReflectionPad1d(1)]
-        # elif padding_type == 'replicate':
-        #     conv_block += [nn.ReplicationPad1d(1)]
-        # elif padding_type == 'zero':
-        #     p = 1
-        # else:
-        #     raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+        p = 0
+        if padding_type == 'reflect':
+            conv_block += [nn.ReflectionPad1d(1)]
+        elif padding_type == 'replicate':
+            conv_block += [nn.ReplicationPad1d(1)]
+        elif padding_type == 'zero':
+            p = 1
+        else:
+            raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
-        # conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), norm_layer(dim), nn.ReLU(True)]
-        # if use_dropout:
-        #     conv_block += [nn.Dropout(0.5)]
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), norm_layer(dim), nn.ReLU(True)]
+        if use_dropout:
+            conv_block += [nn.Dropout(0.5)]
 
-        # p = 0
-        # if padding_type == 'reflect':
-        #     conv_block += [nn.ReflectionPad1d(1)]
-        # elif padding_type == 'replicate':
-        #     conv_block += [nn.ReplicationPad1d(1)]
-        # elif padding_type == 'zero':
-        #     p = 1
-        # else:
-        #     raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-        # conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), norm_layer(dim)] #
+        p = 0
+        if padding_type == 'reflect':
+            conv_block += [nn.ReflectionPad1d(1)]
+        elif padding_type == 'replicate':
+            conv_block += [nn.ReplicationPad1d(1)]
+        elif padding_type == 'zero':
+            p = 1
+        else:
+            raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding='same', bias=use_bias), norm_layer(dim)] #
 
         return nn.Sequential(*conv_block)
 
