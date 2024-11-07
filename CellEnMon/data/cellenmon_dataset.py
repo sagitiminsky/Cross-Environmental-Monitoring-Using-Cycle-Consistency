@@ -79,25 +79,31 @@ class CellenmonDataset(BaseDataset):
 
     def calc_dist_and_center_point(self, x1_longitude, x1_latitude, x2_longitude, x2_latitude) -> dict:
         
-        lon1 = radians(x1_longitude)
-        lon2 = radians(x1_latitude)
-        lat1 = radians(x2_longitude)
+        # Convert latitude and longitude from degrees to radians
+        lat1 = radians(x1_latitude)
         lat2 = radians(x2_latitude)
+        lon1 = radians(x1_longitude)
+        lon2 = radians(x2_longitude)
 
         # Haversine formula
         dlon = lon2 - lon1
         dlat = lat2 - lat1
-        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-
+        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
         c = 2 * asin(sqrt(a))
 
-        # Radius of earth in kilometers (6371). Use 3956 for miles. We use 1 because it is normalized
-        r = 1
+        # Radius of Earth in kilometers
+        r = 6371
+        distance = c * r
+
+        # Calculate the midpoint
+        midpoint_longitude = (x1_longitude + x2_longitude) / 2
+        midpoint_latitude = (x1_latitude + x2_latitude) / 2
+
         return {
-            "dist": c * r / 1000.0, #in km
+            "dist": distance,  # in km
             "center": {
-                "longitude": (x1_longitude + x2_longitude) / 2,
-                "latitude": (x1_latitude + x2_latitude) / 2
+                "longitude": midpoint_longitude,
+                "latitude": midpoint_latitude
             }
         }
 
@@ -139,20 +145,23 @@ class CellenmonDataset(BaseDataset):
         link_metadata = self.dataset.dme.db[selected_link]['metadata']
         gauge_metadata=self.dataset.ims.db[selected_gague]['metadata']
 
+
         dme_station_coo = self.calc_dist_and_center_point(x1_longitude=link_metadata[0],
                                                           x1_latitude=link_metadata[1],
                                                           x2_longitude=link_metadata[2],
                                                           x2_latitude=link_metadata[3])
 
-        ims_station_coo = self.calc_dist_and_center_point(x1_longitude=gauge_metadata[0],
-                                                          x1_latitude=gauge_metadata[1],
-                                                          x2_longitude=gauge_metadata[0],
-                                                          x2_latitude=gauge_metadata[1])
 
-        dist = self.calc_dist_and_center_point(x1_longitude=ims_station_coo["center"]["longitude"],
-                                               x1_latitude=ims_station_coo["center"]["latitude"],
+        dist = self.calc_dist_and_center_point(x1_longitude=gauge_metadata[1],
+                                               x1_latitude=gauge_metadata[0],
                                                x2_longitude=dme_station_coo["center"]["longitude"],
                                                x2_latitude=dme_station_coo["center"]["latitude"])["dist"]
+
+        # print(f"gauge long:{gauge_metadata[0]}")
+        # print(f"gauge lat:{gauge_metadata[1]}")
+        # print(f"link long:{dme_station_coo['center']['longitude']}")
+        # print(f"link lat:{dme_station_coo['center']['latitude']}")
+        # print(dist)
 
         ################################
         #### Rain Rate Significance ####
@@ -175,7 +184,7 @@ class CellenmonDataset(BaseDataset):
             
             if time_stamp_A_start_time[:10] in [x[:10] for x in data_dict_B['data']]: # 13:dutch | 10:israel
                 for l in data_dict_B['data'].keys():
-                    if l.startswith(time_stamp_A_start_time[:10]) and config.TRAIN_RADIUS >= dist:
+                    if l.startswith(time_stamp_A_start_time[:10]): #and config.TRAIN_RADIUS >= dist:
                         slice_start_B=list(data_dict_B['data'].keys()).index(l)
                         break
 
