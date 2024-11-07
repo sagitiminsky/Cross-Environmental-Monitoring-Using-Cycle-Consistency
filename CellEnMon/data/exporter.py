@@ -48,7 +48,7 @@ class Domain:
 
     def metadata_normalization(self):
         for station_name, value in self.db.items():
-            self.db_normalized[station_name]["norm_metadata"] = self.min_max_norm(value['metadata'])
+            self.db_normalized[station_name]["norm_metadata"] = value['metadata'] #self.min_max_norm(
 
     def metadata_min_max_finder(self, metadata_vector):
         self.metadata_long_max = max(self.metadata_long_max, metadata_vector[0], metadata_vector[2])

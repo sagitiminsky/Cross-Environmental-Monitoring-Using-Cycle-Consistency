@@ -276,7 +276,8 @@ if __name__ == '__main__':
                          "gague":gauge,\
                          "rain_rate_sample":rain_sample,\
                          "Time":slice_time,\
-                         "rain_rate_prob": func_fit(rain_sample_unnormalized,LAMBDA)
+                         "rain_rate_prob": func_fit(rain_sample_unnormalized,LAMBDA),
+                         "distance": torch.tensor([3], device='cuda:0', dtype=torch.float64) # in KM
                         }                      
                         model.set_input(loader,isTrain=False)
                             
@@ -362,7 +363,7 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if key!="fake_B": #and key!="rec_B":
+                                    if key!="fake_B" and key!="rec_B":
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
@@ -370,7 +371,7 @@ if __name__ == '__main__':
                                                 linewidth=0.0,
                                                 markersize=4,
                                                 label=label
-                                                )
+                                        )
                                     else:
                                         
                                         if key=="fake_B":
