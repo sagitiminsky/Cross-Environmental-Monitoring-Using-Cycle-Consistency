@@ -119,82 +119,62 @@ class CellenmonDataset(BaseDataset):
         Step 1: get a random image path: e.g., path = self.image_paths[index]
         Step 2: load your data from the disk: e.g., image = Image.open(path).convert('RGB').
         Step 3: convert your data to a PyTorch tensor. You can use helpder functions such as self.transform. e.g., data = self.transform(image)
-        Step 4: return a data point as a dictionary.
-        """
-        entry_list_dme = list(self.dataset.dme.db_normalized)
-        entry_list_ims = list(self.dataset.ims.db_normalized)
-
-        selected_link = entry_list_dme[random.randint(0, self.dme_len - 1)]
-        data_dict_A = self.dataset.dme.db_normalized[selected_link]
-
-        selected_gague = entry_list_ims[random.randint(0, self.ims_len - 1)]
-        data_dict_B = self.dataset.ims.db_normalized[selected_gague]  # needs to be a tensor
-
-        """
-        dme: a day contains 96 samples
-        ims: a day contains 144 samples
+        Step 4: return a data point as a dictionary."""
         
-        So that after taking each 2nd measurment of dme
-        And after taking each 3rd measurment of ims we get
-        
-        """
-        ##########################
-        #### Station Distance ####
-        ##########################
+        entry_list_dme=list(self.dataset.dme.db_normalized)
+        entry_list_ims=list(self.dataset.ims.db_normalized)
+        filter_cond=True
+        while filter_cond:
+            
+            selected_link = entry_list_dme[random.randint(0, self.dme_len - 1)]
+            data_dict_A = self.dataset.dme.db_normalized[selected_link]
 
-        link_metadata = self.dataset.dme.db[selected_link]['metadata']
-        gauge_metadata=self.dataset.ims.db[selected_gague]['metadata']
+            selected_gague = entry_list_ims[random.randint(0, self.ims_len - 1)]
+            data_dict_B = self.dataset.ims.db_normalized[selected_gague]  # needs to be a tensor
+
+            link_metadata = self.dataset.dme.db[selected_link]['metadata']
+            gauge_metadata=self.dataset.ims.db[selected_gague]['metadata']
 
 
-        dme_station_coo = self.calc_dist_and_center_point(x1_longitude=link_metadata[0],
+            dme_station_coo = self.calc_dist_and_center_point(x1_longitude=link_metadata[0],
                                                           x1_latitude=link_metadata[1],
                                                           x2_longitude=link_metadata[2],
                                                           x2_latitude=link_metadata[3])
 
 
-        dist = self.calc_dist_and_center_point(x1_longitude=gauge_metadata[1],
+            dist = self.calc_dist_and_center_point(x1_longitude=gauge_metadata[1],
                                                x1_latitude=gauge_metadata[0],
                                                x2_longitude=dme_station_coo["center"]["longitude"],
-                                               x2_latitude=dme_station_coo["center"]["latitude"])["dist"]
+                                               x2_latitude=dme_station_coo["center"]["latitude"])["dist"]        
 
-        # print(f"gauge long:{gauge_metadata[0]}")
-        # print(f"gauge lat:{gauge_metadata[1]}")
-        # print(f"link long:{dme_station_coo['center']['longitude']}")
-        # print(f"link lat:{dme_station_coo['center']['latitude']}")
-        # print(dist)
 
-        ################################
-        #### Rain Rate Significance ####
-        ################################
+            if config.TRAIN_RADIUS >= dist:
+                # print("link and gauge are in radius")
+                slice_start_A = 0
+                slice_start_B = 0
+                slice_dist = self.opt.slice_dist
+                time_stamp_A_start_time = 0
+                time_stamp_B_start_time = 1
+                dme_vec_len = len(data_dict_A['data'])
+                ims_vec_len = len(data_dict_B['data'])
+                
 
-        slice_start_A = 0
-        slice_start_B = 0
-        slice_dist = self.opt.slice_dist
-        time_stamp_A_start_time = 0
-        time_stamp_B_start_time = 1
-        dme_vec_len = len(data_dict_A['data'])
-        ims_vec_len = len(data_dict_B['data'])
-        filter_cond = True
 
-        while filter_cond:
-            # go fetch
-            #print("go fetch")
-            slice_start_A = random.randint(0, dme_vec_len - 1)
-            time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
-            
-            if time_stamp_A_start_time[:10] in [x[:10] for x in data_dict_B['data']]: # 13:dutch | 10:israel
-                for l in data_dict_B['data'].keys():
-                    if l.startswith(time_stamp_A_start_time[:10]): #and config.TRAIN_RADIUS >= dist:
-                        slice_start_B=list(data_dict_B['data'].keys()).index(l)
-                        break
-
-            filter_cond = slice_start_A + slice_dist > dme_vec_len \
-                          or slice_start_B + slice_dist > ims_vec_len
+                slice_start_A = random.randint(0, dme_vec_len - 1)
+                time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
+                
+                if time_stamp_A_start_time[:10] in [x[:10] for x in data_dict_B['data']]: # 13:dutch | 10:israel
+                    for l in data_dict_B['data'].keys():
+                        if l.startswith(time_stamp_A_start_time[:10]) and \
+                        slice_start_A + slice_dist <= dme_vec_len and\
+                        slice_start_B + slice_dist <= ims_vec_len:
+                            slice_start_B=list(data_dict_B['data'].keys()).index(l)
+                            filter_cond=False
         
         slice_end_A = slice_start_A + slice_dist
         slice_end_B = slice_start_B + slice_dist
         
-#         print(f"Selected Index is: {slice_end_A}")
+        # print(f"Selected dist is: {dist}")
 
         A = torch.Tensor(np.array(list(data_dict_A['data'].values())[slice_start_A:slice_end_A]))
         B = torch.Tensor(np.array(list(data_dict_B['data'].values())[slice_start_B:slice_end_B]))
