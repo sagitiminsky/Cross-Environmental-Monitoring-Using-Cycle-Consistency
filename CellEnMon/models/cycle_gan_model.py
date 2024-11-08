@@ -9,6 +9,7 @@ import os
 
 threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"])
+THETA=float(os.environ["THETA"])
 
 class CycleGANModel(BaseModel):
     """
@@ -271,11 +272,11 @@ class CycleGANModel(BaseModel):
         targets=(self.real_B >= threshold/3.3).float() # 0.2/3.3=0.06, ie. we consider a wet event over 
         #adjust for type-1 and type-2 erros
         adjusted_weights=self.rr_norm.clone()
-        adjusted_fake_weights=self.weight_func(torch.abs(self.real_B-self.fake_B_sigmoid),5)
-        adjusted_fake_weights_det=self.weight_func(torch.abs(targets-self.fake_B_det_sigmoid),5)
+        adjusted_fake_weights=self.weight_func(torch.abs(self.real_B-self.fake_B_sigmoid),THETA)
+        adjusted_fake_weights_det=self.weight_func(torch.abs(targets-self.fake_B_det_sigmoid),THETA)
         #---
-        adjusted_rec_weights=self.weight_func(torch.abs(self.real_B-self.rec_B_sigmoid),5)
-        adjusted_rec_weights_det=self.weight_func(torch.abs(targets-self.rec_B_det_sigmoid),5)
+        adjusted_rec_weights=self.weight_func(torch.abs(self.real_B-self.rec_B_sigmoid),THETA)
+        adjusted_rec_weights_det=self.weight_func(torch.abs(targets-self.rec_B_det_sigmoid),THETA)
 
         
 
@@ -294,7 +295,7 @@ class CycleGANModel(BaseModel):
 
         self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det , targets) * adjusted_fake_weights_det)
         self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det, targets) * adjusted_rec_weights_det)
-        self.loss_bce_B = self.loss_bce_fake_B + self.loss_bce_rec_B
+        self.loss_bce_B = self.loss_bce_fake_B #+ self.loss_bce_rec_B
         
         self.D_B=self.netD_B(self.fake_B_sigmoid)
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
@@ -334,7 +335,7 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_A = torch.sum(L1(self.rec_A_sigmoid, self.real_A)) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
-        self.loss_cycle_B = torch.sum(L1(self.fake_B_sigmoid, self.real_B) * adjusted_fake_weights)
+        self.loss_cycle_B = torch.sum(L1(self.rec_B_sigmoid, self.real_B) * adjusted_rec_weights)
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
@@ -344,7 +345,7 @@ class CycleGANModel(BaseModel):
             (     
                 self.loss_bce_B +\
                 10*self.loss_cycle_B +\
-                self.loss_cycle_A
+                10*self.loss_cycle_A
             )
             
             # self.loss_G_B_only +\

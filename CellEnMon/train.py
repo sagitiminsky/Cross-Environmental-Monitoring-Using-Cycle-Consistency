@@ -405,8 +405,8 @@ if __name__ == '__main__':
 
 
                         wandb.log({title: fig})
-                        with np.printoptions(threshold=np.inf):
-                            print(f"batch #{batch_counter}:{fake_detection}")
+                        # with np.printoptions(threshold=np.inf):
+                        #     print(f"batch #{batch_counter}:{fake_detection}")
                     
 
                     
