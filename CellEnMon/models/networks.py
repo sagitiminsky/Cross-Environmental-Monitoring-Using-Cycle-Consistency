@@ -25,7 +25,7 @@ def get_norm_layer(norm_type='instance'):
     For InstanceNorm, we do not use learnable affine parameters. We do not track running statistics.
     """
     if norm_type == 'batch': #https://discuss.pytorch.org/t/nan-when-i-use-batch-normalization-batchnorm1d/322/9
-        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=True)
+        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=False, eps=1e-4)
     elif norm_type == 'instance':
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
     elif norm_type == 'none':
@@ -343,11 +343,11 @@ class ResnetGenerator(nn.Module):
 
         use_bias=False
 
-        model = [nn.Conv1d (input_nc, ngf, kernel_size=5, bias=use_bias,groups=input_nc),
+        model = [nn.Conv1d (input_nc, ngf, kernel_size=3, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 2
+        n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
@@ -369,9 +369,8 @@ class ResnetGenerator(nn.Module):
                                          bias=use_bias),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-        
-        
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=5, groups=output_nc)] #     
+
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=3),norm_layer(output_nc)]
         self.model = nn.Sequential(*model)
         
 
@@ -429,19 +428,19 @@ class ResnetBlock(nn.Module):
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
         conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim), nn.ReLU(True)]
-        if use_dropout:
-            conv_block += [nn.Dropout(0.5)]
+        # if use_dropout:
+        #     conv_block += [nn.Dropout(0.5)]
 
-        p = 0
-        if padding_type == 'reflect':
-            conv_block += [nn.ReflectionPad1d(1)]
-        elif padding_type == 'replicate':
-            conv_block += [nn.ReplicationPad1d(1)]
-        elif padding_type == 'zero':
-            p = 1
-        else:
-            raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)] #
+        # p = 0
+        # if padding_type == 'reflect':
+        #     conv_block += [nn.ReflectionPad1d(1)]
+        # elif padding_type == 'replicate':
+        #     conv_block += [nn.ReplicationPad1d(1)]
+        # elif padding_type == 'zero':
+        #     p = 1
+        # else:
+        #     raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+        # conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)] #
 
         return nn.Sequential(*conv_block)
 
@@ -594,23 +593,30 @@ class NLayerDiscriminator(nn.Module):
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
-        model = [nn.Conv1d(input_nc, ndf, kernel_size=15, bias=use_bias),
-                 norm_layer(ndf),
-                 nn.LeakyReLU(0.2, True),
-                #  nn.Dropout(0.5)
-                 ]
-
-        for i in range(n_layers):  # add downsampling layers
-            mult = 2 ** i
-            model += [nn.Conv1d(ndf * mult, ndf * mult * 2, kernel_size=17, stride=1, padding=0, bias=use_bias),
-                      norm_layer(ndf * mult * 2),
-                      nn.LeakyReLU(0.2, True),
-                    #   nn.Dropout(0.5)
+        kw = 4
+        padw = 1
+        sequence = [nn.Conv1d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]
+        nf_mult = 1
+        nf_mult_prev = 1
+        for n in range(1, n_layers):  # gradually increase the number of filters
+            nf_mult_prev = nf_mult
+            nf_mult = min(2 ** n, 8)
+            sequence += [
+                nn.Conv1d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias),
+                norm_layer(ndf * nf_mult),
+                nn.LeakyReLU(0.2, True)
             ]
 
-        model += [nn.Conv1d(ndf * mult * 2, 1, kernel_size=2, stride=1, padding=0)]  # output 1 channel prediction map
-        # sequence += [nn.Conv1d(1, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
-        self.model = nn.Sequential(*model)
+        nf_mult_prev = nf_mult
+        nf_mult = min(2 ** n_layers, 8)
+        sequence += [
+            nn.Conv1d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias),
+            norm_layer(ndf * nf_mult),
+            nn.LeakyReLU(0.2, True)
+        ]
+
+        sequence += [nn.Conv1d(ndf * nf_mult, 1, kernel_size=7, stride=5, padding=padw)]  # output 1 channel prediction map
+        self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
         """Standard forward."""
