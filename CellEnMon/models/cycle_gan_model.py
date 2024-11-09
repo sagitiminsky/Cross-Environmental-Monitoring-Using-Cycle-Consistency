@@ -55,7 +55,7 @@ class CycleGANModel(BaseModel):
         self.noise = torch.rand(64, device="cuda:0") * 0.01
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
-        self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B','bce_B','bce_fake_B','bce_rec_B', 'D_A', 'D_B', 'G_A','G_B_only'] #   , 
+        self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B','bce_B','bce_fake_B','bce_rec_B', ] #   , 'D_A', 'D_B', 'G_A','G_B_only'
 
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         visual_names_A = ['real_A', 'fake_B_sigmoid', 'rec_A_sigmoid', "fake_B_det"]
@@ -170,6 +170,9 @@ class CycleGANModel(BaseModel):
     def logistic_cdf(self, x):
         return 1 / (1 + torch.exp(-x / 5))
 
+    def norm_mean_std(self,x):
+        return (x-x.mean())/(x.std()+self.epsilon)
+
         
 
     def forward(self):
@@ -177,37 +180,43 @@ class CycleGANModel(BaseModel):
         ## >> B
         fake_B = self.netG_A(self.real_A, dir="AtoB")   # G_A(A)
 
-        activation=nn.LeakyReLU(0.01)
+        activation=nn.LeakyReLU(0.1)
         
         self.fake_B_det = fake_B[1]
-        self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det)
+        self.fake_B_det_sigmoid = torch.sigmoid(self.norm_mean_std(self.fake_B_det)) ## <-- detection
 
         # print(self.L)
 
         ## >> Fake
+            # >> A
+        self.fake_A = self.netG_B(self.real_B,dir="BtoA") 
+        self.fake_A_sigmoid=activation(self.norm_mean_std(self.fake_A)) ## <<-- regression
+
+            # >> B
         self.fake_B=fake_B[0]
         
-        self.fake_B_sigmoid = activation(self.fake_B) ## <<-- activation
+        self.fake_B_sigmoid = activation(self.norm_mean_std(self.fake_B)) ## <<-- regression
         self.fake_B_with_detection = self.fake_B_sigmoid * (self.fake_B_det_sigmoid > probability_threshold)
 
         
-        self.fake_A = self.netG_B(self.real_B,dir="BtoA") #self.norm_zero_one()  # G_B(B)
-        self.fake_A_sigmoid=activation(self.fake_A) ## <<-- activation
+
         
 
         ## >> Rec
-        self.rec_A = self.netG_B(self.fake_B_sigmoid, dir="BtoA") #self.norm_zero_one()
-        self.rec_A_sigmoid=activation(self.rec_A) ## <<-- activation
+            # >> A
+        self.rec_A = self.netG_B(self.fake_B_with_detection, dir="BtoA") 
+        self.rec_A_sigmoid=activation(self.norm_mean_std(self.rec_A)) ## <<-- regression
 
-
+            # >> B
         rec_B=self.netG_A(self.fake_A_sigmoid,dir="AtoB")
 
+
         self.rec_B_det=rec_B[1]
-        self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det)
+        self.rec_B_det_sigmoid=torch.sigmoid(self.norm_mean_std(self.rec_B_det)) ## <-- detection
         
         
         self.rec_B=rec_B[0]
-        self.rec_B_sigmoid = activation(self.rec_B) ## <<-- activation
+        self.rec_B_sigmoid = activation(self.norm_mean_std(self.rec_B)) ## <<-- regression
         self.rec_B_with_detection = self.rec_B_sigmoid * (self.rec_B_det_sigmoid > probability_threshold)
 
         
@@ -293,9 +302,9 @@ class CycleGANModel(BaseModel):
 
         
 
-        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det , targets)) # * self.rain_rate_prob
-        self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det, targets) * adjusted_rec_weights_det)
-        self.loss_bce_B = self.loss_bce_fake_B #+ self.loss_bce_rec_B
+        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det , targets) * self.rain_rate_prob) # *  
+        self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det, targets) * self.rain_rate_prob) # 
+        self.loss_bce_B = self.loss_bce_fake_B + self.loss_bce_rec_B
         
         self.D_B=self.netD_B(self.fake_B_sigmoid)
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
@@ -336,14 +345,14 @@ class CycleGANModel(BaseModel):
         rec_A_unnorm=self.min_max_inv_transform(self.rec_A_sigmoid,-50.8,17)
         real_A_unnorm=self.min_max_inv_transform(self.real_A,-50.8,17)
 
-        self.loss_cycle_A = torch.sum(L1(self.rec_A_sigmoid, self.real_A) ) #* self.att_norm
+        self.loss_cycle_A = torch.sum(L1(rec_A_unnorm, real_A_unnorm) ) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
         rec_B_unnorm=self.min_max_inv_transform(self.rec_B_sigmoid,0,3.3)
         real_B_unnorm=self.min_max_inv_transform(self.real_B,0,3.3)
         
         
-        self.loss_cycle_B = torch.sum(L1(self.rec_B_sigmoid,self.real_B) * self.rain_rate_prob) # 
+        self.loss_cycle_B = torch.sum(L1(rec_B_unnorm,real_B_unnorm)) # * self.rain_rate_prob
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
@@ -353,13 +362,15 @@ class CycleGANModel(BaseModel):
             (     
                 10*self.loss_cycle_B +\
                 10*self.loss_cycle_A +\
-                self.loss_G_B_only +\
-                self.loss_G_A
+                self.loss_bce_B
+
                 
 
 
             )
-            # self.loss_bce_B
+            #self.loss_G_B_only +\
+            #self.loss_G_A
+            # 
 
             
 
@@ -392,20 +403,20 @@ class CycleGANModel(BaseModel):
             self.optimizer_G.step()  # update G_A and G_B's weights
         
         # D_A and D_B
-        resetting attrs ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
+        # resetting attrs ['D_A', 'G_A', 'cycle_A', 'D_B', 'G_B', 'cycle_B', 'mse_A', 'mse_B', 'bce_B','G_B_only']
 
-        self.set_requires_grad([self.netD_A, self.netD_B], True)
-        self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero        
-        self.backward_D_A()  # calculate gradients for D_A
-        self.backward_D_B()  # calculate graidents for D_B
-        if self.isTrain:
-            self.optimizer_D.step()  # update D_A and D_B's weights
+        # self.set_requires_grad([self.netD_A, self.netD_B], True)
+        # self.optimizer_D.zero_grad()  # set D_A and D_B's gradients to zero        
+        # self.backward_D_A()  # calculate gradients for D_A
+        # self.backward_D_B()  # calculate graidents for D_B
+        # if self.isTrain:
+        #     self.optimizer_D.step()  # update D_A and D_B's weights
 
 
         
-        setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
-        setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
-        setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
+        # setattr(self,f"loss_{self.dataset_type}_D_A",self.loss_D_A)
+        # setattr(self,f"loss_{self.dataset_type}_G_A",self.loss_G_A)
+        # setattr(self,f"loss_{self.dataset_type}_D_B",self.loss_D_B)
 
         setattr(self,f"loss_{self.dataset_type}_cycle_A",self.loss_cycle_A)
         setattr(self,f"loss_{self.dataset_type}_G_B",self.loss_G_B)

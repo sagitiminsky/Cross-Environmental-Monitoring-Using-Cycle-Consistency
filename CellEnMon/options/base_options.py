@@ -35,19 +35,26 @@ class BaseOptions():
         parser.add_argument('--input_nc_B', type=int, default=1, help='# of input channels')
         parser.add_argument('--output_nc_B', type=int, default=4, help='# of output channels') # here we go from Rain to Att, so 1x64->4x64
         parser.add_argument('--ngf', type=int, default=256, help='# of gen filters in the last conv layer')
-        parser.add_argument('--ndf', type=int, default=32, help='# of discrim filters in the first conv layer')
+        parser.add_argument('--ndf', type=int, default=16, help='# of discrim filters in the first conv layer')
         parser.add_argument('--netD', type=str, default='n_layers',
                             help='specify discriminator architecture [n_layers]. n_layers allows you to specify the layers in the discriminator')
+        
+        
         parser.add_argument('--netG', type=str, default='resnet_1blocks', help='specify generator architecture [n_layers]')
         parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers | if you want to change this make sure to adjust D so it will ouput [1,1,1]')
         parser.add_argument('--norm', type=str, default='batch',
                             help='instance normalization or batch normalization [instance | batch | none | layer]')
         parser.add_argument('--init_type', type=str, default='kaiming',
                             help='network initialization [normal | xavier | kaiming | orthogonal]')
+
+
+                            
         parser.add_argument('--init_gain', type=float, default=0.02,
                             help='scaling factor for normal, xavier and orthogonal.')
         parser.add_argument('--no_dropout', action='store_true', default=False, help='no dropout for the generator')
         # dataset parameters
+        
+        
         parser.add_argument('--dataset_mode', type=str, default='cellenmon', help='chooses how datasets are loaded. [unaligned | aligned | single | colorization]')
         parser.add_argument('--direction', type=str, default='AtoB', help='AtoB or BtoA')
         parser.add_argument('--serial_batches', action='store_true', default=True,
