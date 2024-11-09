@@ -51,7 +51,7 @@ class BaseOptions():
                             
         parser.add_argument('--init_gain', type=float, default=0.02,
                             help='scaling factor for normal, xavier and orthogonal.')
-        parser.add_argument('--no_dropout', action='store_true', default=False, help='no dropout for the generator')
+        parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator')
         # dataset parameters
         
         

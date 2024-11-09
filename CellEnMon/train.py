@@ -196,7 +196,7 @@ if __name__ == '__main__':
             total_iters += train_opt.batch_size
             epoch_iter += train_opt.batch_size
             
-            model.train()
+            #model.train()
             model.set_input(data)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
             
