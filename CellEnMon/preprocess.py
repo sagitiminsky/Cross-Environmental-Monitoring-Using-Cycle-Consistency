@@ -25,7 +25,8 @@ class Preprocess:
         
 
         
-        d = {'Time':pd.to_datetime(T), 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake * detections , 'Detections':detections } #
+        #* detections
+        d = {'Time':pd.to_datetime(T), 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake  , 'Detections':detections } #
         df = pd.DataFrame(data=d)
 
 
@@ -33,7 +34,7 @@ class Preprocess:
 
         # Replace neg fake values with zero
         df.loc[df['RainAmoutPredicted[mm/h]'] < 0.1, 'RainAmoutPredicted[mm/h]'] = 0
-        # df.loc[df['RainAmoutPredicted[mm/h]'] > 3.2, 'RainAmoutPredicted[mm/h]'] = 3.2
+        df.loc[df['RainAmoutPredicted[mm/h]'] > 3.3, 'RainAmoutPredicted[mm/h]'] = 3.3
 
         self.fake=np.asarray(df['RainAmoutPredicted[mm/h]'],dtype=float)
         self.real=np.asarray(df['RainAmoutGT[mm/h]'],dtype=float)

@@ -347,7 +347,7 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 1
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
@@ -371,7 +371,7 @@ class ResnetGenerator(nn.Module):
                       nn.ReLU(True)]
         
         
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7),] #    norm_layer(output_nc)
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=7),norm_layer(output_nc)] #    
         self.model = nn.Sequential(*model)
         
 
