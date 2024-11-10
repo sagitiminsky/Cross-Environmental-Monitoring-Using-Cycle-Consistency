@@ -314,7 +314,7 @@ class CycleGANModel(BaseModel):
 
         
 
-        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det_sigmoid , targets) * self.rain_rate_prob) # * self.rain_rate_prob
+        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det_sigmoid , targets)) # * self.rain_rate_prob
         self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det_sigmoid, targets) * self.rain_rate_prob) # * self.rain_rate_prob
         self.loss_bce_B = self.loss_bce_fake_B + self.loss_bce_rec_B
         
@@ -358,7 +358,7 @@ class CycleGANModel(BaseModel):
         rec_A_unnorm=self.min_max_inv_transform(self.rec_A_sigmoid,-50.8,17)
         real_A_unnorm=self.min_max_inv_transform(self.real_A,-50.8,17)
 
-        self.loss_cycle_A = torch.sum(L1(rec_A_unnorm, real_A_unnorm)) #* self.att_norm
+        self.loss_cycle_A = torch.sum(L2(rec_A_unnorm, real_A_unnorm)) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
         ## <--what if detector is wrong?? we need a way to bring down high values
@@ -367,7 +367,7 @@ class CycleGANModel(BaseModel):
         real_B_unnorm=self.min_max_inv_transform(self.real_B, 0, 3.3)
         
         
-        self.loss_cycle_B = torch.sum(L1(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob) # 
+        self.loss_cycle_B = torch.sum(L2(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob) # 
         # self.loss_cycle_B = RMSLE(rec_B_unnorm,real_B_unnorm)
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
@@ -376,10 +376,10 @@ class CycleGANModel(BaseModel):
         # combined loss and calculate gradients
         self.loss_G = \
             (     
-                self.loss_cycle_B +\
+                10*self.loss_cycle_B +\
                 self.loss_cycle_A +\
 
-                self.loss_bce_fake_B+\
+                0.1*self.loss_bce_fake_B+\
                 # 0.1*self.loss_bce_rec_B+\
 
                 self.loss_G_B_only +\
