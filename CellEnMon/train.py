@@ -126,7 +126,7 @@ def toggle(t):
 
 
 def min_max_inv_transform(x, mmin, mmax):
-    return x * (mmax - mmin) + mmin
+    return x #x * (mmax - mmin) + mmin
 
 # DIRECTIONS
 LEFT = (1, 0, 0, 0)
