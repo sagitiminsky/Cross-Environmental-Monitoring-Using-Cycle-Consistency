@@ -17,16 +17,11 @@ class Preprocess:
         self.link = link.replace("-","_")
         self.gauge=gauge
 
-
-        # ####
         df_detections = pd.DataFrame(data={'Time': T, 'Detections': detections })
         detections = np.asarray(df_detections['Detections'],dtype=float)
-        # ### 
         
-
         
-        #* detections
-        d = {'Time':pd.to_datetime(T), 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake , 'Detections':detections } #
+        d = {'Time':pd.to_datetime(T), 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake , 'Detections':detections, "FakeWithDetections": fake*detections } #
         df = pd.DataFrame(data=d)
 
 
@@ -39,10 +34,12 @@ class Preprocess:
         self.fake=np.asarray(df['RainAmoutPredicted[mm/h]'],dtype=float)
         self.real=np.asarray(df['RainAmoutGT[mm/h]'],dtype=float)
         self.detections = np.asarray(df["Detections"], dtype=float)
+        self.fake_with_detection = np.array(df["FakeWithDetections"], dtype=float)
 
         # Accumulative
         df["RainAmoutPredictedCumSum"]=df['RainAmoutPredicted[mm/h]'].cumsum()
         df["RainAmoutGTCumSum"]=df['RainAmoutGT[mm/h]'].cumsum()
+        df["FakeWithDetectionsCumSum"]=df["FakeWithDetections"].cumsum()
 
         # Save to csv
         df.to_csv(f"{root}/01012015_01022015/predict/{self.link}_{gauge}.csv", index=False)
@@ -52,6 +49,8 @@ class Preprocess:
 
         self.fake_cumsum = np.asarray(self.excel_data["RainAmoutPredictedCumSum"])
         self.real_cumsum = np.asarray(self.excel_data["RainAmoutGTCumSum"])
+        self.detections = np.asarray(self.excel_data["Detections"])
+        self.fake_with_detection_cumsum = np.asarray(self.excel_data["FakeWithDetectionsCumSum"])
 
 
 

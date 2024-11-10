@@ -95,7 +95,7 @@ validation_link_to_gauge_matching ={
 ### TO RUN:
 # LAMBDA=2 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ITERS_BETWEEN_VALIDATIONS=1000 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
 
-## LAMBDA=10 is TOO big
+## LAMBDA=0.27, calculated by a
 
 # Environment Variables
 threshold = float(os.environ["threshold"])
@@ -139,7 +139,7 @@ DOWN = (0, 0, 0, 1)
 def func_fit(x, a):
     x=torch.from_numpy(np.array(x))
     b=torch.from_numpy(np.array(a))
-    return 1/(a * torch.exp(-x*a))
+    return 1/(a * torch.exp(-a*x))
 
 
 def pad_with_respect_to_direction( A, B, dir, value_a, value_b):
@@ -278,7 +278,7 @@ if __name__ == '__main__':
                          "gague":gauge,\
                          "rain_rate_sample":rain_sample,\
                          "Time":slice_time,\
-                         "rain_rate_prob": func_fit(rain_sample_unnormalized,LAMBDA),
+                         "rain_rate_prob": func_fit(rain_sample_unnormalized, LAMBDA),
                          "distance": torch.tensor([3], device='cuda:0', dtype=torch.float64) # in KM
                         }                      
                         model.set_input(loader,isTrain=False)
@@ -365,7 +365,7 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if True: #: key!="fake_B" and key!="rec_B"
+                                    if key!="fake_B" and key!="rec_B":
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
@@ -407,8 +407,8 @@ if __name__ == '__main__':
 
 
                         wandb.log({title: fig})
-                        # with np.printoptions(threshold=np.inf):
-                        #     print(f"batch #{batch_counter}:{fake_detection}")
+                        with np.printoptions(threshold=np.inf):
+                            print(f"batch #{batch_counter}:{fake_detection}")
                     
 
                     
@@ -422,7 +422,7 @@ if __name__ == '__main__':
                     
 
                     p=Preprocess(link=link,gauge=gauge, epoch=epoch, T=T, real=real_gauge_vec, fake=fake_gauge_vec, detections=fake_gauge_vec_det_labels)
-                    fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
+                    
                     
 
                     
@@ -452,9 +452,11 @@ if __name__ == '__main__':
                     preprocessed_time=np.asarray(T) #16436.00694444
                     preprocessed_time_wanb=[mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in T]
                     
+                    fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, label="CML")
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="Gauge")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_with_detection_cumsum, 'b-', label="Reg+Det")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="Reg")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="GT", color='orange')
                     axs_preprocessed.grid()
                     fig_preprocessed.legend()
                     fig_preprocessed.tight_layout()
@@ -474,9 +476,10 @@ if __name__ == '__main__':
                     wandb.log({f"Virtual (CML) vs Real (Gauge) - {link}-{gauge}":fig_preprocessed})
                     
                     #RMSSE
-                    cond=[True if r >= 0.2 or f >= 0.1 else False for r,f in zip(p.real, p.fake)]
+                    cond=[True if r >= threshold or f >= threshold else False for r,f in zip(p.real, p.fake)]
                     N=len(p.fake)
-                    wandb.log({f"RMSSE-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake)**2)/N)})
+                    wandb.log({f"RMSSE-REG-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake)**2)/N)})
+                    wandb.log({f"RMSSE-REG+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake*p.detections)**2)/N)})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))
