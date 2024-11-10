@@ -11,6 +11,15 @@ threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"])
 THETA=float(os.environ["THETA"])
 
+
+class RMSLELoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+        
+    def forward(self, pred, actual):
+        return torch.sqrt(self.mse(torch.log(pred + 1), torch.log(actual + 1)))
+
 class CycleGANModel(BaseModel):
     """
     This class implements the CycleGAN model, for learning CML-to-Gauge translation without paired data.
@@ -294,19 +303,19 @@ class CycleGANModel(BaseModel):
         
         # adjusted_fake_weights[(self.fake_B_det_sigmoid < probability_threshold) & (targets==1)] = 100
         # adjusted_fake_weights[(self.fake_B_det_sigmoid > probability_threshold) & (targets==0)] = 100
-        fake_bce_weight_loss = nn.BCELoss() #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        fake_bce_weight_loss = nn.BCELoss(reduction="none") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
 
         # adjusted_rec_weights[(self.rec_B_det_sigmoid < probability_threshold) & (targets==1)] = 100
         # adjusted_rec_weights[(self.rec_B_det_sigmoid > probability_threshold) & (targets==0)] = 100
-        rec_bce_weight_loss = nn.BCELoss() #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        rec_bce_weight_loss = nn.BCELoss(reduction="none") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
 
 
         
 
         
 
-        self.loss_bce_fake_B = fake_bce_weight_loss(self.fake_B_det_sigmoid , targets) # * self.rain_rate_prob
-        self.loss_bce_rec_B  = rec_bce_weight_loss(self.rec_B_det_sigmoid, targets) # * self.rain_rate_prob
+        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det_sigmoid , targets)* self.rain_rate_prob) # * self.rain_rate_prob
+        self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det_sigmoid, targets)* self.rain_rate_prob) # * self.rain_rate_prob
         self.loss_bce_B = self.loss_bce_fake_B + self.loss_bce_rec_B
         
         ## <--what if detector is wrong?? we need a way to bring down high values
@@ -341,8 +350,9 @@ class CycleGANModel(BaseModel):
             print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
         
         
-
+        RMSLE=RMSLELoss()
         L1=nn.L1Loss(reduction='none') # weight=self.rr_norm
+        L2=nn.MSELoss(reduction='none') # weight=self.rr_norm
         # adjusted_rec_weights[(self.fake_B_det_sigmoid <= probability_threshold ) & (targets=1)] = some_large_number
 
         rec_A_unnorm=self.min_max_inv_transform(self.rec_A_sigmoid,-50.8,17)
@@ -358,6 +368,7 @@ class CycleGANModel(BaseModel):
         
         
         self.loss_cycle_B = torch.sum(L1(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob) # 
+        # self.loss_cycle_B = RMSLE(rec_B_unnorm,real_B_unnorm)
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
