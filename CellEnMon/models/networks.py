@@ -341,7 +341,7 @@ class ResnetGenerator(nn.Module):
         assert(n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
 
-        use_bias=False
+        use_bias=True
 
         model = [nn.ReplicationPad1d(3),
                  nn.Conv1d (input_nc, ngf, kernel_size=7, bias=use_bias),

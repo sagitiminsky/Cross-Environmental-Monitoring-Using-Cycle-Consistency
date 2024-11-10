@@ -180,7 +180,7 @@ class CycleGANModel(BaseModel):
         ## >> B
         fake_B = self.netG_A(self.real_A, dir="AtoB")   # G_A(A)
 
-        activation=nn.LeakyReLU(0.1) #<-- LeakyReLU is required for gadient flow in B    
+        activation=nn.ReLU() #<-- LeakyReLU is required for gadient flow in B    
         
         self.fake_B_det = fake_B[1]
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det) ## <-- detection
@@ -294,11 +294,11 @@ class CycleGANModel(BaseModel):
         
         # adjusted_fake_weights[(self.fake_B_det_sigmoid < probability_threshold) & (targets==1)] = 100
         # adjusted_fake_weights[(self.fake_B_det_sigmoid > probability_threshold) & (targets==0)] = 100
-        fake_bce_weight_loss = nn.BCELoss(weight=self.rain_rate_prob) #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        fake_bce_weight_loss = nn.BCELoss() #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
 
         # adjusted_rec_weights[(self.rec_B_det_sigmoid < probability_threshold) & (targets==1)] = 100
         # adjusted_rec_weights[(self.rec_B_det_sigmoid > probability_threshold) & (targets==0)] = 100
-        rec_bce_weight_loss = nn.BCELoss(weight=self.rain_rate_prob) #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        rec_bce_weight_loss = nn.BCELoss() #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
 
 
         
@@ -341,6 +341,7 @@ class CycleGANModel(BaseModel):
             print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
         
         
+
         L1=nn.L1Loss(reduction='none') # weight=self.rr_norm
         # adjusted_rec_weights[(self.fake_B_det_sigmoid <= probability_threshold ) & (targets=1)] = some_large_number
 
@@ -356,24 +357,26 @@ class CycleGANModel(BaseModel):
         real_B_unnorm=self.min_max_inv_transform(self.real_B, 0, 3.3)
         
         
-        self.loss_cycle_B = torch.sum(L1(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob) # * self.rain_rate_prob
+        self.loss_cycle_B = torch.sum(L1(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob) # 
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = 1/(torch.log(1+0.03 * self.L))*\
+        self.loss_G = \
             (     
                 10*self.loss_cycle_B +\
                 self.loss_cycle_A +\
 
-                self.loss_bce_fake_B+\
-                0.1*self.loss_bce_rec_B+\
+                # self.loss_bce_fake_B+\
+                # 0.1*self.loss_bce_rec_B+\
 
                 self.loss_G_B_only +\
                 self.loss_G_A
 
             )
+
+            #1/(torch.log(1+0.03 * self.L))*\
 
 
 

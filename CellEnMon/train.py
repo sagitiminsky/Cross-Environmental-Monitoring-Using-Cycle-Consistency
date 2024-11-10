@@ -95,6 +95,8 @@ validation_link_to_gauge_matching ={
 ### TO RUN:
 # LAMBDA=2 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ITERS_BETWEEN_VALIDATIONS=1000 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
 
+## LAMBDA=10 is TOO big
+
 # Environment Variables
 threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
@@ -363,7 +365,7 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if key!="fake_B" and key!="rec_B": #:
+                                    if True: #: key!="fake_B" and key!="rec_B"
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
@@ -405,8 +407,8 @@ if __name__ == '__main__':
 
 
                         wandb.log({title: fig})
-                        with np.printoptions(threshold=np.inf):
-                            print(f"batch #{batch_counter}:{fake_detection}")
+                        # with np.printoptions(threshold=np.inf):
+                        #     print(f"batch #{batch_counter}:{fake_detection}")
                     
 
                     
