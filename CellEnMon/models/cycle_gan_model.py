@@ -189,10 +189,10 @@ class CycleGANModel(BaseModel):
         ## >> B
         fake_B = self.netG_A(self.real_A, dir="AtoB")   # G_A(A)
 
-        activation=nn.ReLU() #<-- LeakyReLU is required for gadient flow in B    
+        activation=nn.ReLU()
         
         self.fake_B_det = fake_B[1]
-        self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det) ## <-- detection
+        self.fake_B_det_sigmoid = torch.sigmoid(self.norm_mean_std(self.fake_B_det)) ## <-- detection
 
         # print(self.L)
 
@@ -222,7 +222,7 @@ class CycleGANModel(BaseModel):
 
 
         self.rec_B_det=rec_B[1]
-        self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det) ## <-- detection
+        self.rec_B_det_sigmoid=torch.sigmoid(self.norm_mean_std(self.rec_B_det)) ## <-- detection
         
         
         self.rec_B=rec_B[0]
@@ -314,8 +314,8 @@ class CycleGANModel(BaseModel):
 
         
 
-        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det_sigmoid , targets)* self.rain_rate_prob) # * self.rain_rate_prob
-        self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det_sigmoid, targets)* self.rain_rate_prob) # * self.rain_rate_prob
+        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det_sigmoid , targets) * self.rain_rate_prob) # * self.rain_rate_prob
+        self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det_sigmoid, targets) * self.rain_rate_prob) # * self.rain_rate_prob
         self.loss_bce_B = self.loss_bce_fake_B + self.loss_bce_rec_B
         
         ## <--what if detector is wrong?? we need a way to bring down high values
@@ -376,10 +376,10 @@ class CycleGANModel(BaseModel):
         # combined loss and calculate gradients
         self.loss_G = \
             (     
-                10*self.loss_cycle_B +\
+                self.loss_cycle_B +\
                 self.loss_cycle_A +\
 
-                # self.loss_bce_fake_B+\
+                self.loss_bce_fake_B+\
                 # 0.1*self.loss_bce_rec_B+\
 
                 self.loss_G_B_only +\
