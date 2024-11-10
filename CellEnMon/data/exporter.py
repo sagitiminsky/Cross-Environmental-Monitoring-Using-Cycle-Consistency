@@ -71,7 +71,7 @@ class Domain:
     def normalizer(self, mat):
         min = -50.8 if self.db_type=="dme" else 0
         max = 17 if self.db_type=="dme" else 3.3
-        mat=(mat - min) / (max - min)
+        mat=mat #(mat - min) / (max - min)
 
         return max, min, mat
 

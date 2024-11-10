@@ -180,7 +180,7 @@ class CycleGANModel(BaseModel):
         ## >> B
         fake_B = self.netG_A(self.real_A, dir="AtoB")   # G_A(A)
 
-        activation=nn.LeakyReLU(0.1)
+        activation=nn.LeakyReLU(0.1) #<-- This is required for gadient flow in B    
         
         self.fake_B_det = fake_B[1]
         self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det) ## <-- detection
@@ -190,7 +190,7 @@ class CycleGANModel(BaseModel):
         ## >> Fake
             # >> A
         self.fake_A = self.netG_B(self.real_B,dir="BtoA") 
-        self.fake_A_sigmoid=activation(self.fake_A) ## <<-- regression
+        self.fake_A_sigmoid=self.fake_A ## <<-- regression
 
             # >> B
         self.fake_B=fake_B[0]
@@ -204,8 +204,9 @@ class CycleGANModel(BaseModel):
 
         ## >> Rec
             # >> A
-        self.rec_A = self.netG_B(self.fake_B_with_detection, dir="BtoA") 
-        self.rec_A_sigmoid=activation(self.rec_A) ## <<-- regression
+            ## <--what if detector is wrong?? we need a way to propogate this to regression
+        self.rec_A = self.netG_B(self.fake_B_sigmoid, dir="BtoA") 
+        self.rec_A_sigmoid=self.rec_A ## <<-- regression
 
             # >> B
         rec_B=self.netG_A(self.fake_A_sigmoid,dir="AtoB")
@@ -365,12 +366,13 @@ class CycleGANModel(BaseModel):
             (     
                 10*self.loss_cycle_B +\
                 self.loss_cycle_A +\
-                self.loss_bce_B+\
+                self.loss_bce_fake_B+\
+                0.1*self.loss_bce_rec_B +\
                 self.loss_G_B_only +\
                 self.loss_G_A
             )
-
-            # 
+            #
+            # self.loss_bce_B+\
 
             
 
@@ -383,7 +385,7 @@ class CycleGANModel(BaseModel):
    
     
     def min_max_inv_transform(self,x, mmin, mmax):
-        return x * (mmax - mmin) + mmin
+        return x # x * (mmax - mmin) + mmin
     
     def func_fit(self, x, a, b, c):
         return a * torch.exp(-b * x) + c

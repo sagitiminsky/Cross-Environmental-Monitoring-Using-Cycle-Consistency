@@ -237,7 +237,7 @@ class CellenmonDataset(BaseDataset):
         }
 
     def min_max_inv_transform(self,x, mmin, mmax):
-        return x * (mmax - mmin) + mmin
+        return x #x * (mmax - mmin) + mmin
     
     def func_fit(self, x, a):
         x=torch.from_numpy(np.array(x))

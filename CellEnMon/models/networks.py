@@ -347,7 +347,7 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 1
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
@@ -370,7 +370,7 @@ class ResnetGenerator(nn.Module):
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
 
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=3),norm_layer(output_nc)]
+        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=3)] #norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
@@ -378,7 +378,6 @@ class ResnetGenerator(nn.Module):
         """Standard forward"""
         output1 = self.model(input)
 #         print(f"dir:{dir} | {output1.shape}") # AtoB [2, 64], BtoA [4, 64]
-        relu=nn.ReLU()
         if dir=="AtoB":
             res=torch.split(output1, 1, dim=1)
             reg=res[0]
@@ -428,8 +427,8 @@ class ResnetBlock(nn.Module):
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
         conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim), nn.ReLU(True)]
-        # if use_dropout:
-        #     conv_block += [nn.Dropout(0.5)]
+        if use_dropout:
+            conv_block += [nn.Dropout(0.5)]
 
         # p = 0
         # if padding_type == 'reflect':
