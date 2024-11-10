@@ -343,7 +343,8 @@ class ResnetGenerator(nn.Module):
 
         use_bias=False
 
-        model = [nn.Conv1d (input_nc, ngf, kernel_size=3, bias=use_bias),
+        model = [nn.ReplicationPad1d(3),
+                 nn.Conv1d (input_nc, ngf, kernel_size=7, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
@@ -351,7 +352,7 @@ class ResnetGenerator(nn.Module):
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
-                                        kernel_size=3, stride=1,bias=use_bias),
+                                        kernel_size=3, stride=1, bias=use_bias,padding=1),
                       norm_layer(ngf * mult * 2),
                       nn.ReLU(True)
                     ]
@@ -365,12 +366,15 @@ class ResnetGenerator(nn.Module):
             mult = 2 ** (n_downsampling - i)
             model += [nn.ConvTranspose1d(ngf * mult, int(ngf * mult / 2),
                                          kernel_size=3, stride=1,
-                                         output_padding=0,
-                                         bias=use_bias),
+                                         bias=use_bias,
+                                         padding=1, 
+                                         output_padding=0
+                                         ),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
-
-        model += [nn.ConvTranspose1d(ngf, output_nc, kernel_size=3)] #norm_layer(output_nc)
+        
+        model += [nn.ReplicationPad1d(3)]
+        model += [nn.Conv1d(ngf, output_nc, kernel_size=7)] #norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
@@ -430,16 +434,16 @@ class ResnetBlock(nn.Module):
         if use_dropout:
             conv_block += [nn.Dropout(0.5)]
 
-        # p = 0
-        # if padding_type == 'reflect':
-        #     conv_block += [nn.ReflectionPad1d(1)]
-        # elif padding_type == 'replicate':
-        #     conv_block += [nn.ReplicationPad1d(1)]
-        # elif padding_type == 'zero':
-        #     p = 1
-        # else:
-        #     raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-        # conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)] #
+        p = 0
+        if padding_type == 'reflect':
+            conv_block += [nn.ReflectionPad1d(1)]
+        elif padding_type == 'replicate':
+            conv_block += [nn.ReplicationPad1d(1)]
+        elif padding_type == 'zero':
+            p = 1
+        else:
+            raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)] #
 
         return nn.Sequential(*conv_block)
 
