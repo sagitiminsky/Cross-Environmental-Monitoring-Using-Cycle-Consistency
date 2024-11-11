@@ -394,7 +394,6 @@ class CycleGANModel(BaseModel):
         # --> torch.sum is REALLY important here.
         # --> Remember most of dataset does not have rain events, so we don't need to include this in the loss
         # --> and rain events, or mistakes need to be punished harshly!
-        # --> SOFT: LAMBDA=0.27
         self.loss_cycle_B = torch.sum(L1(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob)
         # self.loss_cycle_B = RMSLE(rec_B_unnorm,real_B_unnorm)
 
@@ -405,7 +404,7 @@ class CycleGANModel(BaseModel):
         # cycle_A and cycle_B should be the same scale - mind the training/validation losses (!!!)
         self.loss_G =\
             (     
-                10 * self.loss_cycle_B +\
+                100 * self.loss_cycle_B +\
                 self.loss_cycle_A +\
 
                 # self.loss_bce_fake_B+\
