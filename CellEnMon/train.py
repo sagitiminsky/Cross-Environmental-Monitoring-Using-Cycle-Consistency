@@ -26,6 +26,13 @@ from sklearn.metrics import ConfusionMatrixDisplay
 import numpy as np
 from matplotlib import colors
 from collections import defaultdict
+import warnings
+
+# Ignore a specific type of warning from a specific module
+warnings.filterwarnings("ignore", message="'linear' x-axis tick spacing not even, ignoring mpl tick formatting.", module="plotly.matplotlylib")
+
+# Alternatively, ignore all warnings from a specific module
+warnings.filterwarnings("ignore", module="plotly.matplotlylib")
 
 ENABLE_WANDB = bool(os.environ["ENABLE_WANDB"])
 GROUPS = {
@@ -95,24 +102,21 @@ validation_link_to_gauge_matching ={
 ### TO RUN:
 # LAMBDA=2 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ITERS_BETWEEN_VALIDATIONS=1000 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
 
-## LAMBDA=0.27, calculated by evaluation func_fit for train dataset with function a^e(-ax) --> a=LAMBDA
-## Other values of LAMBDA are also ok, just make sure not to take very high values (ie >=10)
+### >> LAMBDA
+#1) first wascalculated by evaluation func_fit for train dataset with function a^e(-ax) --> a=LAMBDA
+#2) cycle_A and cycle_B should be the same scale - mind the training/validation losses (!!!)
+# So to make sure that the cycle_A and cycle_B are in the same scale select LAMBDA=5
 
 # Environment Variables
 threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
-ITERS_BETWEEN_VALIDATIONS=int(os.environ["ITERS_BETWEEN_VALIDATIONS"])
 SELECTED_GROUP_NAME = os.environ["SELECTED_GROUP_NAME"]
 SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
-# Detection:
-#[[  52 2099]
-#  [   3  150]]
-# Regression:
-#[[1793  358]
-#  [ 126   27]]
-
+# see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="100"
+ITERS_BETWEEN_VALIDATIONS=10
 
 #Formatting Date
 date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
@@ -140,7 +144,7 @@ DOWN = (0, 0, 0, 1)
 def func_fit(x, a):
     x=torch.from_numpy(np.array(x))
     b=torch.from_numpy(np.array(a))
-    return 1/(a * torch.exp(-a*x))
+    return torch.exp(a*x**2)
 
 
 def pad_with_respect_to_direction( A, B, dir, value_a, value_b):
@@ -148,7 +152,7 @@ def pad_with_respect_to_direction( A, B, dir, value_a, value_b):
     B = F.pad(input=B, pad=dir, mode='constant', value=value_b)
     return A, B
 
-
+NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH = int(os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"])
 if __name__ == '__main__':
     real_fake_gauge_metric={}
     dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
@@ -214,15 +218,14 @@ if __name__ == '__main__':
             for key in current_losses:
                 training_losses[key] += current_losses[key]
         
-        if epoch%100==0 and epoch>0: # TRAIN
-            print(f'End of epoch:{epoch}')
+
 
             
             
             
         if epoch % ITERS_BETWEEN_VALIDATIONS == 0 and epoch>0: # VALIDATION
-            
 
+            print(f'End of training epoch:{epoch} | Remember! in each epoch we trained on {NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH} randomly selected CML-Gauge Pairs')
             print(f"Validation in progress...")
             data_A=validation_dataset.dataset.dataset.dme
             data_B= validation_dataset.dataset.dataset.ims
@@ -232,13 +235,10 @@ if __name__ == '__main__':
             rain_axs=rain_axs.flatten()
             
             
-            print(f"Validation links:{validation_links}")
             for link_counter,link in enumerate(validation_links):
                 for gauge in validation_link_to_gauge_matching[link]:
-                    print(f"with gauge: {gauge}")
                     data_norm_B = data_B.db_normalized[gauge]
                     validation_gauge_full = torch.Tensor(np.array(list(data_norm_B['data'].values())))
-    #                 print(f"links:{validation_dataset.dataset.dataset.dme.db_normalized.keys()}")
                     real_fake_gauge_metric[f"{link}-{gauge}"]=0
                     seq_len=0
                     real_gauge_vec=np.array([])
@@ -257,9 +257,6 @@ if __name__ == '__main__':
                     
                     for batch_counter,i in enumerate(range(0, num_samples, k)): #len(validation_gauge_full)
 
-
-                        print(f"link:{link}:{i}/{len(validation_link_full)}")
-                        print(f"gauge:{gauge}:{i}/{len(validation_gauge_full)}")
 
                         try:
                             A=validation_link_full[i :  i + k].reshape(k,4)
@@ -498,4 +495,4 @@ if __name__ == '__main__':
 #                 wandb.log({"html": wandb.Html(open(path_to_html), inject=False)})
             print(print(f"Validation cycle end..."))
 
-    model.save_networks("latest")
+    # model.save_networks("latest")
