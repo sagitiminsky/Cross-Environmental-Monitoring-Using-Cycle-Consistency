@@ -242,8 +242,8 @@ class CellenmonDataset(BaseDataset):
     def func_fit(self, x, a):
         x=torch.from_numpy(np.array(x))
         b=torch.from_numpy(np.array(a))
-        return 1/(a * torch.exp(-a * x))
+        return torch.exp(a*x**2)
 
     def __len__(self):
-        """Return the total number of images."""
-        return max(self.dme_len, self.ims_len)
+        """We do 1000 random selects between CML and Gauge"""
+        return int(os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"])
