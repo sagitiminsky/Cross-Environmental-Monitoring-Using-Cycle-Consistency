@@ -366,7 +366,7 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if key!="fake_B" and key!="rec_B":
+                                    if True: #key!="fake_B" and key!="rec_B":
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
@@ -408,8 +408,8 @@ if __name__ == '__main__':
 
 
                         wandb.log({title: fig})
-                        with np.printoptions(threshold=np.inf):
-                            print(f"batch #{batch_counter}:{fake_detection}")
+                        # with np.printoptions(threshold=np.inf):
+                        #     print(f"batch #{batch_counter}:{fake_detection}")
                     
 
                     
@@ -455,7 +455,7 @@ if __name__ == '__main__':
                     
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_with_detection_cumsum, 'b-', label="Reg+Det")
+                    # axs_preprocessed.plot(preprocessed_time_wanb, p.fake_with_detection_cumsum, 'b-', label="Reg+Det")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="Reg")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="GT", color='orange')
                     axs_preprocessed.grid()
@@ -480,7 +480,7 @@ if __name__ == '__main__':
                     cond=[True if r >= threshold or f >= threshold else False for r,f in zip(p.real, p.fake)]
                     N=len(p.fake)
                     wandb.log({f"RMSSE-REG-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake)**2)/N)})
-                    wandb.log({f"RMSSE-REG+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake*p.detections)**2)/N)})
+                    # wandb.log({f"RMSSE-REG+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake*p.detections)**2)/N)})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))
