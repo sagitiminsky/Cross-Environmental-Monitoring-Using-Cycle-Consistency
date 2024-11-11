@@ -95,7 +95,8 @@ validation_link_to_gauge_matching ={
 ### TO RUN:
 # LAMBDA=2 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ITERS_BETWEEN_VALIDATIONS=1000 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
 
-## LAMBDA=0.27, calculated by a
+## LAMBDA=0.27, calculated by evaluation func_fit for train dataset with function a^e(-ax) --> a=LAMBDA
+## Other values of LAMBDA are also ok, just make sure not to take very high values (ie >=10)
 
 # Environment Variables
 threshold = float(os.environ["threshold"])

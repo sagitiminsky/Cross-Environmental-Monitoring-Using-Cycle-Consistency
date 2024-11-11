@@ -6,19 +6,39 @@ from CellEnMon.util.image_pool import SignalPool
 from .networks import define_G, define_D, GANLoss
 import numpy as np
 import os
+import config
 
 threshold = float(os.environ["threshold"])
 probability_threshold = float(os.environ["probability_threshold"])
 THETA=float(os.environ["THETA"])
 
 
-class RMSLELoss(nn.Module):
+def log_cosh_loss(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+    def _log_cosh(x: torch.Tensor) -> torch.Tensor:
+        return x + torch.nn.functional.softplus(-2. * x) - np.log(2.0)
+    return _log_cosh(y_pred - y_true)
+
+class LogCoshLoss(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.mse = nn.MSELoss()
-        
-    def forward(self, pred, actual):
-        return torch.sqrt(self.mse(torch.log(pred + 1), torch.log(actual + 1)))
+
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> torch.Tensor:
+        return log_cosh_loss(y_pred, y_true)
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=0.25, gamma=2):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def forward(self, inputs, targets):
+        BCE_loss = nn.BCEWithLogitsLoss(reduction='none')(inputs, targets)
+        pt = torch.exp(-BCE_loss)
+        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
+        return F_loss
 
 class CycleGANModel(BaseModel):
     """
@@ -61,7 +81,7 @@ class CycleGANModel(BaseModel):
         """
         BaseModel.__init__(self, opt)
         self.epsilon=1e-12
-        self.noise = torch.rand(64, device="cuda:0") * 0.01
+        self.noise = torch.rand(64, device="cuda:0") * 1.6
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['cycle_A', 'G_B', 'cycle_B', 'mse_A', 'mse_B','bce_B','bce_fake_B','bce_rec_B', 'D_A', 'D_B', 'G_A','G_B_only'] #   , 
@@ -123,7 +143,7 @@ class CycleGANModel(BaseModel):
         """
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample" if AtoB else 'rain_rate_sample'].to(self.device)
-        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device) #+ self.noise
+        self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device)
         self.gague = input['gague']
         self.link = input['link']
         self.t = input['Time']
@@ -132,6 +152,7 @@ class CycleGANModel(BaseModel):
         self.rain_rate_prob = input['rain_rate_prob'].to(self.device)
         L=input['distance'].to(self.device)
         self.L=L+self.epsilon
+        self.dist_func=1/(torch.log(1+(self.L/config.TRAIN_RADIUS)))
         
         if isTrain:
             self.alpha=0.02
@@ -191,8 +212,8 @@ class CycleGANModel(BaseModel):
 
         activation=nn.ReLU()
         
-        self.fake_B_det = fake_B[1]
-        self.fake_B_det_sigmoid = torch.sigmoid(self.norm_mean_std(self.fake_B_det)) ## <-- detection
+        self.fake_B_det = self.norm_mean_std(fake_B[1])
+        self.fake_B_det_sigmoid = torch.sigmoid(self.fake_B_det) ## <-- detection
 
         # print(self.L)
 
@@ -221,8 +242,8 @@ class CycleGANModel(BaseModel):
         rec_B=self.netG_A(self.fake_A_sigmoid,dir="AtoB")
 
 
-        self.rec_B_det=rec_B[1]
-        self.rec_B_det_sigmoid=torch.sigmoid(self.norm_mean_std(self.rec_B_det)) ## <-- detection
+        self.rec_B_det=self.norm_mean_std(rec_B[1])
+        self.rec_B_det_sigmoid=torch.sigmoid(self.rec_B_det) ## <-- detection
         
         
         self.rec_B=rec_B[0]
@@ -250,7 +271,7 @@ class CycleGANModel(BaseModel):
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
-        loss_D = 1/(torch.log(1 + 0.03 * self.L))*(loss_D_real + loss_D_fake)
+        loss_D = self.dist_func * (loss_D_real + loss_D_fake)
         if self.isTrain:
             loss_D.backward()
         return loss_D
@@ -263,7 +284,7 @@ class CycleGANModel(BaseModel):
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.rec_B_sigmoid)  #self.rec_B_sigmoid
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B_sigmoid)
 
     def backward_G(self):
         """Calculate the loss for generators G_A and G_B"""
@@ -304,22 +325,23 @@ class CycleGANModel(BaseModel):
         # adjusted_fake_weights[(self.fake_B_det_sigmoid < probability_threshold) & (targets==1)] = 100
         # adjusted_fake_weights[(self.fake_B_det_sigmoid > probability_threshold) & (targets==0)] = 100
         fake_bce_weight_loss = nn.BCELoss(reduction="none") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
-
+        fake_focal_loss = FocalLoss()
         # adjusted_rec_weights[(self.rec_B_det_sigmoid < probability_threshold) & (targets==1)] = 100
         # adjusted_rec_weights[(self.rec_B_det_sigmoid > probability_threshold) & (targets==0)] = 100
         rec_bce_weight_loss = nn.BCELoss(reduction="none") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        rec_focal_loss = FocalLoss()
 
 
         
 
         
-
-        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det_sigmoid , targets)) # * self.rain_rate_prob
-        self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det_sigmoid, targets) * self.rain_rate_prob) # * self.rain_rate_prob
+        # works best without weights: self.rain_rate_prob
+        self.loss_bce_fake_B = torch.sum(fake_focal_loss(self.fake_B_det , targets) * self.rain_rate_prob) 
+        self.loss_bce_rec_B  = torch.sum(rec_focal_loss(self.rec_B_det, targets))
         self.loss_bce_B = self.loss_bce_fake_B + self.loss_bce_rec_B
         
         ## <--what if detector is wrong?? we need a way to bring down high values
-        self.D_B=self.netD_B(self.rec_B_sigmoid)
+        self.D_B=self.netD_B(self.fake_B_sigmoid) # + self.noise
         self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
 
         # GAN loss D_B(G_A(A))
@@ -350,7 +372,9 @@ class CycleGANModel(BaseModel):
             print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
         
         
-        RMSLE=RMSLELoss()
+        # print(self.L)
+
+        LogCosh=LogCoshLoss()
         L1=nn.L1Loss(reduction='none') # weight=self.rr_norm
         L2=nn.MSELoss(reduction='none') # weight=self.rr_norm
         # adjusted_rec_weights[(self.fake_B_det_sigmoid <= probability_threshold ) & (targets=1)] = some_large_number
@@ -358,7 +382,7 @@ class CycleGANModel(BaseModel):
         rec_A_unnorm=self.min_max_inv_transform(self.rec_A_sigmoid,-50.8,17)
         real_A_unnorm=self.min_max_inv_transform(self.real_A,-50.8,17)
 
-        self.loss_cycle_A = torch.sum(L2(rec_A_unnorm, real_A_unnorm)) #* self.att_norm
+        self.loss_cycle_A = torch.sum(L1(rec_A_unnorm, real_A_unnorm)) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
         ## <--what if detector is wrong?? we need a way to bring down high values
@@ -367,27 +391,27 @@ class CycleGANModel(BaseModel):
         real_B_unnorm=self.min_max_inv_transform(self.real_B, 0, 3.3)
         
         
-        self.loss_cycle_B = torch.sum(L2(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob) # 
+        self.loss_cycle_B = torch.sum(LogCosh(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob) #torch.sum(L2(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob) # 
         # self.loss_cycle_B = RMSLE(rec_B_unnorm,real_B_unnorm)
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
         self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_sigmoid, self.real_B))
 
         # combined loss and calculate gradients
-        self.loss_G = \
+        self.loss_G = self.dist_func*\
             (     
                 10*self.loss_cycle_B +\
-                self.loss_cycle_A +\
+                10*self.loss_cycle_A +\
 
-                0.1*self.loss_bce_fake_B+\
-                # 0.1*self.loss_bce_rec_B+\
+                self.loss_bce_fake_B+\
+                self.loss_bce_rec_B+\
 
                 self.loss_G_B_only +\
                 self.loss_G_A
 
             )
 
-            #1/(torch.log(1+0.03 * self.L))*\
+            
 
 
 
