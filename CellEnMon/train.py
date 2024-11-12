@@ -10,6 +10,8 @@ import data
 import models
 import wandb
 from pathlib import Path
+import matplotlib
+matplotlib.use('Agg')  # Use the non-interactive backend 'Agg'
 import matplotlib.pyplot as plt
 from datetime import datetime
 import matplotlib.dates as mpl_dates
