@@ -271,7 +271,7 @@ class CycleGANModel(BaseModel):
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
         # Combined loss and calculate gradients
-        loss_D = (loss_D_real + loss_D_fake)
+        loss_D = self.dist_func * (loss_D_real + loss_D_fake)
         if self.isTrain:
             loss_D.backward()
         return loss_D
@@ -382,7 +382,7 @@ class CycleGANModel(BaseModel):
         rec_A_unnorm=self.min_max_inv_transform(self.rec_A_sigmoid,-50.8,17)
         real_A_unnorm=self.min_max_inv_transform(self.real_A,-50.8,17)
 
-        self.loss_cycle_A = torch.mean(L1(rec_A_unnorm, real_A_unnorm)) #* self.att_norm
+        self.loss_cycle_A = torch.sum(L1(rec_A_unnorm, real_A_unnorm)) #* self.att_norm
                                        
         # Backward cycle loss || G_A(G_B(B)) - B|| # self.rain_rate_prob 
         ## <--what if detector is wrong?? we need a way to bring down high values
@@ -402,7 +402,7 @@ class CycleGANModel(BaseModel):
 
         # combined loss and calculate gradients
         # cycle_A and cycle_B should be the same scale - mind the training/validation losses (!!!)
-        self.loss_G =\
+        self.loss_G = self.dist_func *\
             (     
                 100 * self.loss_cycle_B +\
                 self.loss_cycle_A +\
@@ -415,7 +415,7 @@ class CycleGANModel(BaseModel):
 
             )
 
-            #*self.dist_func *
+            #*
 
             
 
