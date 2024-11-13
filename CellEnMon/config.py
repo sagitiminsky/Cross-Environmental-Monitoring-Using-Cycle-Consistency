@@ -36,7 +36,7 @@ def add_days_to_date(date, delta_days=0):
 smoothing_dme=1
 smoothing_ims="xx" # not used yet
 
-TRAIN_RADIUS=15
+TRAIN_RADIUS=30
 
 # 10KM <-> 2 pairs
 # 30KM <-> 9 pairs
