@@ -365,7 +365,7 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if True: #key!="fake_B" and key!="rec_B":
+                                    if key!="fake_B" and key!="rec_B": #
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
