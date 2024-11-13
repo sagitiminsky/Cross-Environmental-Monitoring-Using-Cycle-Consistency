@@ -217,7 +217,7 @@ class CycleGANModel(BaseModel):
         ## >> B
         fake_B = self.netG_A(self.real_A, dir="AtoB")   # G_A(A)
 
-        activation = nn.Identity() #nn.ReLU() #nn.Identity()
+        activation = nn.ReLU() # #nn.Identity()
 
 
         ## >> fake Detection
@@ -405,7 +405,7 @@ class CycleGANModel(BaseModel):
         # cycle_A and cycle_B should be the same scale - mind the training/validation losses (!!!)
         self.loss_G = \
             (     
-                100 * self.loss_cycle_B +\
+                10000 * self.loss_cycle_B +\
                 self.loss_cycle_A +\
 
                 # 0.01 * self.loss_bce_fake_B+\
@@ -421,7 +421,7 @@ class CycleGANModel(BaseModel):
             ## >> As per original paper, cycle loss needs to be x10 the loss of the GAN
             self.loss_G +=\
             (
-                1 * self.loss_G_B_only +\
+                100 * self.loss_G_B_only +\
                 1 * self.loss_G_A
             )
 
