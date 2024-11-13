@@ -29,6 +29,7 @@ class Preprocess:
 
         # Replace neg fake values with zero
         df.loc[df['RainAmoutPredicted[mm/h]'] < 0.1, 'RainAmoutPredicted[mm/h]'] = 0
+        df.loc[df["FakeWithDetections"] < 0.1, "FakeWithDetections"] = 0
         # df.loc[df['RainAmoutPredicted[mm/h]'] > 3.3, 'RainAmoutPredicted[mm/h]'] = 3.3
 
         self.fake=np.asarray(df['RainAmoutPredicted[mm/h]'],dtype=float)
