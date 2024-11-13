@@ -2,6 +2,8 @@ PYTHONPATH="/Users/sagit/Desktop/CellEnMon-Research"
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 import os
+import torch
+import numpy as np
 
 MAC = False
 download_path = '/Users/sagitiminsky/Downloads' if MAC == True else '/home/sagit/Downloads'
@@ -41,6 +43,10 @@ TRAIN_RADIUS=30
 # 10KM <-> 2 pairs
 # 30KM <-> 9 pairs
 
+def func_fit(x, a):
+    x=torch.from_numpy(np.array(x))
+    b=torch.from_numpy(np.array(a))
+    return a*x + a + 1
 
 
 VALIDATION_RADIUS=100

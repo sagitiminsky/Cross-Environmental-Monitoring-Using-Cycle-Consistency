@@ -21,6 +21,7 @@ import torch.nn.functional as F
 from datetime import datetime
 import config
 import os
+from config import func_fit
 
 # from data.image_folder import make_dataset
 # from PIL import Image
@@ -228,8 +229,8 @@ class CellenmonDataset(BaseDataset):
                                         'metadata_long_min': self.dataset.metadata_long_min},
             'distance': dist,  # in KM
             
-            'attenuation_prob': self.func_fit(x=A_attenuation, a=a),
-            'rain_rate_prob': self.func_fit(x=B_rain_rate, a=a),
+            'attenuation_prob': config.func_fit(x=A_attenuation, a=a),
+            'rain_rate_prob': config.func_fit(x=B_rain_rate, a=a),
             
 #             'a_rain': self.dataset.a,
 #             'b_rain': self.dataset.b,
@@ -239,10 +240,7 @@ class CellenmonDataset(BaseDataset):
     def min_max_inv_transform(self,x, mmin, mmax):
         return x #x * (mmax - mmin) + mmin
     
-    def func_fit(self, x, a):
-        x=torch.from_numpy(np.array(x))
-        b=torch.from_numpy(np.array(a))
-        return a*x + a + 1
+
     
     def __len__(self):
         """We do 1000 random selects between CML and Gauge"""
