@@ -348,11 +348,11 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 2
+        n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
-                                        kernel_size=3, stride=1, bias=use_bias,padding=1),
+                                        kernel_size=3, stride=1, bias=use_bias),
                       norm_layer(ngf * mult * 2),
                       nn.ReLU(True)
                     ]
@@ -366,8 +366,7 @@ class ResnetGenerator(nn.Module):
             mult = 2 ** (n_downsampling - i)
             model += [nn.ConvTranspose1d(ngf * mult, int(ngf * mult / 2),
                                          kernel_size=3, stride=1,
-                                         bias=use_bias,
-                                         padding=1, 
+                                         bias=use_bias, 
                                          output_padding=0
                                          ),
                       norm_layer(int(ngf * mult / 2)),
@@ -431,8 +430,8 @@ class ResnetBlock(nn.Module):
             raise NotImplementedError('padding [%s] is not implemented' % padding_type)
 
         conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim), nn.ReLU(True)]
-        if use_dropout:
-            conv_block += [nn.Dropout(0.5)]
+        # if use_dropout:
+        conv_block += [nn.Dropout(0.5)]
 
         p = 0
         if padding_type == 'reflect':
