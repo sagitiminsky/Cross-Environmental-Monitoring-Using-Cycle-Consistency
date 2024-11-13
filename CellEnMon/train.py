@@ -143,10 +143,6 @@ RIGHT = (0, 1, 0, 0)
 UP = (0, 0, 1, 0)
 DOWN = (0, 0, 0, 1)
 
-def func_fit(x, a):
-    x=torch.from_numpy(np.array(x))
-    b=torch.from_numpy(np.array(a))
-    return torch.exp(a*x**2)
 
 
 def pad_with_respect_to_direction( A, B, dir, value_a, value_b):
@@ -278,7 +274,7 @@ if __name__ == '__main__':
                          "gague":gauge,\
                          "rain_rate_sample":rain_sample,\
                          "Time":slice_time,\
-                         "rain_rate_prob": func_fit(rain_sample_unnormalized, LAMBDA),
+                         "rain_rate_prob": config.func_fit(rain_sample_unnormalized, LAMBDA),
                          "distance": torch.tensor([3], device='cuda:0', dtype=torch.float64) # in KM
                         }                      
                         model.set_input(loader,isTrain=False)
