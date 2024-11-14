@@ -287,7 +287,7 @@ class CycleGANModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         #fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A_sigmoid)
+        self.loss_D_A = 1000 * self.backward_D_basic(self.netD_A, self.real_A, self.fake_A_sigmoid)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
@@ -408,7 +408,7 @@ class CycleGANModel(BaseModel):
                 10000 * self.loss_cycle_B +\
                 self.loss_cycle_A +\
 
-                # 0.01 * self.loss_bce_fake_B+\
+                # self.loss_bce_fake_B+\
                 # self.loss_bce_rec_B+\
 
 
@@ -426,7 +426,7 @@ class CycleGANModel(BaseModel):
             )
 
         
-        # self.dist_func*
+        self.loss_G = self.loss_G * self.dist_func
 
         if self.isTrain:
             self.loss_G.backward()

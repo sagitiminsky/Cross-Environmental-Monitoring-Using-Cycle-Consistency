@@ -25,7 +25,7 @@ def get_norm_layer(norm_type='instance'):
     For InstanceNorm, we do not use learnable affine parameters. We do not track running statistics.
     """
     if norm_type == 'batch': #https://discuss.pytorch.org/t/nan-when-i-use-batch-normalization-batchnorm1d/322/9
-        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=False, eps=1e-4)
+        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=False, )
     elif norm_type == 'instance':
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
     elif norm_type == 'none':
@@ -343,12 +343,12 @@ class ResnetGenerator(nn.Module):
 
         use_bias=True
 
-        model = [nn.ReplicationPad1d(1),
-                 nn.Conv1d (input_nc, ngf, kernel_size=3, bias=use_bias),
+        model = [nn.ReplicationPad1d(3),
+                 nn.Conv1d (input_nc, ngf, kernel_size=7, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 4
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
@@ -372,8 +372,8 @@ class ResnetGenerator(nn.Module):
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
         
-        model += [nn.ReplicationPad1d(1)]
-        model += [nn.Conv1d(ngf, output_nc, kernel_size=3)] #norm_layer(output_nc)
+        model += [nn.ReplicationPad1d(3)]
+        model += [nn.Conv1d(ngf, output_nc, kernel_size=7)] #norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
