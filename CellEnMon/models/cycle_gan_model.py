@@ -287,7 +287,7 @@ class CycleGANModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         #fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = 1000 * self.backward_D_basic(self.netD_A, self.real_A, self.fake_A_sigmoid)
+        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A_sigmoid)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
@@ -302,7 +302,7 @@ class CycleGANModel(BaseModel):
         L1_idt=nn.L1Loss(reduction='none')
 
         self.loss_idt_A = torch.sum(L1_idt(self.fake_A, self.real_A))
-        self.loss_idt_B = torch.sum(L1_idt(self.fake_B, self.real_B) * self.rain_rate_prob)
+        self.loss_idt_B = torch.sum(L1_idt(self.fake_B, self.real_B)) #* self.rain_rate_prob
 
 
         self.rr_norm = self.rain_rate_prob
@@ -325,11 +325,11 @@ class CycleGANModel(BaseModel):
         
         # adjusted_fake_weights[(self.fake_B_det_sigmoid < probability_threshold) & (targets==1)] = 100
         # adjusted_fake_weights[(self.fake_B_det_sigmoid > probability_threshold) & (targets==0)] = 100
-        fake_bce_weight_loss = nn.BCELoss(reduction="none") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        fake_bce_weight_loss = nn.BCEWithLogitsLoss (reduction="sum") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
         fake_focal_loss = FocalLoss()
         # adjusted_rec_weights[(self.rec_B_det_sigmoid < probability_threshold) & (targets==1)] = 100
         # adjusted_rec_weights[(self.rec_B_det_sigmoid > probability_threshold) & (targets==0)] = 100
-        rec_bce_weight_loss = nn.BCELoss(reduction="none") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        rec_bce_weight_loss = nn.BCEWithLogitsLoss(reduction="sum") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
         rec_focal_loss = FocalLoss()
 
 
@@ -337,8 +337,8 @@ class CycleGANModel(BaseModel):
 
         
         # works best **without** weights: self.rain_rate_prob
-        self.loss_bce_fake_B = torch.sum(fake_bce_weight_loss(self.fake_B_det_sigmoid , targets))
-        self.loss_bce_rec_B  = torch.sum(rec_bce_weight_loss(self.rec_B_det_sigmoid, targets))
+        self.loss_bce_fake_B = fake_bce_weight_loss(self.fake_B_det , targets)
+        self.loss_bce_rec_B  = rec_bce_weight_loss(self.rec_B_det, targets)
         self.loss_bce_B = self.loss_bce_fake_B + self.loss_bce_rec_B
         
         ## <--what if detector is wrong?? we need a way to bring down high values
@@ -395,7 +395,7 @@ class CycleGANModel(BaseModel):
         # --> torch.sum is REALLY important here.
         # --> Remember most of dataset does not have rain events, so we don't need to include this in the loss
         # --> and rain events, or mistakes need to be punished harshly!
-        self.loss_cycle_B = torch.sum(L1_rec(rec_B_unnorm, real_B_unnorm) * self.rain_rate_prob)
+        self.loss_cycle_B = torch.sum(L1_rec(rec_B_unnorm, real_B_unnorm)) #* self.rain_rate_prob
         # self.loss_cycle_B = RMSLE(rec_B_unnorm,real_B_unnorm)
 
         self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A_sigmoid, self.real_A))
@@ -405,7 +405,7 @@ class CycleGANModel(BaseModel):
         # cycle_A and cycle_B should be the same scale - mind the training/validation losses (!!!)
         self.loss_G = \
             (     
-                10000 * self.loss_cycle_B +\
+                self.loss_cycle_B +\
                 self.loss_cycle_A +\
 
                 # self.loss_bce_fake_B+\
@@ -413,16 +413,16 @@ class CycleGANModel(BaseModel):
 
 
 
-                # self.loss_idt_A +\
-                10 * self.loss_idt_B
+                self.loss_idt_A +\
+                self.loss_idt_B
 
             )
         if int(os.environ["ENABLE_GAN"]):
             ## >> As per original paper, cycle loss needs to be x10 the loss of the GAN
             self.loss_G +=\
             (
-                100 * self.loss_G_B_only +\
-                1 * self.loss_G_A
+                self.loss_G_B_only +\
+                self.loss_G_A
             )
 
         
