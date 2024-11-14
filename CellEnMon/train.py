@@ -102,7 +102,7 @@ validation_link_to_gauge_matching ={
 
 
 ### TO RUN:
-# ENABLE_GAN=0 THETA=0 LAMBDA=0 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py 
+# ENABLE_GAN=0 THETA=0 LAMBDA=1 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py 
 
 ### >> LAMBDA
 #1) first wascalculated by evaluation func_fit for train dataset with function a^e(-ax) --> a=LAMBDA
@@ -241,7 +241,9 @@ if __name__ == '__main__':
                     seq_len=0
                     real_gauge_vec=np.array([])
                     fake_gauge_vec=np.array([])
+                    rec_gauge_vec=np.array([])
                     fake_gauge_vec_det=np.array([])
+                    rec_gauge_vec_det=np.array([])
                     T=np.array([])
 
                     # calculate metric for test gauges
@@ -297,24 +299,28 @@ if __name__ == '__main__':
                                 visuals = OrderedDict(
                                 [
                                     ('real_A', torch.unsqueeze(A.T,0)),\
-                                    ('fake_B', model.fake_B_sigmoid),\
-                                    ('rec_A', model.rec_A_sigmoid),\
+                                    ('fake_B', model.fake_B),\
+                                    ('rec_A', model.rec_A),\
                                     ('real_B',torch.unsqueeze(B.T,0)),\
-                                    ('fake_A', model.fake_A_sigmoid),\
-                                    ('rec_B', model.rec_B_sigmoid),\
-                                    ('fake_B_det_sigmoid', model.fake_B_det_sigmoid),\
-                                    ('rec_B_det_sigmoid', model.rec_B_det_sigmoid)
+                                    ('fake_A', model.fake_A),\
+                                    ('rec_B', model.rec_B),\
+                                    ('fake_B_det', model.fake_B_det),\
+                                    ('rec_B_det', model.rec_B_det)
                                 ]
                             )
                             
-                            real_rain_add=visuals['real_B'][0].cpu().detach().numpy()
-                            fake_rain_add=visuals['fake_B'][0].cpu().detach().numpy()
-                            fake_detection=model.fake_B_det_sigmoid.cpu().detach().numpy()[0][0]
-                            rec_detection=model.rec_B_det_sigmoid.cpu().detach().numpy()[0][0]
 
-                            real_gauge_vec=np.append(real_gauge_vec,np.round(real_rain_add,2))
-                            fake_gauge_vec=np.append(fake_gauge_vec,np.round(fake_rain_add,2))
-                            fake_gauge_vec_det=np.append(fake_gauge_vec_det, fake_detection)
+                            real_rain_add=np.round(visuals['real_B'][0].cpu().detach().numpy(), 2)
+                            fake_rain_add=np.round(visuals['fake_B'][0].cpu().detach().numpy(), 2)
+                            rec_rain_add=np.round(visuals['rec_B'][0].cpu().detach().numpy(), 2)
+                            fake_detection_add=np.round(visuals['fake_B_det'][0].cpu().detach().numpy(), 2)
+                            rec_detection_add=np.round(visuals['rec_B_det'][0].cpu().detach().numpy(), 2)
+                            
+                            real_gauge_vec=np.append(real_gauge_vec,real_rain_add)
+                            fake_gauge_vec=np.append(fake_gauge_vec,fake_rain_add)
+                            rec_gauge_vec=np.append(rec_gauge_vec,rec_rain_add)
+                            fake_gauge_vec_det=np.append(fake_gauge_vec_det,fake_detection_add)
+                            rec_gauge_vec_det=np.append(rec_gauge_vec_det, rec_detection_add)
                             T=np.append(T,np.array(model.t))
 
 
@@ -373,10 +379,9 @@ if __name__ == '__main__':
                                     else:
                                         
                                         if key=="fake_B":
-                                            mask=fake_detection
+                                            mask=fake_detection_add[0]
                                         else:
-                                            mask=rec_detection
-                                        
+                                            mask=rec_detection_add[0]
                                         
                                         mask=(mask >= probability_threshold).astype(int)
                                         cmap=["red" if m else "black" for m in mask]
@@ -408,27 +413,31 @@ if __name__ == '__main__':
                     
 
                     
-                    #Un-normalize back to values in range of real rain
-                    real_gauge_vec=min_max_inv_transform(real_gauge_vec, mmin=0, mmax=3.3)
-                    fake_gauge_vec=min_max_inv_transform(fake_gauge_vec, mmin=0, mmax=3.3)
                     
                     # Convert continuous values to binary class labels
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
+                    rec_gauge_vec_det_labels = ((rec_gauge_vec_det >= probability_threshold)).astype(int)
                     fake_gauge_vec_det_labels = ((fake_gauge_vec_det >= probability_threshold)).astype(int)
                     
 
-                    p=Preprocess(link=link,gauge=gauge, epoch=epoch, T=T, real=real_gauge_vec, fake=fake_gauge_vec, detections=fake_gauge_vec_det_labels)
+                    p=Preprocess(link=link,gauge=gauge,epoch=epoch, T=T,\
+                        real=real_gauge_vec,
+                        fake=fake_gauge_vec,\
+                        rec=rec_gauge_vec,\
+                        fake_detections = fake_gauge_vec_det_labels,\
+                        rec_detections = rec_gauge_vec_det_labels
+                    )
                     
                     
 
                     
-                    CM=confusion_matrix(real_gauge_vec_labels, p.detections)
+                    CM=confusion_matrix(real_gauge_vec_labels, p.rec_det)
                     
                     # Create subplots for given confusion matrices
                     f, axes = plt.subplots(1, 1, figsize=(15, 15))
 
                     # Plot the first confusion matrix at position (0)
-                    axes.set_title("Confusion Mat Detection", size=8)
+                    axes.set_title("Confusion Mat For Cyclic Detection", size=8)
                     ConfusionMatrixDisplay(confusion_matrix=CM, display_labels=["dry","wet"]).plot(
                         include_values=True, cmap="Blues", ax=axes, colorbar=False, values_format=".0f")
 
@@ -437,9 +446,9 @@ if __name__ == '__main__':
                     axes.yaxis.set_ticklabels(['dry', 'wet'])
 
                     
-                    wandb.log({f"Confusion Matrix":f})
-                    wandb.log({"f1-score Detection": f1_score(p.detections, real_gauge_vec_labels)})
-                    wandb.log({"Acc": (CM[0][0]+CM[1][1])/(CM[0][0]+CM[0][1]+CM[1][0]+CM[1][1])})
+                    wandb.log({f"Confusion Matrix of real Gauges<->Cycle Gauges":f})
+                    wandb.log({"f1-score real Gauges<->Cycle Gauges": f1_score(p.rec_det, real_gauge_vec_labels)})
+                    wandb.log({"Acc real Gauges<->Cycle Gauges": (CM[0][0]+CM[1][1])/(CM[0][0]+CM[0][1]+CM[1][0]+CM[1][1])})
                     
 
         
@@ -450,7 +459,7 @@ if __name__ == '__main__':
                     
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_with_detection_cumsum, 'b-', label="Reg+Det")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'b-', label="Reg+Det")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="Reg")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="GT", color='orange')
                     axs_preprocessed.grid()
@@ -472,10 +481,10 @@ if __name__ == '__main__':
                     wandb.log({f"Virtual (CML) vs Real (Gauge) - {link}-{gauge}":fig_preprocessed})
                     
                     #RMSSE
-                    cond=[True if r >= threshold or f >= threshold else False for r,f in zip(p.real, p.fake)]
+                    cond=[True if r >= threshold or f >= threshold else False for r,f in zip(p.real, p.rec)]
                     N=len(p.fake)
                     wandb.log({f"RMSSE-REG-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake)**2)/N)})
-                    wandb.log({f"RMSSE-REG+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake*p.detections)**2)/N)})
+                    wandb.log({f"RMSSE-REG+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake_dot_det)**2)/N)})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))

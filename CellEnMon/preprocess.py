@@ -12,35 +12,49 @@ import matplotlib.dates as mpl_dates
 
 
 class Preprocess:
-    def __init__(self,link,gauge,epoch,T,real,fake,detections):
+    def __init__(self,link,gauge,epoch,T,real,fake,rec,fake_detections,rec_detections):
         
         self.link = link.replace("-","_")
         self.gauge=gauge
 
-        df_detections = pd.DataFrame(data={'Time': T, 'Detections': detections })
-        detections = np.asarray(df_detections['Detections'],dtype=float)
+        df_detections = pd.DataFrame(data={'Time': T, 'fake_detections': fake_detections, 'rec_detections': rec_detections })
+        fake_detections = np.asarray(df_detections['fake_detections'],dtype=float)
+        rec_detections = np.asarray(df_detections['rec_detections'],dtype=float)
         
         
-        d = {'Time':pd.to_datetime(T), 'RainAmoutGT[mm/h]':real, 'RainAmoutPredicted[mm/h]': fake , 'Detections':detections, "FakeWithDetections": fake*detections } #
+        d = {'Time':pd.to_datetime(T),\
+                'real':real,\
+                'fake':fake,\
+                'rec': rec,\
+                'fake_det': fake_detections,\
+                'rec_det': rec_detections,\
+                "fake_dot_det": fake * fake_detections,\
+                "rec_dot_det": rec * rec_detections
+                
+            }
         df = pd.DataFrame(data=d)
 
 
-
-
         # Replace neg fake values with zero
-        df.loc[df['RainAmoutPredicted[mm/h]'] < 0.1, 'RainAmoutPredicted[mm/h]'] = 0
-        df.loc[df["FakeWithDetections"] < 0.1, "FakeWithDetections"] = 0
-        # df.loc[df['RainAmoutPredicted[mm/h]'] > 3.3, 'RainAmoutPredicted[mm/h]'] = 3.3
+        df.loc[df['rec'] < 0.1, 'rec'] = 0
+        df.loc[df["rec_dot_det"] < 0.1, "rec_dot_det"] = 0
+        df.loc[df["fake_dot_det"] < 0.1, "fake_dot_det"] = 0
+        # df.loc[df['RainAmoutPredicted'] > 3.3, 'RainAmoutPredicted'] = 3.3
 
-        self.fake=np.asarray(df['RainAmoutPredicted[mm/h]'],dtype=float)
-        self.real=np.asarray(df['RainAmoutGT[mm/h]'],dtype=float)
-        self.detections = np.asarray(df["Detections"], dtype=float)
-        self.fake_with_detection = np.array(df["FakeWithDetections"], dtype=float)
+        self.real               =np.asarray(df['real'],dtype=float)
+        self.fake               =np.asarray(df['fake'],dtype=float)
+        self.rec                =np.asarray(df['rec'],dtype=float)
+        self.fake_det           =np.asarray(df['fake_det'],dtype=float)
+        self.rec_det            = np.asarray(df["rec_det"], dtype=float)
+        self.fake_dot_det       = np.asarray(df["fake_dot_det"], dtype=float)
+        self.rec_dot_det        = np.asarray(df["rec_dot_det"], dtype=float)
 
         # Accumulative
-        df["RainAmoutPredictedCumSum"]=df['RainAmoutPredicted[mm/h]'].cumsum()
-        df["RainAmoutGTCumSum"]=df['RainAmoutGT[mm/h]'].cumsum()
-        df["FakeWithDetectionsCumSum"]=df["FakeWithDetections"].cumsum()
+        df["real_cumsum"]=df['real'].cumsum()
+        df["fake_cumsum"]=df['fake'].cumsum()
+        df["rec_cumsum"]=df['rec'].cumsum()
+        df["fake_dot_det_cumsum"]=df['fake_dot_det'].cumsum()
+        df["rec_dot_det_cumsum"]=df["rec_dot_det"].cumsum()
 
         # Save to csv
         df.to_csv(f"{root}/01012015_01022015/predict/{self.link}_{gauge}.csv", index=False)
@@ -48,10 +62,11 @@ class Preprocess:
 
         self.excel_data=df
 
-        self.fake_cumsum = np.asarray(self.excel_data["RainAmoutPredictedCumSum"])
-        self.real_cumsum = np.asarray(self.excel_data["RainAmoutGTCumSum"])
-        self.detections = np.asarray(self.excel_data["Detections"])
-        self.fake_with_detection_cumsum = np.asarray(self.excel_data["FakeWithDetectionsCumSum"])
+        self.real_cumsum = np.asarray(self.excel_data["real_cumsum"])
+        self.fake_cumsum = np.asarray(self.excel_data["fake_cumsum"])
+        self.rec_cumsum =  np.asarray(self.excel_data["rec_cumsum"])
+        self.fake_dot_det_cumsum = np.array(self.excel_data["fake_dot_det_cumsum"])
+        self.rec_dot_det_cumsum = np.asarray(self.excel_data["rec_dot_det_cumsum"])
 
 
 
