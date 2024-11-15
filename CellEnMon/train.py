@@ -408,8 +408,8 @@ if __name__ == '__main__':
 
 
                         wandb.log({title: fig})
-                        # with np.printoptions(threshold=np.inf):
-                        #     print(f"batch #{batch_counter}:{fake_detection}")
+                        with np.printoptions(threshold=np.inf):
+                            print(f"batch #{batch_counter}:{np.round(fake_detection_add, 2)}")
                     
 
                     
@@ -431,24 +431,32 @@ if __name__ == '__main__':
                     
 
                     
-                    CM=confusion_matrix(real_gauge_vec_labels, p.rec_det)
+                    CM_rec=confusion_matrix(real_gauge_vec_labels, p.rec_det)
+                    CM_fake=confusion_matrix(real_gauge_vec_labels, p.fake_det)
                     
                     # Create subplots for given confusion matrices
-                    f, axes = plt.subplots(1, 1, figsize=(15, 15))
+                    f, axes = plt.subplots(1, 2, figsize=(15, 15))
 
                     # Plot the first confusion matrix at position (0)
-                    axes.set_title("Confusion Mat For Cyclic Detection", size=8)
-                    ConfusionMatrixDisplay(confusion_matrix=CM, display_labels=["dry","wet"]).plot(
-                        include_values=True, cmap="Blues", ax=axes, colorbar=False, values_format=".0f")
+                    axes[0].set_title("Cycle", size=8)
+                    axes[1].set_title("Fake", size=8)
+                    ConfusionMatrixDisplay(confusion_matrix=CM_rec, display_labels=["dry","wet"]).plot(
+                        include_values=True, cmap="Blues", ax=axes[0], colorbar=False, values_format=".0f")
+                    ConfusionMatrixDisplay(confusion_matrix=CM_fake, display_labels=["dry","wet"]).plot(
+                        include_values=True, cmap="Blues", ax=axes[1], colorbar=False, values_format=".0f")
 
                     # Remove x-axis labels and ticks
-                    axes.xaxis.set_ticklabels(['dry', 'wet'])
-                    axes.yaxis.set_ticklabels(['dry', 'wet'])
+                    axes[0].xaxis.set_ticklabels(['dry', 'wet'])
+                    axes[0].yaxis.set_ticklabels(['dry', 'wet'])
+                    axes[1].xaxis.set_ticklabels(['dry', 'wet'])
+                    axes[1].yaxis.set_ticklabels(['dry', 'wet'])
 
                     
-                    wandb.log({f"Confusion Matrix of real Gauges<->Cycle Gauges":f})
+                    wandb.log({f"Confusion Matrices":f})
                     wandb.log({"f1-score real Gauges<->Cycle Gauges": f1_score(p.rec_det, real_gauge_vec_labels)})
-                    wandb.log({"Acc real Gauges<->Cycle Gauges": (CM[0][0]+CM[1][1])/(CM[0][0]+CM[0][1]+CM[1][0]+CM[1][1])})
+                    wandb.log({"f1-score real Gauges<->Fake Gauges": f1_score(p.fake_det, real_gauge_vec_labels)})
+                    wandb.log({"Acc real Gauges<->Cycle Gauges": (CM_rec[0][0]+CM_rec[1][1])/(CM_rec[0][0]+CM_rec[0][1]+CM_rec[1][0]+CM_rec[1][1])})
+                    wandb.log({"Acc real Gauges<->Fake Gauges": (CM_fake[0][0]+CM_fake[1][1])/(CM_fake[0][0]+CM_fake[0][1]+CM_fake[1][0]+CM_fake[1][1])})
                     
 
         
@@ -460,7 +468,7 @@ if __name__ == '__main__':
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
                     axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'b-', label="Reg+Det")
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="Reg")
+                    # axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="Reg")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="GT", color='orange')
                     axs_preprocessed.grid()
                     fig_preprocessed.legend()
@@ -483,7 +491,7 @@ if __name__ == '__main__':
                     #RMSSE
                     cond=[True if r >= threshold or f >= threshold else False for r,f in zip(p.real, p.rec)]
                     N=len(p.fake)
-                    wandb.log({f"RMSSE-REG-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake)**2)/N)})
+                    # wandb.log({f"RMSSE-REG-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake)**2)/N)})
                     wandb.log({f"RMSSE-REG+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake_dot_det)**2)/N)})
         
                             

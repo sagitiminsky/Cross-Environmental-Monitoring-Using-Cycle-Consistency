@@ -37,6 +37,7 @@ class Preprocess:
 
         # Replace neg fake values with zero
         df.loc[df['rec'] < 0.1, 'rec'] = 0
+        df.loc[df['fake'] < 0.1, 'fake'] = 0
         df.loc[df["rec_dot_det"] < 0.1, "rec_dot_det"] = 0
         df.loc[df["fake_dot_det"] < 0.1, "fake_dot_det"] = 0
         # df.loc[df['RainAmoutPredicted'] > 3.3, 'RainAmoutPredicted'] = 3.3
