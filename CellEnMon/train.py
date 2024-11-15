@@ -467,7 +467,8 @@ if __name__ == '__main__':
                     
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'b-', label="Reg+Det")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'b-', label="FAKE+Det")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.rec_dot_det_cumsum, 'g-', label="REC+Det")
                     # axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="Reg")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="GT", color='orange')
                     axs_preprocessed.grid()
