@@ -343,12 +343,12 @@ class ResnetGenerator(nn.Module):
 
         use_bias=True
 
-        model = [
-                 nn.Conv1d (input_nc, ngf, kernel_size=1, bias=use_bias),
+        model = [nn.ReflectionPad1d(2),
+                 nn.Conv1d (input_nc, ngf, kernel_size=5, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 2
+        n_downsampling = 1
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
