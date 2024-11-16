@@ -118,7 +118,7 @@ LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
 os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="100"
-ITERS_BETWEEN_VALIDATIONS=10
+ITERS_BETWEEN_VALIDATIONS=1
 
 #Formatting Date
 date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
@@ -380,8 +380,10 @@ if __name__ == '__main__':
                                         
                                         if key=="fake_B":
                                             mask=fake_detection_add[0]
+
                                         else:
                                             mask=rec_detection_add[0]
+
                                         
                                         mask=(mask >= probability_threshold).astype(int)
                                         cmap=["red" if m else "black" for m in mask]
@@ -409,7 +411,8 @@ if __name__ == '__main__':
 
                         wandb.log({title: fig})
                         with np.printoptions(threshold=np.inf):
-                            print(f"batch #{batch_counter}:{np.round(fake_detection_add, 2)}")
+                            print(f"Fake | batch #{batch_counter}:{np.round(fake_detection_add, 2)}")
+                            print(f"Rec | batch#{batch_counter}:{np.round(rec_detection_add, 2)}")
                     
 
                     
@@ -467,7 +470,8 @@ if __name__ == '__main__':
                     
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'b-', label="FAKE+Det")
+                    # axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'b-', label="FAKE+Det")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.rec_cumsum, 'b-', label="REC")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.rec_dot_det_cumsum, 'g-', label="REC+Det")
                     # axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="Reg")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="GT", color='orange')
@@ -493,7 +497,8 @@ if __name__ == '__main__':
                     cond=[True if r >= threshold or f >= threshold else False for r,f in zip(p.real, p.rec)]
                     N=len(p.fake)
                     # wandb.log({f"RMSSE-REG-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake)**2)/N)})
-                    wandb.log({f"RMSSE-REG+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake_dot_det)**2)/N)})
+                    wandb.log({f"RMSSE-FAKE+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.fake_dot_det)**2)/N)})
+                    wandb.log({f"RMSSE-REC+DET-{link}-{gauge}":np.sqrt(np.sum((p.real - p.rec_dot_det)**2)/N)})
         
                             
                     assert(len(T)==len(real_gauge_vec.flatten()))

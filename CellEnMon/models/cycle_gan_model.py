@@ -213,7 +213,7 @@ class CycleGANModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""          
-        activation = nn.LeakyReLU() #nn.Identity() #nn.ReLU()
+        activation = nn.LeakyReLU(0.01) #nn.Identity() #nn.ReLU()
         
         ##############
         ## >> Fake ###
@@ -221,7 +221,7 @@ class CycleGANModel(BaseModel):
         fake_B = self.netG_A(self.real_A, dir="AtoB")   # G_A(A)
 
         
-        self.fake_B_det = torch.sigmoid(self.norm_mean_std(fake_B[1])) # <--Detection
+        self.fake_B_det = torch.sigmoid(fake_B[1]) # <--Detection
 
         ## >> Regression
             # >> A
@@ -237,7 +237,7 @@ class CycleGANModel(BaseModel):
         ############
         rec_B=self.netG_A(self.fake_A,dir="AtoB")
 
-        self.rec_B_det_without_activation = self.norm_mean_std(rec_B[1])
+        self.rec_B_det_without_activation = rec_B[1]
         self.rec_B_det = torch.sigmoid(rec_B[1]) ### <-- detection
             
         # >> A
@@ -327,7 +327,7 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss
         self.loss_cycle_A = torch.mean(L1(self.rec_A, self.real_A))
-        self.loss_cycle_B = torch.sum(L1(self.rec_B_dot_detection, self.real_B) * self.rain_rate_prob)                              
+        self.loss_cycle_B = torch.sum(L1(self.rec_B, self.real_B) * self.rain_rate_prob) # * self.rain_rate_prob |
         
         
         # GAN loss D_B(G_A(A))

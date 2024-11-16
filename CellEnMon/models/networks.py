@@ -25,9 +25,9 @@ def get_norm_layer(norm_type='instance'):
     For InstanceNorm, we do not use learnable affine parameters. We do not track running statistics.
     """
     if norm_type == 'batch': #https://discuss.pytorch.org/t/nan-when-i-use-batch-normalization-batchnorm1d/322/9
-        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=False)
+        norm_layer = functools.partial(nn.BatchNorm1d, affine=True, track_running_stats=True)
     elif norm_type == 'instance':
-        norm_layer = functools.partial(nn.InstanceNorm1d, affine=True, track_running_stats=False)
+        norm_layer = functools.partial(nn.InstanceNorm1d, affine=False, track_running_stats=False)
     elif norm_type == 'none':
         def norm_layer(x): return Identity()
     elif norm_type == "layer":
@@ -341,14 +341,14 @@ class ResnetGenerator(nn.Module):
         assert(n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
 
-        use_bias=True
+        use_bias=False
 
-        model = [nn.ReflectionPad1d(2),
-                 nn.Conv1d (input_nc, ngf, kernel_size=5, bias=use_bias),
+        model = [nn.ReflectionPad1d(3),
+                 nn.Conv1d (input_nc, ngf, kernel_size=7, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 1
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
             model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
@@ -372,8 +372,8 @@ class ResnetGenerator(nn.Module):
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
         
-        model += [nn.ReplicationPad1d(1)]
-        model += [nn.Conv1d(ngf, output_nc, kernel_size=3)] #norm_layer(output_nc)
+        model += [nn.ReplicationPad1d(3)]
+        model += [nn.Conv1d(ngf, output_nc, kernel_size=7)] #norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
@@ -433,16 +433,16 @@ class ResnetBlock(nn.Module):
         # if use_dropout:
         # conv_block += [nn.Dropout(0.5)]
 
-        p = 0
-        if padding_type == 'reflect':
-            conv_block += [nn.ReflectionPad1d(1)]
-        elif padding_type == 'replicate':
-            conv_block += [nn.ReplicationPad1d(1)]
-        elif padding_type == 'zero':
-            p = 1
-        else:
-            raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)] #
+        # p = 0
+        # if padding_type == 'reflect':
+        #     conv_block += [nn.ReflectionPad1d(1)]
+        # elif padding_type == 'replicate':
+        #     conv_block += [nn.ReplicationPad1d(1)]
+        # elif padding_type == 'zero':
+        #     p = 1
+        # else:
+        #     raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+        # conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)] #
 
         return nn.Sequential(*conv_block)
 
