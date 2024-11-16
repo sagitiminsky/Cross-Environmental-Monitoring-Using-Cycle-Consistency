@@ -213,7 +213,7 @@ class CycleGANModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""          
-        activation = nn.LeakyReLU(0.01) #nn.Identity() #nn.ReLU()
+        activation = nn.ReLU() #nn.Identity() #nn.ReLU()
         
         ##############
         ## >> Fake ###
@@ -314,7 +314,7 @@ class CycleGANModel(BaseModel):
         self.loss_idt_A = torch.sum(L1_idt(self.fake_A, self.real_A))
         self.loss_idt_B = torch.sum(L1_idt(self.fake_B, self.real_B)) #* self.rain_rate_prob
 
-        rec_bce_weight_loss = nn.BCEWithLogitsLoss(reduction="sum") #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        rec_bce_weight_loss = nn.BCEWithLogitsLoss(reduction="sum", weight=self.rain_rate_prob) #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
 
         targets=(self.real_B >= threshold).float()
         
