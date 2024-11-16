@@ -230,7 +230,7 @@ class CycleGANModel(BaseModel):
             # >> B
         self.fake_B=activation(fake_B[0]) ## <<-- regression
         
-        self.fake_B_dot_detection = self.fake_B * (self.fake_B_det >= probability_threshold)
+        self.fake_B_dot_detection = self.fake_B * self.fake_B_det
 
         ############
         ## >> Rec ##
@@ -247,7 +247,7 @@ class CycleGANModel(BaseModel):
         
             ## >> rec Detection
         self.rec_B = activation(rec_B[0]) ## <<-- regression
-        self.rec_B_dot_detection = self.rec_B * (self.rec_B_det >= probability_threshold)
+        self.rec_B_dot_detection = self.rec_B * self.rec_B_det
 
 
     def backward_D_basic(self, netD, real, fake): #weight=torch.ones([1], device='cuda:0')
@@ -327,7 +327,7 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss
         self.loss_cycle_A = torch.mean(L1(self.rec_A, self.real_A))
-        self.loss_cycle_B = torch.sum(L1(self.rec_B, self.real_B) * self.rain_rate_prob) # * self.rain_rate_prob |
+        self.loss_cycle_B = torch.sum(L1(self.rec_B_dot_detection, self.real_B)) # * self.rain_rate_prob |
         
         
         # GAN loss D_B(G_A(A))
@@ -367,8 +367,7 @@ class CycleGANModel(BaseModel):
                 self.loss_G_A
             )
 
-        self.loss_G += GAN_LOSS
-        # self.loss_G = self.loss_G * self.dist_func
+        self.loss_G = 10 * self.loss_G + GAN_LOSS
 
         if self.isTrain:
             self.loss_G.backward()

@@ -470,10 +470,17 @@ if __name__ == '__main__':
                     
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
-                    # axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'b-', label="FAKE+Det")
+                    # >> REC
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="FAKE")
+                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'm:', label="FAKE+Det")
+                    
+                    
+                    # >> FAKE
                     axs_preprocessed.plot(preprocessed_time_wanb, p.rec_cumsum, 'b-', label="REC")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.rec_dot_det_cumsum, 'g-', label="REC+Det")
-                    # axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="Reg")
+                    
+
+                    # >> GT
                     axs_preprocessed.plot(preprocessed_time_wanb, p.real_cumsum, "--", label="GT", color='orange')
                     axs_preprocessed.grid()
                     fig_preprocessed.legend()
