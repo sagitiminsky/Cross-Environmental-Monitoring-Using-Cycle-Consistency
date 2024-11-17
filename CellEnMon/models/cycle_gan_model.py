@@ -314,7 +314,7 @@ class CycleGANModel(BaseModel):
         self.loss_idt_A = torch.sum(L1_idt(self.fake_A, self.real_A))
         self.loss_idt_B = torch.sum(L1_idt(self.fake_B, self.real_B)) #* self.rain_rate_prob
 
-        rec_bce_weight_loss = nn.BCEWithLogitsLoss(reduction="sum", weight=self.rain_rate_prob) #weight=self.rain_rate_prob #nn.BCEWithLogitsLoss(pos_weight=self.rain_rate_prob) # 
+        rec_bce_weight_loss = nn.BCEWithLogitsLoss(reduction="mean", weight=self.rain_rate_prob) #  weight=self.rain_rate_prob
 
         targets=(self.real_B >= threshold).float()
         
@@ -327,7 +327,7 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss
         self.loss_cycle_A = torch.mean(L1(self.rec_A, self.real_A))
-        self.loss_cycle_B = torch.sum(L1(self.rec_B_dot_detection, self.real_B)) # * self.rain_rate_prob |
+        self.loss_cycle_B = torch.mean(L1(self.rec_B, self.real_B) * self.rain_rate_prob) 
         
         
         # GAN loss D_B(G_A(A))
@@ -350,10 +350,10 @@ class CycleGANModel(BaseModel):
 
         self.loss_G = \
             (     
-                self.loss_cycle_B +\
-                self.loss_cycle_A +\
+                10 * self.loss_cycle_B +\
+                10 *self.loss_cycle_A +\
 
-                self.loss_bce_rec_B
+                100 * self.loss_bce_rec_B
 
 
             )
@@ -367,7 +367,7 @@ class CycleGANModel(BaseModel):
                 self.loss_G_A
             )
 
-        self.loss_G = 10 * self.loss_G + GAN_LOSS
+        self.loss_G = self.loss_G + GAN_LOSS
 
         if self.isTrain:
             self.loss_G.backward()

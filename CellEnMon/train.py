@@ -102,7 +102,7 @@ validation_link_to_gauge_matching ={
 
 
 ### TO RUN:
-# ENABLE_GAN=0 THETA=0 LAMBDA=1 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py 
+# ENABLE_GAN=0 THETA=1 LAMBDA=1 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
 
 ### >> LAMBDA
 #1) first wascalculated by evaluation func_fit for train dataset with function a^e(-ax) --> a=LAMBDA

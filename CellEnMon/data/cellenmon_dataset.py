@@ -125,52 +125,54 @@ class CellenmonDataset(BaseDataset):
         entry_list_dme=list(self.dataset.dme.db_normalized)
         entry_list_ims=list(self.dataset.ims.db_normalized)
         filter_cond=True
-        while filter_cond:
+        # while filter_cond:
             
-            selected_link = entry_list_dme[random.randint(0, self.dme_len - 1)]
-            data_dict_A = self.dataset.dme.db_normalized[selected_link]
+        selected_link = entry_list_dme[random.randint(0, self.dme_len - 1)]
+        data_dict_A = self.dataset.dme.db_normalized[selected_link]
 
-            selected_gague = entry_list_ims[random.randint(0, self.ims_len - 1)]
-            data_dict_B = self.dataset.ims.db_normalized[selected_gague]  # needs to be a tensor
+        selected_gague = entry_list_ims[random.randint(0, self.ims_len - 1)]
+        data_dict_B = self.dataset.ims.db_normalized[selected_gague]  # needs to be a tensor
 
-            link_metadata = self.dataset.dme.db[selected_link]['metadata']
-            gauge_metadata=self.dataset.ims.db[selected_gague]['metadata']
-
-
-            dme_station_coo = self.calc_dist_and_center_point(x1_longitude=link_metadata[0],
-                                                          x1_latitude=link_metadata[1],
-                                                          x2_longitude=link_metadata[2],
-                                                          x2_latitude=link_metadata[3])
+        link_metadata = self.dataset.dme.db[selected_link]['metadata']
+        gauge_metadata=self.dataset.ims.db[selected_gague]['metadata']
 
 
-            dist = self.calc_dist_and_center_point(x1_longitude=gauge_metadata[1],
-                                               x1_latitude=gauge_metadata[0],
-                                               x2_longitude=dme_station_coo["center"]["longitude"],
-                                               x2_latitude=dme_station_coo["center"]["latitude"])["dist"]        
+        dme_station_coo = self.calc_dist_and_center_point(x1_longitude=link_metadata[0],
+                                                        x1_latitude=link_metadata[1],
+                                                        x2_longitude=link_metadata[2],
+                                                        x2_latitude=link_metadata[3])
 
 
-            if config.TRAIN_RADIUS >= dist:
-                # print("link and gauge are in radius")
-                slice_start_A = 0
-                slice_start_B = 0
-                slice_dist = self.opt.slice_dist
-                time_stamp_A_start_time = 0
-                time_stamp_B_start_time = 1
-                dme_vec_len = len(data_dict_A['data'])
-                ims_vec_len = len(data_dict_B['data'])
+        dist = self.calc_dist_and_center_point(x1_longitude=gauge_metadata[1],
+                                            x1_latitude=gauge_metadata[0],
+                                            x2_longitude=dme_station_coo["center"]["longitude"],
+                                            x2_latitude=dme_station_coo["center"]["latitude"])["dist"]        
+
+
+        # if config.TRAIN_RADIUS >= dist:
+        # print("link and gauge are in radius")
+        slice_start_A = 0
+        slice_start_B = 0
+        slice_dist = self.opt.slice_dist
+        time_stamp_A_start_time = 0
+        time_stamp_B_start_time = 1
+        dme_vec_len = len(data_dict_A['data'])
+        ims_vec_len = len(data_dict_B['data'])
+        
+
+
+        slice_start_A = random.randint(0, dme_vec_len - slice_dist -1)
+        slice_start_B = random.randint(0, ims_vec_len - slice_dist -1)
+        # time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
+        
+        # if time_stamp_A_start_time[:10] in [x[:10] for x in data_dict_B['data']]: # 13:dutch | 10:israel
+        # for l in data_dict_B['data'].keys():
+        #     if l.startswith(time_stamp_A_start_time[:10]) and \
+        #         slice_start_A + slice_dist <= dme_vec_len and\
+        #         slice_start_B + slice_dist <= ims_vec_len:
                 
-
-
-                slice_start_A = random.randint(0, dme_vec_len - 1)
-                time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
-                
-                if time_stamp_A_start_time[:10] in [x[:10] for x in data_dict_B['data']]: # 13:dutch | 10:israel
-                    for l in data_dict_B['data'].keys():
-                        if l.startswith(time_stamp_A_start_time[:10]) and \
-                        slice_start_A + slice_dist <= dme_vec_len and\
-                        slice_start_B + slice_dist <= ims_vec_len:
-                            slice_start_B=list(data_dict_B['data'].keys()).index(l)
-                            filter_cond=False
+        #         slice_start_B=list(data_dict_B['data'].keys()).index(l)
+        #         filter_cond=False
         
         slice_end_A = slice_start_A + slice_dist
         slice_end_B = slice_start_B + slice_dist
