@@ -230,7 +230,7 @@ class CycleGANModel(BaseModel):
             # >> B
         self.fake_B=activation(fake_B[0]) ## <<-- regression
         
-        self.fake_B_dot_detection = self.fake_B * self.fake_B_det
+        self.fake_B_dot_detection = self.fake_B * (self.fake_B_det >= probability_threshold)
 
         ############
         ## >> Rec ##
@@ -247,7 +247,7 @@ class CycleGANModel(BaseModel):
         
             ## >> rec Detection
         self.rec_B = activation(rec_B[0]) ## <<-- regression
-        self.rec_B_dot_detection = self.rec_B * self.rec_B_det
+        self.rec_B_dot_detection = self.rec_B * (self.rec_B_det >= probability_threshold)
 
 
     def backward_D_basic(self, netD, real, fake): #weight=torch.ones([1], device='cuda:0')
@@ -288,7 +288,7 @@ class CycleGANModel(BaseModel):
 
 
 
-        if "DEBUG" in os.environ and int(os.environ["DEBUG"]):
+        if "DEBUG" in os.environ and int(os.environ["DEBUG"])==1:
             print(f"real A:{self.real_A.shape}")
             print(f"real B:{self.real_B.shape}")
             print(f"fake A:{self.fake_A.shape}")
@@ -331,8 +331,8 @@ class CycleGANModel(BaseModel):
         
         
         # GAN loss D_B(G_A(A))
-        self.D_B=self.netD_B(self.fake_B_dot_detection) # + self.noise
-        self.loss_G_B_only=self.criterionGAN(self.D_B, True) # weight=self.rr_norm.max()
+        self.D_B=self.netD_B(self.fake_B_dot_detection)
+        self.loss_G_B_only=self.criterionGAN(self.D_B, True)
 
         # GAN loss D_A(G_B(B))
         self.D_A=self.netD_A(self.fake_A)
