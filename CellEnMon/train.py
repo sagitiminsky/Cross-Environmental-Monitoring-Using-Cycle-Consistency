@@ -117,7 +117,7 @@ SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
-os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="100"
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1000"
 ITERS_BETWEEN_VALIDATIONS=10
 
 #Formatting Date
@@ -471,12 +471,12 @@ if __name__ == '__main__':
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
                     # >> REC
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="FAKE")
+                    # axs_preprocessed.plot(preprocessed_time_wanb, p.fake_cumsum, 'r:' ,label="FAKE")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.fake_dot_det_cumsum, 'm:', label="FAKE+Det")
                     
                     
                     # >> FAKE
-                    axs_preprocessed.plot(preprocessed_time_wanb, p.rec_cumsum, 'b-', label="REC")
+                    # axs_preprocessed.plot(preprocessed_time_wanb, p.rec_cumsum, 'b-', label="REC")
                     axs_preprocessed.plot(preprocessed_time_wanb, p.rec_dot_det_cumsum, 'g-', label="REC+Det")
                     
 
