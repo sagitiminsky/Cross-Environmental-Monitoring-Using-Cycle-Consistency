@@ -21,7 +21,7 @@ class BaseOptions():
         # basic parameters
         is_only_dynamic=True
         parser.add_argument('--is_only_dynamic', default=is_only_dynamic, help='indicated if the dataest constain only dynamic data or both dynamic and static dadta')
-        parser.add_argument('--slice_dist', type=int, default=64, #do not change
+        parser.add_argument('--slice_dist', type=int, default=256, #do not change
                             help='Number of samples taken for ims and dme data in a single dataload')
         parser.add_argument('--dataroot', required=False, help='supported by the data/exporter class')
         parser.add_argument('--name', type=str, default='CellEnMon_CycleGan',
@@ -34,13 +34,13 @@ class BaseOptions():
         parser.add_argument('--output_nc_A', type=int, default=2, help='# of output channels') # in the output we want to duplicate the 64 vector | one for regression the other for classification, so 4x64->2x64
         parser.add_argument('--input_nc_B', type=int, default=1, help='# of input channels')
         parser.add_argument('--output_nc_B', type=int, default=4, help='# of output channels') # here we go from Rain to Att, so 1x64->4x64
-        parser.add_argument('--ngf', type=int, default=128, help='# of gen filters in the last conv layer')
-        parser.add_argument('--ndf', type=int, default=128, help='# of discrim filters in the first conv layer')
+        parser.add_argument('--ngf', type=int, default=64, help='# of gen filters in the last conv layer')
+        parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in the first conv layer')
         parser.add_argument('--netD', type=str, default='pixel',
                             help='specify discriminator architecture [n_layers]. n_layers allows you to specify the layers in the discriminator')
         
         
-        parser.add_argument('--netG', type=str, default='resnet_1blocks', help='specify generator architecture [n_layers]')
+        parser.add_argument('--netG', type=str, default='resnet_6blocks', help='specify generator architecture [n_layers]')
         parser.add_argument('--n_layers_D', type=int, default=4, help='only used if netD==n_layers | if you want to change this make sure to adjust D so it will ouput [1,1,1]')
         parser.add_argument('--norm', type=str, default='instance',
                             help='instance normalization or batch normalization [instance | batch | none | layer]')
