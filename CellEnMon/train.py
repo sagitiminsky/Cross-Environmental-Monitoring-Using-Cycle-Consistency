@@ -283,7 +283,7 @@ if __name__ == '__main__':
                             
                         model.optimize_parameters(is_train=False)
                         visuals = model.get_current_visuals()
-                        validation_losses = model.get_current_losses(is_train=False) # validation for each batch, i.e 64 samples
+                        validation_losses = model.get_current_losses(is_train=False) # validation for each batch, i.e slice_dist samples
 
 
                         if ENABLE_WANDB:
@@ -343,7 +343,7 @@ if __name__ == '__main__':
 
                                 # Plot Data
                                 data = visuals[key][0].cpu().detach().numpy()
-                                assert(data.shape == (N,64))
+                                assert(data.shape == (N,train_opt.slice_dist))
                                 
                             
                                 for i in range(4): #This is only validaiton

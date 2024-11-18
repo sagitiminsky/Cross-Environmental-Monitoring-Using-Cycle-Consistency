@@ -46,7 +46,7 @@ TRAIN_RADIUS=30
 def func_fit(x, a):
     x=torch.from_numpy(np.array(x))
     b=torch.from_numpy(np.array(a))
-    return a*x*torch.exp(a*x) + 1
+    return a * x * torch.exp(a*x) + 1
 
 
 VALIDATION_RADIUS=100

@@ -348,10 +348,10 @@ class ResnetGenerator(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-        n_downsampling = 0
+        n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
-            model += [nn.Conv1d(ngf * mult, ngf * mult * 2,
+            model += [nn.Conv1d(ngf * mult, ngf * mult * 2, padding=0, padding_mode = "reflect",
                                         kernel_size=3, stride=1, bias=use_bias),
                       norm_layer(ngf * mult * 2),
                       nn.ReLU(True)
@@ -367,6 +367,7 @@ class ResnetGenerator(nn.Module):
             model += [nn.ConvTranspose1d(ngf * mult, int(ngf * mult / 2),
                                          kernel_size=3, stride=1,
                                          bias=use_bias, 
+                                         padding=0,
                                          output_padding=0
                                          ),
                       norm_layer(int(ngf * mult / 2)),
@@ -489,7 +490,7 @@ class UnetGenerator(nn.Module):
             det=res[1]
 
             # Remove the extra dimension added by split
-            return (reg, torch.sigmoid(det))
+            return (reg, det)
         return output1
 
 
