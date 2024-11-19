@@ -118,7 +118,7 @@ LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
 os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1000"
-ITERS_BETWEEN_VALIDATIONS=10
+ITERS_BETWEEN_VALIDATIONS=1
 
 #Formatting Date
 date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
@@ -367,7 +367,7 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if key!="fake_B" and key!="rec_B": #
+                                    if True: #key!="fake_B" and key!="rec_B": #
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
                                                 min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
                                                 marker='o',
