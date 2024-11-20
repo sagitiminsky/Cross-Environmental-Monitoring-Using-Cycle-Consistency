@@ -241,7 +241,7 @@ class CycleGANModel(BaseModel):
         self.rec_B_det = torch.sigmoid(rec_B[1]) ### <-- detection
             
         # >> A
-        self.rec_A = self.netG_B(self.fake_B_dot_detection, dir="BtoA")  ## <<-- regression
+        self.rec_A = self.netG_B(self.fake_B, dir="BtoA")  ## <<-- regression
 
         # >> B
         
@@ -306,8 +306,6 @@ class CycleGANModel(BaseModel):
             print(f"fake_B * rr_prob: {(self.fake_B * self.rain_rate_prob).shape}")
             print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
 
-
-
         lambda_A = 10
         lambda_B = 10
         # Identity loss
@@ -326,10 +324,15 @@ class CycleGANModel(BaseModel):
 
         L1=nn.L1Loss(reduction='none')
         L2=nn.MSELoss(reduction='none')
+        gamma=1
 
         # Backward cycle loss
         self.loss_cycle_A = torch.mean(L1(self.rec_A, self.real_A))
-        self.loss_cycle_B = torch.mean(L1(self.rec_B, self.real_B) * self.rain_rate_prob) 
+        # self.loss_cycle_B = torch.mean(L2(self.rec_B, self.real_B) * self.rain_rate_prob) 
+        
+        residual = torch.abs(self.rec_B - self.real_B)  # L1 loss
+        modulating_factor = (1 - torch.exp(-residual)) ** gamma # Modulating factor
+        self.loss_cycle_B = torch.mean(modulating_factor * self.rain_rate_prob * residual)
         
         
         # GAN loss D_B(G_A(A))
@@ -347,10 +350,10 @@ class CycleGANModel(BaseModel):
 
         self.loss_G = \
             (     
-                10 * self.loss_cycle_B +\
-                10 * self.loss_cycle_A +\
+                100 * self.loss_cycle_B +\
+                self.loss_cycle_A +\
 
-                100 * self.loss_bce_rec_B
+                10 * self.loss_bce_rec_B
 
 
             )

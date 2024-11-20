@@ -343,16 +343,16 @@ class ResnetGenerator(nn.Module):
 
         use_bias=False
 
-        model = [nn.ReflectionPad1d(3),
-                 nn.Conv1d (input_nc, ngf, kernel_size=7, bias=use_bias),
+        model = [nn.ReflectionPad1d(2),
+                 nn.Conv1d (input_nc, ngf, kernel_size=5, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
         n_downsampling = 2
         for i in range(n_downsampling):  # add downsampling layers
             mult = 2 ** i
-            model += [nn.Conv1d(ngf * mult, ngf * mult * 2, padding=1,
-                                        kernel_size=3, stride=2, bias=use_bias),
+            model += [nn.Conv1d(ngf * mult, ngf * mult * 2, padding=0,
+                                        kernel_size=3, stride=1, bias=use_bias),
                       norm_layer(ngf * mult * 2),
                       nn.ReLU(True)
                     ]
@@ -365,16 +365,16 @@ class ResnetGenerator(nn.Module):
         for i in range(n_downsampling):  # add upsampling layers
             mult = 2 ** (n_downsampling - i)
             model += [nn.ConvTranspose1d(ngf * mult, int(ngf * mult / 2),
-                                         kernel_size=3, stride=2,
+                                         kernel_size=3, stride=1,
                                          bias=use_bias, 
-                                         padding=1,
-                                         output_padding=1
+                                         padding=0,
+                                         output_padding=0
                                          ),
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
         
-        model += [nn.ReplicationPad1d(3)]
-        model += [nn.Conv1d(ngf, output_nc, kernel_size=7)] #norm_layer(output_nc)
+        model += [nn.ReplicationPad1d(2)]
+        model += [nn.Conv1d(ngf, output_nc, kernel_size=5)] #norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
@@ -591,9 +591,10 @@ class NLayerDiscriminator(nn.Module):
 
         """
         super(NLayerDiscriminator, self).__init__()
-
-
-        use_bias=True
+        if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
+            use_bias = norm_layer.func == nn.InstanceNorm2d
+        else:
+            use_bias = norm_layer == nn.InstanceNorm2d
 
         kw = 4
         padw = 1
@@ -602,7 +603,7 @@ class NLayerDiscriminator(nn.Module):
         nf_mult_prev = 1
         for n in range(1, n_layers):  # gradually increase the number of filters
             nf_mult_prev = nf_mult
-            nf_mult = 2 ** n #min(2 ** n, 8)
+            nf_mult = min(2 ** n, 8)
             sequence += [
                 nn.Conv1d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias),
                 norm_layer(ndf * nf_mult),
@@ -610,7 +611,7 @@ class NLayerDiscriminator(nn.Module):
             ]
 
         nf_mult_prev = nf_mult
-        nf_mult = 2 ** n #min(2 ** n_layers, 8)
+        nf_mult = min(2 ** n_layers, 8)
         sequence += [
             nn.Conv1d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias),
             norm_layer(ndf * nf_mult),
