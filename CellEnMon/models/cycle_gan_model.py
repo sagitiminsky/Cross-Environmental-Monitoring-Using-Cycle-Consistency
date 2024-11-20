@@ -230,7 +230,7 @@ class CycleGANModel(BaseModel):
             # >> B
         self.fake_B=activation(fake_B[0]) ## <<-- regression
         
-        self.fake_B_dot_detection = self.fake_B #* self.fake_B_det
+        self.fake_B_dot_detection = self.fake_B * self.fake_B_det
 
         ############
         ## >> Rec ##
@@ -247,7 +247,7 @@ class CycleGANModel(BaseModel):
         
             ## >> rec Detection
         self.rec_B = activation(rec_B[0]) ## <<-- regression
-        self.rec_B_dot_detection = self.rec_B #* self.rec_B_det
+        self.rec_B_dot_detection = self.rec_B * self.rec_B_det
 
 
     def backward_D_basic(self, netD, real, fake): #weight=torch.ones([1], device='cuda:0')
@@ -281,7 +281,7 @@ class CycleGANModel(BaseModel):
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B)
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B) # self.fake_B_dot_detection
 
     def backward_G(self):
         """Calculate the losses"""
@@ -325,6 +325,7 @@ class CycleGANModel(BaseModel):
 
 
         L1=nn.L1Loss(reduction='none')
+        L2=nn.MSELoss(reduction='none')
 
         # Backward cycle loss
         self.loss_cycle_A = torch.mean(L1(self.rec_A, self.real_A))
@@ -332,7 +333,7 @@ class CycleGANModel(BaseModel):
         
         
         # GAN loss D_B(G_A(A))
-        self.D_B=self.netD_B(self.fake_B)
+        self.D_B=self.netD_B(self.fake_B) # self.fake_B_dot_detection
         self.loss_G_B_only=self.criterionGAN(self.D_B, True)
 
         # GAN loss D_A(G_B(B))
@@ -341,15 +342,15 @@ class CycleGANModel(BaseModel):
         
 
 
-        self.loss_mse_A = torch.sum(self.criterionCycle(self.fake_A, self.real_A))
-        self.loss_mse_B = torch.sum(self.criterionCycle(self.fake_B_dot_detection, self.real_B))
+        self.loss_mse_A = torch.mean(self.criterionCycle(self.fake_A, self.real_A))
+        self.loss_mse_B = torch.mean(self.criterionCycle(self.fake_B, self.real_B))
 
         self.loss_G = \
             (     
                 10 * self.loss_cycle_B +\
-                10 * self.loss_cycle_A
+                10 * self.loss_cycle_A +\
 
-                # self.loss_bce_rec_B
+                100 * self.loss_bce_rec_B
 
 
             )
