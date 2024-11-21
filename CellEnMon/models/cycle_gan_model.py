@@ -351,9 +351,9 @@ class CycleGANModel(BaseModel):
         self.loss_G = \
             (     
                 100 * self.loss_cycle_B +\
-                self.loss_cycle_A +\
+                self.loss_cycle_Add
 
-                10 * self.loss_bce_rec_B
+                # 10 * self.loss_bce_rec_B
 
 
             )
