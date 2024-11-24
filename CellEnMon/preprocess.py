@@ -22,7 +22,7 @@ class Preprocess:
         rec_detections = np.asarray(df_detections['rec_detections'],dtype=float)
         
         
-         #* fake_detections
+         #
          #* rec_detections
 
         d = {'Time':pd.to_datetime(T),\
@@ -31,7 +31,7 @@ class Preprocess:
                 'rec': rec,\
                 'fake_det': fake_detections,\
                 'rec_det': rec_detections,\
-                "fake_dot_det": fake ,\
+                "fake_dot_det": fake * fake_detections,\
                 "rec_dot_det": rec 
                 
             }
