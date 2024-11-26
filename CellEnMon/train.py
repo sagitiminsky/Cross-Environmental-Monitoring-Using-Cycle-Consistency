@@ -277,7 +277,8 @@ if __name__ == '__main__':
                          "rain_rate_sample":rain_sample,\
                          "Time":slice_time,\
                          "rain_rate_prob": config.func_fit(rain_sample_unnormalized, LAMBDA),
-                         "distance": torch.tensor([3], device='cuda:0', dtype=torch.float64) # in KM
+                         "distance": torch.tensor([3], device='cuda:0', dtype=torch.float64), # in KM
+                         "slice_dist": train_opt.slice_dist
                         }                      
                         model.set_input(loader,isTrain=False)
                             

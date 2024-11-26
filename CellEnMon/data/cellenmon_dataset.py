@@ -233,6 +233,7 @@ class CellenmonDataset(BaseDataset):
             
             'attenuation_prob': config.func_fit(x=A_attenuation, a=a),
             'rain_rate_prob': config.func_fit(x=B_rain_rate, a=a),
+            'slice_dist': slice_dist
             
 #             'a_rain': self.dataset.a,
 #             'b_rain': self.dataset.b,
