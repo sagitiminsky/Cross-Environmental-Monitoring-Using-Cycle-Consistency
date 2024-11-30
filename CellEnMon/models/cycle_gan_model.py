@@ -81,7 +81,6 @@ class CycleGANModel(BaseModel):
         """
         BaseModel.__init__(self, opt)
         self.epsilon=1e-12
-        self.noise = torch.rand(64, device="cuda:0") * 1.6
         dataset_type_str="Train" if self.isTrain else "Validation"
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['cycle_A', 'cycle_B', 'mse_A', 'mse_B','bce_rec_B', "idt_A", "idt_B" ] #
@@ -148,6 +147,8 @@ class CycleGANModel(BaseModel):
         The option 'direction' can be used to swap domain A and domain B.
         """
         AtoB = self.opt.direction == 'AtoB'
+        self.slice_dist=input['slice_dist']
+        self.noise = torch.rand(self.slice_dist, device="cuda:0") * 0.1
         self.real_A = input['A' if AtoB else 'B'].to(self.device) if isTrain else input["attenuation_sample" if AtoB else 'rain_rate_sample'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device) if isTrain else input['rain_rate_sample' if AtoB else 'attenuation_sample'].to(self.device)
         self.gague = input['gague']
@@ -159,7 +160,7 @@ class CycleGANModel(BaseModel):
         L=input['distance'].to(self.device)
         self.L=L+self.epsilon
         self.dist_func=1/(torch.log(1+(self.L/config.TRAIN_RADIUS)))
-        self.slice_dist=input['slice_dist']
+        
         
         if isTrain:
             self.alpha=0.02
@@ -226,11 +227,10 @@ class CycleGANModel(BaseModel):
 
         ## >> Regression
             # >> A
-        self.fake_A = self.netG_B(self.real_B,dir="BtoA")  ## <<-- regression
+        self.fake_A = self.netG_B(self.real_B + self.noise,dir="BtoA")  ## <<-- regression
 
             # >> B
         self.fake_B=activation(fake_B[0]) ## <<-- regression
-        
         self.fake_B_dot_detection = self.fake_B * (self.fake_B_det >= probability_threshold)
 
         ############
@@ -245,7 +245,6 @@ class CycleGANModel(BaseModel):
         self.rec_A = self.netG_B(self.fake_B_dot_detection, dir="BtoA")  ## <<-- regression
 
         # >> B
-        
             ## >> rec Detection
         self.rec_B = activation(rec_B[0]) ## <<-- regression
         self.rec_B_dot_detection = self.rec_B * (self.rec_B_det >= probability_threshold)
