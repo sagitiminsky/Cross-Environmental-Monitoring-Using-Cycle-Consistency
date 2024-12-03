@@ -227,7 +227,7 @@ class CycleGANModel(BaseModel):
 
         ## >> Regression
             # >> A
-        self.fake_A = self.netG_B(self.real_B + self.noise,dir="BtoA")  ## <<-- regression
+        self.fake_A = self.netG_B(self.real_B,dir="BtoA")  ## <<-- regression
 
             # >> B
         self.fake_B=activation(fake_B[0]) ## <<-- regression
@@ -242,7 +242,7 @@ class CycleGANModel(BaseModel):
         self.rec_B_det = torch.sigmoid(rec_B[1]) ### <-- detection
             
         # >> A
-        self.rec_A = self.netG_B(self.fake_B_dot_detection, dir="BtoA")  ## <<-- regression
+        self.rec_A = self.netG_B(self.fake_B, dir="BtoA")  ## <<-- regression
 
         # >> B
             ## >> rec Detection
@@ -316,13 +316,14 @@ class CycleGANModel(BaseModel):
         self.loss_idt_A = torch.sum(L1_idt(self.fake_A, self.real_A))
         self.loss_idt_B = torch.sum(L1_idt(self.fake_B, self.real_B)) #* self.rain_rate_prob
 
-        rec_bce_weight_loss = nn.BCEWithLogitsLoss(reduction="mean") #  
+        rec_bce_weight_loss = nn.BCEWithLogitsLoss(weight=self.rain_rate_prob) #  
+        BCE = nn.BCELoss(weight=self.rain_rate_prob)
 
-        targets=torch.where(self.real_B >= threshold, 0.9, 0.1).float()
+        targets=(self.real_B >= threshold).float()
         
 
         # BCE for detector
-        self.loss_bce_rec_B  = rec_bce_weight_loss(self.rec_B_det_without_activation, targets)
+        self.loss_bce_rec_B  = BCE(self.rec_B_det, targets)
 
 
         L1=nn.L1Loss(reduction='none')
@@ -331,7 +332,7 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss
         self.loss_cycle_A = torch.mean(L1(self.rec_A, self.real_A))
-        self.loss_cycle_B = torch.mean(L2(self.rec_B, self.real_B) * self.rain_rate_prob) #
+        self.loss_cycle_B = torch.mean(L1(self.rec_B, self.real_B) * self.rain_rate_prob) #
 
         # gamma=2        
         # residual = torch.abs(self.rec_B - self.real_B)  # L1 loss
@@ -341,16 +342,18 @@ class CycleGANModel(BaseModel):
         
         # GAN loss D_B(G_A(A))
         self.D_B=self.netD_B(self.fake_B_dot_detection) # self.fake_B_dot_detection
-        self.loss_G_B_only=self.criterionGAN(self.D_B, True)
+        targets = torch.full_like(self.D_B, 1.0).to(self.D_B.device)
+        self.loss_G_B_only=torch.mean(L2(self.D_B, targets))
 
         # GAN loss D_A(G_B(B))
         self.D_A=self.netD_A(self.fake_A)
-        self.loss_G_A = self.criterionGAN(self.D_A, True) #weight=self.rr_norm.max(), weight=self.att_norm.mean()
+        targets = torch.full_like(self.D_A, 1.0).to(self.D_A.device)
+        self.loss_G_A = torch.mean(L2(self.D_A, targets)) #weight=self.rr_norm.max(), weight=self.att_norm.mean()
         
 
 
-        self.loss_mse_A = torch.mean(self.criterionCycle(self.fake_A, self.real_A))
-        self.loss_mse_B = torch.mean(self.criterionCycle(self.fake_B, self.real_B))
+        self.loss_mse_A = torch.mean(L2(self.fake_A, self.real_A))
+        self.loss_mse_B = torch.mean(L2(self.fake_B, self.real_B))
 
         self.loss_G = \
             (     
@@ -358,8 +361,6 @@ class CycleGANModel(BaseModel):
                 10 * self.loss_cycle_A +\
 
                 self.loss_bce_rec_B
-
-
             )
 
         GAN_LOSS=0

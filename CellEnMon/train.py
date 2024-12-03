@@ -441,28 +441,30 @@ if __name__ == '__main__':
                     CM_fake=confusion_matrix(real_gauge_vec_labels, p.fake_det)
                     
                     # Create subplots for given confusion matrices
-                    f, axes = plt.subplots(1, 2, figsize=(15, 15))
+                    f, axes = plt.subplots(1, 1, figsize=(15, 15))
 
                     # Plot the first confusion matrix at position (0)
                     axes[0].set_title("Cycle", size=8)
-                    axes[1].set_title("Fake", size=8)
+                    # axes[1].set_title("Fake", size=8)
+
                     ConfusionMatrixDisplay(confusion_matrix=CM_rec, display_labels=["dry","wet"]).plot(
                         include_values=True, cmap="Blues", ax=axes[0], colorbar=False, values_format=".0f")
-                    ConfusionMatrixDisplay(confusion_matrix=CM_fake, display_labels=["dry","wet"]).plot(
-                        include_values=True, cmap="Blues", ax=axes[1], colorbar=False, values_format=".0f")
+                    
+                    # ConfusionMatrixDisplay(confusion_matrix=CM_fake, display_labels=["dry","wet"]).plot(
+                    #     include_values=True, cmap="Blues", ax=axes[1], colorbar=False, values_format=".0f")
 
                     # Remove x-axis labels and ticks
                     axes[0].xaxis.set_ticklabels(['dry', 'wet'])
                     axes[0].yaxis.set_ticklabels(['dry', 'wet'])
-                    axes[1].xaxis.set_ticklabels(['dry', 'wet'])
-                    axes[1].yaxis.set_ticklabels(['dry', 'wet'])
+                    # axes[1].xaxis.set_ticklabels(['dry', 'wet'])
+                    # axes[1].yaxis.set_ticklabels(['dry', 'wet'])
 
                     
                     wandb.log({f"Confusion Matrices":f})
                     wandb.log({"f1-score real Gauges<->Cycle Gauges": f1_score(p.rec_det, real_gauge_vec_labels)})
-                    wandb.log({"f1-score real Gauges<->Fake Gauges": f1_score(p.fake_det, real_gauge_vec_labels)})
+                    # wandb.log({"f1-score real Gauges<->Fake Gauges": f1_score(p.fake_det, real_gauge_vec_labels)})
                     wandb.log({"Acc real Gauges<->Cycle Gauges": (CM_rec[0][0]+CM_rec[1][1])/(CM_rec[0][0]+CM_rec[0][1]+CM_rec[1][0]+CM_rec[1][1])})
-                    wandb.log({"Acc real Gauges<->Fake Gauges": (CM_fake[0][0]+CM_fake[1][1])/(CM_fake[0][0]+CM_fake[0][1]+CM_fake[1][0]+CM_fake[1][1])})
+                    # wandb.log({"Acc real Gauges<->Fake Gauges": (CM_fake[0][0]+CM_fake[1][1])/(CM_fake[0][0]+CM_fake[0][1]+CM_fake[1][0]+CM_fake[1][1])})
                     
 
         
