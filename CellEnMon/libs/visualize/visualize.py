@@ -199,6 +199,7 @@ class Visualizer:
 
         for station_type, data_path in station_types.items():
             for instance in os.listdir(data_path):
+                print(f"working on:{instance}...")
                 if ".csv" in instance:
                     if station_type=="produced_gague" and virtual_gauge_name in instance:
                         instace_dict = self.parse_instances(instance,virtual_gauge_coo)
