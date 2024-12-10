@@ -434,16 +434,16 @@ class ResnetBlock(nn.Module):
         # if use_dropout:
         # conv_block += [nn.Dropout(0.5)]
 
-        # p = 0
-        # if padding_type == 'reflect':
-        #     conv_block += [nn.ReflectionPad1d(1)]
-        # elif padding_type == 'replicate':
-        #     conv_block += [nn.ReplicationPad1d(1)]
-        # elif padding_type == 'zero':
-        #     p = 1
-        # else:
-        #     raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-        # conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim)] #
+        p = 0
+        if padding_type == 'reflect':
+            conv_block += [nn.ReflectionPad1d(1)]
+        elif padding_type == 'replicate':
+            conv_block += [nn.ReplicationPad1d(1)]
+        elif padding_type == 'zero':
+            p = 1
+        else:
+            raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+        conv_block += [nn.Conv1d(dim, dim, kernel_size=3, padding=p, bias=use_bias), norm_layer(dim), nn.ReLU(True)] #
 
         return nn.Sequential(*conv_block)
 

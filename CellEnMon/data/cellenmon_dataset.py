@@ -160,9 +160,12 @@ class CellenmonDataset(BaseDataset):
         ims_vec_len = len(data_dict_B['data'])
         
 
-
-        slice_start_A = random.randint(0, dme_vec_len - slice_dist -1)
-        slice_start_B = random.randint(0, ims_vec_len - slice_dist -1)
+        try:
+            slice_start_A = random.randint(0, dme_vec_len - slice_dist -1)
+            slice_start_B = random.randint(0, ims_vec_len - slice_dist -1)
+        except ValueError:
+            print(selected_link)
+            assert(False)
         # time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
         
         # if time_stamp_A_start_time[:10] in [x[:10] for x in data_dict_B['data']]: # 13:dutch | 10:israel

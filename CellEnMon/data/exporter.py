@@ -331,16 +331,16 @@ class Extractor:
 
                     df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
                     #print(f"df:{df.head()}")
-                    if 'PowerRLTMmax[dBm]_baseline' in df and 'PowerRLTMmin[dBm]_baseline' in df :
+                    if 'PowerRLTMmax' in df and 'PowerRLTMmin' in df :
                         
 
-                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]_baseline"].isnull()]["PowerTLTMmax[dBm]_baseline"].astype(float))
+                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax"].isnull()]["PowerTLTMmax"].astype(float))
 
-                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]_baseline"].isnull()]["PowerTLTMmin[dBm]_baseline"].astype(float))
+                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin"].isnull()]["PowerTLTMmin"].astype(float))
 
-                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]_baseline"].isnull()]["PowerRLTMmax[dBm]_baseline"].astype(float))
+                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax"].isnull()]["PowerRLTMmax"].astype(float))
 
-                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]_baseline"].isnull()]["PowerRLTMmin[dBm]_baseline"].astype(float))
+                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin"].isnull()]["PowerRLTMmin"].astype(float))
 
                         
                         

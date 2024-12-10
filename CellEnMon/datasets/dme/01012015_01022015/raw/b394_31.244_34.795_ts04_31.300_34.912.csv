@@ -1,4 +1,4 @@
-Time,PowerTLTMmax[dBm]_baseline,PowerTLTMmin[dBm]_baseline,PowerRLTMmax[dBm]_baseline,PowerRLTMmin[dBm]_baseline
+Time,PowerTLTMmax,PowerTLTMmin,PowerRLTMmax,PowerRLTMmin
 2015-01-01 00:00:00,11.0,10.0,-45.2,-45.8
 2015-01-01 00:10:00,11.0,10.0,-45.2,-45.8
 2015-01-01 00:20:00,11.0,10.0,-45.2,-45.8

@@ -102,10 +102,7 @@ validation_link_to_gauge_matching ={
 
 
 ### TO RUN:
-# ENABLE_GAN=0 THETA=1 LAMBDA=2 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.5 python3 CellEnMon/train.py
-# ENABLE_GAN=1 THETA=1 LAMBDA=2 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ENABLE_WANDB=True DEBUG=0 threshold=0.2 probability_threshold=0.25 python3 CellEnMon/train.py
-## --> ENABLE_GAN=1 THETA=1 LAMBDA=2 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ENABLE_WANDB=True DEBUG=0 threshold=0.1 probability_threshold=0.1 python3 CellEnMon/train.py
-
+# ENABLE_GAN=1 THETA=1 LAMBDA=2.5 SELECTED_GROUP_NAME="Lahav" SELECT_JOB=2 ENABLE_WANDB=True DEBUG=0 threshold=0.3 probability_threshold=0.25 python3 CellEnMon/train.py
 ### >> LAMBDA
 #1) first wascalculated by evaluation func_fit for train dataset with function a^e(-ax) --> a=LAMBDA
 #2) cycle_A and cycle_B should be the same scale - mind the training/validation losses (!!!)
@@ -271,9 +268,9 @@ if __name__ == '__main__':
 
                         
                         attenuation_sample=torch.unsqueeze(A.T,0)
-                        attenuation_sample_unnormalized = min_max_inv_transform(attenuation_sample,mmin=-50.8,mmax=17)
+                        attenuation_sample_unnormalized = attenuation_sample
                         rain_sample=torch.unsqueeze(B.T,0)
-                        rain_sample_unnormalized = min_max_inv_transform(rain_sample,mmin=0,mmax=3.3)
+                        rain_sample_unnormalized = rain_sample
                         loader={"link":link, "attenuation_sample":attenuation_sample,\
                          "gague":gauge,\
                          "rain_rate_sample":rain_sample,\
@@ -370,9 +367,9 @@ if __name__ == '__main__':
 
                                     model_t=model.t
                                     
-                                    if key!="fake_B" and key!="rec_B": # # 
+                                    if key!="fake_B" and key!="rec_B":
                                         ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
-                                                min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
+                                                data_vector,
                                                 marker='o',
                                                 linestyle='dashed',
                                                 linewidth=0.0,
@@ -392,7 +389,7 @@ if __name__ == '__main__':
                                         cmap=["red" if m else "black" for m in mask]
                                         
                                         ax.scatter([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
-                                                min_max_inv_transform(data_vector, mmin=mmin, mmax=mmax),
+                                                data_vector,
                                                 marker='o',
                                                 linestyle='dashed',
                                                 linewidth=0.0,
@@ -444,18 +441,18 @@ if __name__ == '__main__':
                     f, axes = plt.subplots(1, 1, figsize=(15, 15))
 
                     # Plot the first confusion matrix at position (0)
-                    axes[0].set_title("Cycle", size=8)
+                    axes.set_title("Cycle", size=8)
                     # axes[1].set_title("Fake", size=8)
 
                     ConfusionMatrixDisplay(confusion_matrix=CM_rec, display_labels=["dry","wet"]).plot(
-                        include_values=True, cmap="Blues", ax=axes[0], colorbar=False, values_format=".0f")
+                        include_values=True, cmap="Blues", ax=axes, colorbar=False, values_format=".0f")
                     
                     # ConfusionMatrixDisplay(confusion_matrix=CM_fake, display_labels=["dry","wet"]).plot(
                     #     include_values=True, cmap="Blues", ax=axes[1], colorbar=False, values_format=".0f")
 
                     # Remove x-axis labels and ticks
-                    axes[0].xaxis.set_ticklabels(['dry', 'wet'])
-                    axes[0].yaxis.set_ticklabels(['dry', 'wet'])
+                    axes.xaxis.set_ticklabels(['dry', 'wet'])
+                    axes.yaxis.set_ticklabels(['dry', 'wet'])
                     # axes[1].xaxis.set_ticklabels(['dry', 'wet'])
                     # axes[1].yaxis.set_ticklabels(['dry', 'wet'])
 
