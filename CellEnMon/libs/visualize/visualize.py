@@ -33,7 +33,7 @@ class Visualizer:
     def __init__(self, experiment_name='dynamic_and_static',virtual_gauge_coo={}):
         self.dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
         self.map_name = f"{config.export_type}.html"
-        self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/raw")
+        self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
         self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/raw")
         self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict/{experiment_name}")
         self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")
@@ -199,8 +199,10 @@ class Visualizer:
 
         for station_type, data_path in station_types.items():
             for instance in os.listdir(data_path):
-                print(f"working on:{instance}...")
+                
                 if ".csv" in instance:
+                    print(f"working on:{instance}...")
+                    
                     if station_type=="produced_gague" and virtual_gauge_name in instance:
                         instace_dict = self.parse_instances(instance,virtual_gauge_coo)
                     else:

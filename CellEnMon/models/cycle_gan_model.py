@@ -323,7 +323,7 @@ class CycleGANModel(BaseModel):
         
 
         # BCE for detector
-        self.loss_bce_rec_B  = rec_bce_weight_loss(self.rec_B_det_without_activation, targets)
+        self.loss_bce_rec_B  = BCE(self.rec_B_det, targets)
 
 
         L1=nn.L1Loss(reduction='none')
@@ -357,8 +357,8 @@ class CycleGANModel(BaseModel):
 
         self.loss_G = \
             (     
-                10 * self.loss_cycle_B +\
-                10 * self.loss_cycle_A +\
+                100 * self.loss_cycle_B +\
+                self.loss_cycle_A +\
 
                 self.loss_bce_rec_B
             )
