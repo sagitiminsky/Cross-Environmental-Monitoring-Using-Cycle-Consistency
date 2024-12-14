@@ -279,12 +279,12 @@ class CycleGANModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         #fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A)
+        self.loss_D_A = 100 * self.backward_D_basic(self.netD_A, self.real_A, self.fake_A)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B_dot_detection) # self.fake_B_dot_detection
+        self.loss_D_B = 100 * self.backward_D_basic(self.netD_B, self.real_B, self.fake_B_dot_detection) # self.fake_B_dot_detection
 
     def backward_G(self):
         """Calculate the losses"""
@@ -308,6 +308,7 @@ class CycleGANModel(BaseModel):
 
             print(f"fake_B * rr_prob: {(self.fake_B * self.rain_rate_prob).shape}")
             print(f"rec_B * rr_prob: {(self.rec_B * self.rain_rate_prob).shape}")
+            assert(False)
 
         lambda_A = 10
         lambda_B = 10
@@ -357,8 +358,8 @@ class CycleGANModel(BaseModel):
 
         self.loss_G = \
             (     
-                100 * self.loss_cycle_B +\
                 self.loss_cycle_A +\
+                100 * self.loss_cycle_B +\
 
                 self.loss_bce_rec_B
             )
@@ -368,8 +369,8 @@ class CycleGANModel(BaseModel):
             ## >> As per original paper, cycle loss needs to be x10 the loss of the GAN
             GAN_LOSS =\
             (
-                self.loss_G_B_only +\
-                self.loss_G_A
+                100 * self.loss_G_B_only +\
+                100 * self.loss_G_A
             )
 
         self.loss_G = self.loss_G + GAN_LOSS
