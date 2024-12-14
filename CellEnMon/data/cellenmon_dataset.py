@@ -165,6 +165,7 @@ class CellenmonDataset(BaseDataset):
             slice_start_B = random.randint(0, ims_vec_len - slice_dist -1)
         except ValueError:
             print(selected_link)
+            print(selected_gague)
             assert(False)
         # time_stamp_A_start_time = list(data_dict_A['data'].keys())[slice_start_A]
         
