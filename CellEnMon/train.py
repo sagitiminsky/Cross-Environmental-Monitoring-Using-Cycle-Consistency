@@ -117,7 +117,7 @@ SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
-os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="100"
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="10000"
 ITERS_BETWEEN_VALIDATIONS=10
 
 #Formatting Date

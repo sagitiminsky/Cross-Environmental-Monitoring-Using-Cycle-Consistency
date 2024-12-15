@@ -343,8 +343,8 @@ class ResnetGenerator(nn.Module):
 
         use_bias=False
 
-        model = [nn.ReflectionPad1d(3),
-                 nn.Conv1d (input_nc, ngf, kernel_size=7, bias=use_bias),
+        model = [nn.ReflectionPad1d(1),
+                 nn.Conv1d (input_nc, ngf, kernel_size=3, bias=use_bias),
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
@@ -373,8 +373,8 @@ class ResnetGenerator(nn.Module):
                       norm_layer(int(ngf * mult / 2)),
                       nn.ReLU(True)]
         
-        model += [nn.ReplicationPad1d(3)]
-        model += [nn.Conv1d(ngf, output_nc, kernel_size=7)] #norm_layer(output_nc)
+        model += [nn.ReplicationPad1d(1)]
+        model += [nn.Conv1d(ngf, output_nc, kernel_size=3)] #norm_layer(output_nc)
         self.model = nn.Sequential(*model)
         
 
