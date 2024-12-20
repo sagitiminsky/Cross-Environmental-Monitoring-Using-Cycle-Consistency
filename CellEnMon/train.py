@@ -111,13 +111,14 @@ validation_link_to_gauge_matching ={
 
 # Environment Variables
 threshold = float(os.environ["threshold"])
-probability_threshold = float(os.environ["probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+rec_probability_threshold = float(os.environ["rec_probability_threshold"]) #0.3 # a*e^(-bx)+c, ie. we consider a wet event over x=0.2 mm/h
+fake_probability_threshold = float(os.environ["fake_probability_threshold"])
 SELECTED_GROUP_NAME = os.environ["SELECTED_GROUP_NAME"]
 SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
-os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="10000"
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1000"
 ITERS_BETWEEN_VALIDATIONS=10
 
 #Formatting Date
@@ -381,9 +382,11 @@ if __name__ == '__main__':
                                         
                                         if key=="fake_B":
                                             mask=fake_detection_add[0]
+                                            probability_threshold=rec_probability_threshold
 
                                         else:
                                             mask=rec_detection_add[0]
+                                            probability_threshold=fake_probability_threshold
 
                                         
                                         mask=(mask >= probability_threshold).astype(int)
