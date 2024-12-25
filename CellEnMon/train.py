@@ -119,8 +119,8 @@ SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
-os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1"
-ITERS_BETWEEN_VALIDATIONS=1
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1000"
+ITERS_BETWEEN_VALIDATIONS=10
 
 #Formatting Date
 date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
