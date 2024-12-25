@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/CellEnMon/train.py",
+            "console": "integratedTerminal",
+            "env": {
+                "ENABLE_GAN": "1",
+                "THETA": "1",
+                "LAMBDA": "1",
+                "SELECTED_GROUP_NAME": "Lahav",
+                "SELECT_JOB": "2",
+                "ENABLE_WANDB": "True",
+                "DEBUG": "0",
+                "threshold": "0.3",
+                "rec_probability_threshold": "0.5",
+                "fake_probability_threshold": "0.25"
+            },
+            "args": []
+        }
+    ]
+}

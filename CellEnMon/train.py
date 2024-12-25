@@ -119,8 +119,8 @@ SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
-os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1000"
-ITERS_BETWEEN_VALIDATIONS=10
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1"
+ITERS_BETWEEN_VALIDATIONS=1
 
 #Formatting Date
 date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
@@ -324,7 +324,7 @@ if __name__ == '__main__':
                             rec_gauge_vec=np.append(rec_gauge_vec,rec_rain_add)
                             fake_gauge_vec_det=np.append(fake_gauge_vec_det,fake_detection_add)
                             rec_gauge_vec_det=np.append(rec_gauge_vec_det, rec_detection_add)
-                            T=np.append(T,np.array(model.t))
+                            T=np.append(T,model.t)
 
 
                             # rec_A=visuals['rec_A'][0].cpu().detach().numpy()
@@ -473,7 +473,7 @@ if __name__ == '__main__':
 
 
 
-                    preprocessed_time_wanb=np.asarray([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in T])
+                    preprocessed_time_wanb=np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in T])
                     
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
@@ -503,9 +503,9 @@ if __name__ == '__main__':
                     # Set the ticks on the x-axis
                     axs_preprocessed.set_xticks(preprocessed_time_wanb[::step_size])  # Setting x-ticks
                     axs_preprocessed.set_xticklabels(preprocessed_time_wanb[::step_size], rotation=45)  # Setting x-tick labels with rotation
-                    # axs_preprocessed.xaxis.set_major_formatter(date_format)
+                    axs_preprocessed.xaxis.set_major_formatter(date_format)
                     
-
+                        
                     wandb.log({f"Virtual (CML) vs Real (Gauge) - {link}-{gauge}":fig_preprocessed})
                     
                     #RMSSE
