@@ -234,13 +234,45 @@ class Extractor:
             ims_matrix = {}
             for index, station_file_name in enumerate(os.listdir(f'{config.ims_root_files}/raw')):
                 print("now processing gauge: {}".format(station_file_name))
+                col='RainAmount[mm/h]'
                 try:
                     metadata = self.get_ims_metadata(f'{station_file_name}')
                     if metadata:
                         df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
                         
-                        time=df.Time.to_numpy()
-                        ims_vec=df["RainAmout[mm/h]"].to_numpy()
+
+                        # Set 'Time' as the index
+                        df.set_index('Time', inplace=True)
+
+                        # Create a new DataFrame with a 10-minute interval
+                        idx = pd.date_range(start=df.index.min(), end=df.index.max(), freq='15T')
+                        df_resampled = df.reindex(idx)
+
+                        # Interpolate: 'mean of **:10 and **:20 for **:15' logic
+                        for time in df_resampled.index:
+                            try:
+                                minute = time.minute
+                                if minute == 15 or minute == 45:
+                                    prev_time = time - pd.Timedelta(minutes=5)
+                                    next_time = time + pd.Timedelta(minutes=5)
+                                    if prev_time in df_resampled.index and next_time in df_resampled.index:
+                                        df_resampled.loc[time] = (df_resampled.loc[str(prev_time)][0] + df_resampled.loc[str(next_time)][0])/2
+                                else:
+                                    df_resampled.loc[time]=df.loc[str(time)][0]
+                            except KeyError:
+                                continue
+
+
+                        # Forward-fill remaining NaNs and output the result
+                        df_resampled.fillna(0.0, inplace=True)
+
+                        # Reset the index
+                        df_resampled.reset_index(inplace=True)
+                        df_resampled.columns = ['Time', 'RainAmount[mm/h]']
+
+
+                        time=df_resampled.Time.dt.strftime('%Y-%m-%d %H:%M:%S').to_numpy()
+                        ims_vec=df_resampled["RainAmount[mm/h]"].to_numpy()
                             
                         
                         ims_matrix[metadata["gauge_name"]] = \
@@ -264,11 +296,11 @@ class Extractor:
             
             #Conditional dataset
             validation_data["LAHAV"]=training_data["LAHAV"]
-            validation_data["NEOT SMADAR"]=training_data["NEOT SMADAR"]
+            validation_data["NIZZAN"]=training_data["NIZZAN"]
             
             #train pop
             training_data.pop("LAHAV",None)
-            training_data.pop("NEOT SMADAR",None)
+            training_data.pop("NIZZAN",None)
 
             #validation pop
             validation_data.pop("ZOMVET HANEGEV",None)
@@ -375,7 +407,11 @@ class Extractor:
             
             #Conditional dataset
             validation_data["b394-ts04"]=training_data["b394-ts04"]
+            #validation_data["b459-a690"]=training_data["b459-a690"]
+            validation_data["j033-261c"]=training_data["j033-261c"]
             training_data.pop("b394-ts04",None)
+            #training_data.pop("b459-a690",None)
+            training_data.pop("j033-261c",None)
             
             dataset = training_data if is_train else validation_data
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:

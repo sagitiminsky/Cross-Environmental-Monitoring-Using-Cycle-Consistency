@@ -95,9 +95,10 @@ all_link_to_gauge_matching ={
 validation_link_to_gauge_matching ={
 #     "c078-d088": [], 
 #     "a473-b119": [], 
-    "b394-ts04": ["LAHAV"], #
+    "b394-ts04": [], #LAHAV
     "b459-a690": [], #"NEOT SMADAR",
     "c409-d063": [],
+    "j033-261c": ["NIZZAN"]
 
 }
 
@@ -382,11 +383,11 @@ if __name__ == '__main__':
                                         
                                         if key=="fake_B":
                                             mask=fake_detection_add[0]
-                                            probability_threshold=rec_probability_threshold
+                                            probability_threshold=fake_probability_threshold
 
                                         else:
                                             mask=rec_detection_add[0]
-                                            probability_threshold=fake_probability_threshold
+                                            probability_threshold=rec_probability_threshold
 
                                         
                                         mask=(mask >= probability_threshold).astype(int)
@@ -423,8 +424,8 @@ if __name__ == '__main__':
                     
                     # Convert continuous values to binary class labels
                     real_gauge_vec_labels = (real_gauge_vec >= threshold).astype(int)
-                    rec_gauge_vec_det_labels = ((rec_gauge_vec_det >= probability_threshold)).astype(int)
-                    fake_gauge_vec_det_labels = ((fake_gauge_vec_det >= probability_threshold)).astype(int)
+                    rec_gauge_vec_det_labels = ((rec_gauge_vec_det >= rec_probability_threshold)).astype(int)
+                    fake_gauge_vec_det_labels = ((fake_gauge_vec_det >= fake_probability_threshold)).astype(int)
                     
 
                     p=Preprocess(link=link,gauge=gauge,epoch=epoch, T=T,\
@@ -471,8 +472,8 @@ if __name__ == '__main__':
         
 
 
-                    preprocessed_time=np.asarray(T) #16436.00694444
-                    preprocessed_time_wanb=[mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in T]
+
+                    preprocessed_time_wanb=np.asarray([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in T])
                     
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     
@@ -497,12 +498,13 @@ if __name__ == '__main__':
                     num_ticks = 10
 
                     # Calculate the step size between ticks
-                    step_size = len(preprocessed_time) // num_ticks
+                    step_size = len(preprocessed_time_wanb) // num_ticks
 
                     # Set the ticks on the x-axis
                     axs_preprocessed.set_xticks(preprocessed_time_wanb[::step_size])  # Setting x-ticks
                     axs_preprocessed.set_xticklabels(preprocessed_time_wanb[::step_size], rotation=45)  # Setting x-tick labels with rotation
-                    axs_preprocessed.xaxis.set_major_formatter(date_format)
+                    # axs_preprocessed.xaxis.set_major_formatter(date_format)
+                    
 
                     wandb.log({f"Virtual (CML) vs Real (Gauge) - {link}-{gauge}":fig_preprocessed})
                     
