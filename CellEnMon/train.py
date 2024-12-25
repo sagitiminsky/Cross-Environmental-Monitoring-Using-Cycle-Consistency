@@ -119,8 +119,8 @@ SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
-os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1000"
-ITERS_BETWEEN_VALIDATIONS=10
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1"
+ITERS_BETWEEN_VALIDATIONS=1
 
 #Formatting Date
 date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
@@ -501,8 +501,8 @@ if __name__ == '__main__':
                     step_size = len(preprocessed_time_wanb) // num_ticks
 
                     # Set the ticks on the x-axis
-                    axs_preprocessed.set_xticks(preprocessed_time_wanb[::step_size])  # Setting x-ticks
-                    axs_preprocessed.set_xticklabels(preprocessed_time_wanb[::step_size], rotation=45)  # Setting x-tick labels with rotation
+                    # axs_preprocessed.set_xticks(np.array(preprocessed_time_wanb[::step_size]))  # Setting x-ticks
+                    # axs_preprocessed.set_xticklabels(preprocessed_time_wanb[::step_size], rotation=45)  # Setting x-tick labels with rotation
                     axs_preprocessed.xaxis.set_major_formatter(date_format)
                     
                         
