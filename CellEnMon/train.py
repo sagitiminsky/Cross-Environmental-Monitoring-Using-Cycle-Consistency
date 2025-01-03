@@ -204,7 +204,7 @@ if __name__ == '__main__':
             epoch_iter += train_opt.batch_size
             
             #model.train()
-            model.set_input(data)  # unpack data from dataset and apply preprocessing
+            model.set_input(data, epoch)  # unpack data from dataset and apply preprocessing
             model.optimize_parameters(is_train=True)  # calculate loss functions, get gradients, update network weights
             
             # Training losses
@@ -282,7 +282,7 @@ if __name__ == '__main__':
                          "distance": torch.tensor([3], device='cuda:0', dtype=torch.float64), # in KM
                          "slice_dist": train_opt.slice_dist
                         }                      
-                        model.set_input(loader,isTrain=False)
+                        model.set_input(loader,epoch,isTrain=False)
                             
                         model.optimize_parameters(is_train=False)
                         visuals = model.get_current_visuals()

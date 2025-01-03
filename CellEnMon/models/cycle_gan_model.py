@@ -139,7 +139,7 @@ class CycleGANModel(BaseModel):
     def weight_func(self, x, a):
         return 1/(a * torch.exp(-x*a))
 
-    def set_input(self, input, isTrain=True):
+    def set_input(self, input, epoch, isTrain=True):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters:
@@ -161,6 +161,7 @@ class CycleGANModel(BaseModel):
         L=input['distance'].to(self.device)
         self.L=L+self.epsilon
         self.dist_func=1/(torch.log(1+(self.L/config.TRAIN_RADIUS)))
+        self.epoch=epoch
         
         
         if isTrain:
@@ -265,11 +266,11 @@ class CycleGANModel(BaseModel):
         L2=nn.MSELoss(reduction='none')
         # Real
         pred_real = netD(real)
-        target = torch.full_like(pred_real, 0.9).to(pred_real.device)
+        target = torch.full_like(pred_real, 1).to(pred_real.device)
         loss_D_real = torch.mean(L2(pred_real, target))
         # Fake
         pred_fake = netD(fake.detach())
-        target = torch.full_like(pred_fake, 0.1).to(pred_fake.device)
+        target = torch.full_like(pred_fake, 0).to(pred_fake.device)
         loss_D_fake = torch.mean(L2(pred_fake, target))
         # Combined loss and calculate gradients
         loss_D = (loss_D_real + loss_D_fake)
@@ -285,7 +286,7 @@ class CycleGANModel(BaseModel):
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B_dot_detection) # self.fake_B_dot_detection
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B) # self.fake_B_dot_detection
 
     def backward_G(self):
         """Calculate the losses"""
@@ -333,8 +334,8 @@ class CycleGANModel(BaseModel):
 
 
         # Backward cycle loss
-        self.loss_cycle_A = 10 * torch.mean(L2(self.rec_A, self.real_A))
-        self.loss_cycle_B = 10 * torch.mean(L2(self.rec_B, self.real_B)) #
+        self.loss_cycle_A = torch.mean(L2(self.rec_A, self.real_A))
+        self.loss_cycle_B = torch.mean(L2(self.rec_B_dot_detection, self.real_B)) #
 
         # gamma=2        
         # residual = torch.abs(self.rec_B - self.real_B)  # L1 loss
@@ -343,7 +344,7 @@ class CycleGANModel(BaseModel):
         
         
         # GAN loss D_B(G_A(A))
-        self.D_B=self.netD_B(self.fake_B_dot_detection) # self.fake_B_dot_detection
+        self.D_B=self.netD_B(self.fake_B) # self.fake_B_dot_detection
         targets = torch.full_like(self.D_B, 1.0).to(self.D_B.device)
         self.loss_G_B_only = torch.mean(L2(self.D_B, targets))
 
