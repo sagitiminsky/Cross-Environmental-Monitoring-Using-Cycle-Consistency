@@ -335,7 +335,7 @@ class CycleGANModel(BaseModel):
 
         # Backward cycle loss
         self.loss_cycle_A = torch.mean(L2(self.rec_A, self.real_A))
-        self.loss_cycle_B = torch.mean(L2(self.rec_B_dot_detection, self.real_B)) #
+        self.loss_cycle_B = 1000 * torch.mean(L2(self.rec_B_dot_detection, self.real_B)) #
 
         # gamma=2        
         # residual = torch.abs(self.rec_B - self.real_B)  # L1 loss
