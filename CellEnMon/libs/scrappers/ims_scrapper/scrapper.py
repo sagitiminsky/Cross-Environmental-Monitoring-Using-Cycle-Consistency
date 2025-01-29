@@ -3,13 +3,15 @@ import requests
 import pandas as pd
 import CellEnMon.config as config
 import os
-from google.cloud import storage
-from CellEnMon.libs.vault.vault import VaultService
-vault_service=VaultService()
+import ast
+#from google.cloud import storage
+# from CellEnMon.libs.vault.vault import VaultService
+import numpy as np 
+# vault_service=VaultService()
 url = "https://api.ims.gov.il/v1/envista/stations/64/data?from=2019/12/01&to=2020/01/01"
 
 headers = {
-    'Authorization': 'ApiToken ' + vault_service.dict_secrets["ims"]["token"]
+    'Authorization': 'ApiToken ' + "f058958a-d8bd-47cc-95d7-7ecf98610e47"
 }
 
 ## Setting credentials using the downloaded JSON file
@@ -50,6 +52,13 @@ class IMS_Scrapper_obj:
     #         except Exception as e:
     #             print(f'Uploaded file:{station} failed with the following exception:{e}!')
 
+    def get_entry(self, arr, type):
+        i = 0
+        while (not ('name' in arr[i] and arr[i]['name'] == type)):
+            i += 1
+
+        return arr[i]
+
     def download_from_ims(self):
         data_response = requests.request("GET", self.station_data, headers=headers)
 
@@ -57,15 +66,27 @@ class IMS_Scrapper_obj:
             print("station id: {} , data response: {}".format(self.station_id, data_response.status_code))
 
         elif self.station_location['latitude'] and self.station_location['longitude']:
-            data = json.loads(data_response.text.encode('utf8'))
+            try:
+                data = json.loads(data_response.text.encode('utf8'))
+                
+                file_name = "{}_{}_{}.csv".format(self.station_name, self.station_location['longitude'], self.station_location['latitude'])
+                if not os.path.exists(self.root):
+                    os.makedirs(f'{self.root}/raw')
+                
+                
+                df=pd.DataFrame(data['data'])
+                ims_vec = np.array([])
+                time = np.array([" ".join(t.split('+')[0].split('T')) for t in df.datetime])
+                if df is not None:
+                    for row in list(df.channels):
+                        ims_vec = np.append(ims_vec, np.array([row[0]['value']]))
 
-            file_name = "{}_{}_{}_{}_{}.csv".format(self.index, self.station_id, self.station_name,
-                                                    self.station_location['longitude'],
-                                                    self.station_location['latitude'])
-            if not os.path.exists(self.root):
-                os.makedirs(f'{self.root}/raw')
-
-            pd.DataFrame(data['data']).to_csv(f'{self.root}/raw/{file_name}', index=False)
+                
+                    data = {'Time': time, 'RainAmout[mm/h]': ims_vec}
+                    pd.DataFrame.from_dict(data).to_csv(f'{self.root}/raw/{file_name}', index=False)
+                
+            except (json.decoder.JSONDecodeError):
+                print("station id: {} , data response: {}".format(self.station_id, "JSONDecodeError"))
 
 
 #

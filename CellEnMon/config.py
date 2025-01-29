@@ -2,6 +2,8 @@ PYTHONPATH="/Users/sagit/Desktop/CellEnMon-Research"
 from datetime import datetime as dt
 from datetime import timedelta as dt_delta
 import os
+import torch
+import numpy as np
 
 MAC = False
 download_path = '/Users/sagitiminsky/Downloads' if MAC == True else '/home/sagit/Downloads'
@@ -37,19 +39,29 @@ smoothing_dme=1
 smoothing_ims="xx" # not used yet
 
 TRAIN_RADIUS=30
-VALIDATION_RADIUS=10
 
-export_type="dutch"
+# 10KM <-> 2 pairs
+# 30KM <-> 9 pairs
+
+def func_fit(x, a):
+    x=torch.from_numpy(np.array(x))
+    b=torch.from_numpy(np.array(a))
+    return torch.exp(a*x)
+
+
+VALIDATION_RADIUS=100
+
+export_type="israel"
 date = {
     'value': {
-        'dd': '09',
-        'mm': '06',
-        'yyyy': '2011'
+        'dd': '01',
+        'mm': '01',
+        'yyyy': '2015'
     },
     'value_range': {
-        'dd': '13',
-        'mm': '08',
-        'yyyy': '2011'
+        'dd': '01',
+        'mm': '02',
+        'yyyy': '2015'
     }
 }
 

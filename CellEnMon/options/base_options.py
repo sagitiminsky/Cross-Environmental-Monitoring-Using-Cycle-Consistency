@@ -19,9 +19,10 @@ class BaseOptions():
     def initialize(self, parser):
         """Define the common options that are used in both training and test."""
         # basic parameters
-        is_only_dynamic=False
+        is_only_dynamic=True
+        slice_dist=2048
         parser.add_argument('--is_only_dynamic', default=is_only_dynamic, help='indicated if the dataest constain only dynamic data or both dynamic and static dadta')
-        parser.add_argument('--slice_dist', type=int, default=64, #do not change
+        parser.add_argument('--slice_dist', type=int, default=slice_dist, 
                             help='Number of samples taken for ims and dme data in a single dataload')
         parser.add_argument('--dataroot', required=False, help='supported by the data/exporter class')
         parser.add_argument('--name', type=str, default='CellEnMon_CycleGan',
@@ -30,24 +31,31 @@ class BaseOptions():
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         # model parameters
         parser.add_argument('--model', type=str, default='cycle_gan', help='chooses which model to use. [cycle_gan]')
-        parser.add_argument('--input_nc_A', type=int, default=4 if is_only_dynamic else 8, help='# of input channels')
-        parser.add_argument('--output_nc_A', type=int, default=1 if is_only_dynamic else 5, help='# of output channels')
-        parser.add_argument('--input_nc_B', type=int, default=1 if is_only_dynamic else 5, help='# of input channels')
-        parser.add_argument('--output_nc_B', type=int, default=4 if is_only_dynamic else 8, help='# of output channels')
+        parser.add_argument('--input_nc_A', type=int, default=4, help='# of input channels')
+        parser.add_argument('--output_nc_A', type=int, default=2, help='# of output channels') # in the output we want to duplicate the 64 vector | one for regression the other for classification, so 4x64->2x64
+        parser.add_argument('--input_nc_B', type=int, default=1, help='# of input channels')
+        parser.add_argument('--output_nc_B', type=int, default=4, help='# of output channels') # here we go from Rain to Att, so 1x64->4x64
         parser.add_argument('--ngf', type=int, default=64, help='# of gen filters in the last conv layer')
         parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in the first conv layer')
-        parser.add_argument('--netD', type=str, default='n_layers',
-                            help='specify discriminator architecture [n_layers]. n_layers allows you to specify the layers in the discriminator')
+        parser.add_argument('--netD', type=str, default='pixel',
+                            help='specify discriminator architecture [n_layers | pixel]. n_layers allows you to specify the layers in the discriminator')
+        
+        
         parser.add_argument('--netG', type=str, default='resnet_9blocks', help='specify generator architecture [n_layers]')
-        parser.add_argument('--n_layers_D', type=int, default=3, help='only used if netD==n_layers')
+        parser.add_argument('--n_layers_D', type=int, default=8, help='only used if netD==n_layers | if you want to change this make sure to adjust D so it will ouput [1,1,1]')
         parser.add_argument('--norm', type=str, default='instance',
-                            help='instance normalization or batch normalization [instance | batch | none]')
-        parser.add_argument('--init_type', type=str, default='normal',
+                            help='instance normalization or batch normalization [instance | batch | none | layer]')
+        parser.add_argument('--init_type', type=str, default='kaiming',
                             help='network initialization [normal | xavier | kaiming | orthogonal]')
+
+
+                            
         parser.add_argument('--init_gain', type=float, default=0.02,
                             help='scaling factor for normal, xavier and orthogonal.')
         parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator')
         # dataset parameters
+        
+        
         parser.add_argument('--dataset_mode', type=str, default='cellenmon', help='chooses how datasets are loaded. [unaligned | aligned | single | colorization]')
         parser.add_argument('--direction', type=str, default='AtoB', help='AtoB or BtoA')
         parser.add_argument('--serial_batches', action='store_true', default=True,

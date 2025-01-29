@@ -1,5 +1,6 @@
 import os
 import torch
+import torch.nn as nn
 from collections import OrderedDict
 from abc import ABC, abstractmethod
 from torch.optim import lr_scheduler
@@ -23,7 +24,7 @@ def get_scheduler(optimizer, opt):
             return lr_l
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_rule)
     elif opt.lr_policy == 'step':
-        scheduler = lr_scheduler.StepLR(optimizer, step_size=opt.lr_decay_iters, gamma=0.1)
+        scheduler = lr_scheduler.StepLR(optimizer, step_size=opt.lr_decay_iters, gamma=0.5)
     elif opt.lr_policy == 'plateau':
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.2, threshold=0.01, patience=5)
     elif opt.lr_policy == 'cosine':
@@ -35,7 +36,7 @@ def get_scheduler(optimizer, opt):
 
 
 
-class BaseModel(ABC):
+class BaseModel(ABC, nn.Module):
     """This class is an abstract base class (ABC) for models.
     To create a subclass, you need to implement the following five functions:
         -- <__init__>:                      initialize the class; first call BaseModel.__init__(self, opt).
@@ -59,6 +60,7 @@ class BaseModel(ABC):
             -- self.visual_names (str list):        specify the images that you want to display and save.
             -- self.optimizers (optimizer list):    define and initialize optimizers. You can define one optimizer for each network. If two networks are updated at the same time, you can use itertools.chain to group them. See cycle_gan_model.py for an example.
         """
+        super().__init__()
         self.opt = opt
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
@@ -105,15 +107,15 @@ class BaseModel(ABC):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         pass
 
-    def setup(self, opt):
+    def setup(self, opt, isTrain=True):
         """Load and print networks; create schedulers
 
         Parameters:
             opt (Option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
-        if self.isTrain:
+        if isTrain:
             self.schedulers = [get_scheduler(optimizer, opt) for optimizer in self.optimizers]
-        if not self.isTrain or opt.continue_train:
+        if not isTrain or opt.continue_train:
             load_suffix = 'iter_%d' % opt.load_iter if opt.load_iter > 0 else opt.epoch
             self.load_networks(load_suffix)
         self.print_networks(opt.verbose)
@@ -153,7 +155,7 @@ class BaseModel(ABC):
                 scheduler.step()
 
         lr = self.optimizers[0].param_groups[0]['lr']
-        print('learning rate %.7f -> %.7f' % (old_lr, lr))
+        # print('learning rate %.7f -> %.7f' % (old_lr, lr))
 
     def get_current_visuals(self):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
@@ -167,9 +169,10 @@ class BaseModel(ABC):
         """Return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
         errors_ret = OrderedDict()
         dataset_type_str="Train" if is_train else "Validation"
+
         for name in self.loss_names:
             if isinstance(name, str):
-                errors_ret[f'{dataset_type_str}/{name}'] = float(getattr(self, f'loss_' + name))  # float(...) works for both scalar tensor and float number
+                errors_ret[f'{dataset_type_str}/{name}'] = float(getattr(self, f'loss_{dataset_type_str}_' + name))  # float(...) works for both scalar tensor and float number
         return errors_ret
 
     def save_networks(self, epoch):

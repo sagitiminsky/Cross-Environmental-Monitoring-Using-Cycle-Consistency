@@ -34,7 +34,7 @@ class Visualizer:
         self.dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
         self.map_name = f"{config.export_type}.html"
         self.data_path_dme = Path(f"./CellEnMon/datasets/dme/{self.dates_range}/processed")
-        self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/processed")
+        self.data_path_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/raw")
         self.data_path_produced_ims = Path(f"./CellEnMon/datasets/ims/{self.dates_range}/predict/{experiment_name}")
         self.out_path = Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")
         if not os.path.exists(Path(f"./CellEnMon/datasets/visualize/{self.dates_range}")):
@@ -46,6 +46,7 @@ class Visualizer:
         self.color_of_links = 'red'
         self.color_of_gauges = 'blue'
         self.color_of_produced_gauges = 'green'
+        self.color_of_validation = 'black'
         self.gridlines_on = False
         self.num_of_gridlines = 30
     
@@ -176,7 +177,7 @@ class Visualizer:
         station_types = {
             "link": self.data_path_dme,
             "gauge": self.data_path_ims,
-            "produced_gague": self.data_path_produced_ims
+#             "produced_gague": self.data_path_produced_ims
         }
         num_stations_map = num_gagues_map + num_links_map
 
@@ -189,7 +190,7 @@ class Visualizer:
 
         map_1 = folium.Map(location=[32, 35],
                            zoom_start=8,
-                           tiles='Stamen Terrain',
+#                            tiles='Stamen Terrain',
                            control_scale=True)
 
         lat_min = sys.maxsize
@@ -199,7 +200,10 @@ class Visualizer:
 
         for station_type, data_path in station_types.items():
             for instance in os.listdir(data_path):
+                
                 if ".csv" in instance:
+                    print(f"working on:{instance}...")
+                    
                     if station_type=="produced_gague" and virtual_gauge_name in instance:
                         instace_dict = self.parse_instances(instance,virtual_gauge_coo)
                     else:
@@ -242,6 +246,8 @@ class Visualizer:
                     p = folium.Popup(max_width=1150)
 
                     if station_type == "link":
+                        if instace_dict["ID"] in ['b394_ts04', 'j033_261c']: #'c409_d063'
+                            color='black'
                         pl = folium.PolyLine([(instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']),
                                               (instace_dict['Tx Site Longitude'], instace_dict['Tx Site Latitude'])
                                               ],
@@ -249,6 +255,8 @@ class Visualizer:
                                              opacity=1.0
                                              ).add_to(map_1)
                     else:
+                        if instace_dict["ID"] in ['LAHAV', 'NIZZAN']: #SHANI
+                            color='black'
                         pl = folium.Marker(
                             location=[instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']],
                             popup=folium.Popup(f"ID:{instace_dict['ID']}"),

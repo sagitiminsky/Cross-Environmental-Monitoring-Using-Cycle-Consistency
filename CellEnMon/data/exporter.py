@@ -26,6 +26,8 @@ class Domain:
         self.metadata_long_min = sys.maxsize
         self.metadata_lat_max = -sys.maxsize
         self.metadata_lat_min = sys.maxsize
+        self.data_min=999
+        self.data_max=-999
 
         # Data Normalization
         for station_name, value in db.items():
@@ -38,12 +40,15 @@ class Domain:
             }
             # Find min-max for metadata normalization
             self.metadata_min_max_finder(value['metadata'])
+            self.data_min=min(self.data_min, data_min)
+            self.data_max=max(self.data_max, data_max)
 
         self.df = pd.DataFrame.from_dict(self.db_normalized)
+        print(f"min-max:{self.data_min},{self.data_max}")
 
     def metadata_normalization(self):
         for station_name, value in self.db.items():
-            self.db_normalized[station_name]["norm_metadata"] = self.min_max_norm(value['metadata'])
+            self.db_normalized[station_name]["norm_metadata"] = value['metadata'] #self.min_max_norm(
 
     def metadata_min_max_finder(self, metadata_vector):
         self.metadata_long_max = max(self.metadata_long_max, metadata_vector[0], metadata_vector[2])
@@ -60,15 +65,14 @@ class Domain:
         return y
 
     def norm(self, x, mmin, mmax):
-        if mmin == mmax:
-            return 0
-        else:
-            return 2*((x - mmin) / (mmax - mmin))-1
+        epsilon=1e-6
+        return ((x - mmin) / (mmax - mmin + epsilon))
 
     def normalizer(self, mat):
-        min = mat.min()
-        max = mat.max()
-        mat = 0 if max - min == 0 else 2*((mat - min) / (max - min))-1
+        min = -50.8 if self.db_type=="dme" else 0
+        max = 17 if self.db_type=="dme" else 3.3
+        mat=mat #(mat - min) / (max - min)
+
         return max, min, mat
 
 
@@ -150,36 +154,38 @@ class Extractor:
     def calculate_attenuation_events_histogram(self):
         return np.array([y for x in self.dme.db for y in list(self.dme.db[x]['data'].values())])[:,-1]
 
-    def func_fit(self, x, a, b, c):
-        return a * np.exp(-b * x) + c
+    def func_fit(self, x, a):
+        return a * np.exp(-x * a)
 
     def stats(self):
         #rain
         wet_events_hist = self.calculate_wet_events_histogram()
-        wet_events_precentage = len(wet_events_hist[wet_events_hist > 0]) / len(wet_events_hist)
+        wet_events_precentage = len(wet_events_hist[wet_events_hist > 0.2]) / len(wet_events_hist)
 
         counts, bins = np.histogram(wet_events_hist)
         counts = [x / sum(counts) for x in counts]
-#         plt.hist(bins[:-1], bins, weights=counts, rwidth=0.7, label="Rain Rate Histogram")
 
-#         plt.title("Rain Rate All of Israel")
-#         plt.xlabel("Rain Rate [mm/h]")
-#         plt.ylabel("$f_{RR}(r)$")
-#         plt.grid(color='gray', linestyle='-', linewidth=0.5)
+        # plt.hist(bins[:-1], bins, weights=counts, rwidth=0.7, label="Rain Rate Histogram")
+        # plt.title("Rain Rate All of Israel")
+        # plt.xlabel("Rain Rate [mm/h]")
+        # plt.ylabel("$f_{RR}(r)$")
+        # plt.grid(color='gray', linestyle='-', linewidth=0.5)
+
         # Plotting exp. fit
         popt, pcov = curve_fit(self.func_fit, bins[:-1], counts / sum(counts))
-        self.rain_a, self.rain_b, self.rain_c = popt
-#         plt.plot(bins, self.func_fit(bins, *popt), 'r-',
-#                  label='fit[a * exp(-b * x) + c]: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt))
-#         plt.yscale("log")
-#         plt.legend()
+        self.rain_a = popt
+        # plt.plot(bins, self.func_fit(bins, *popt), 'r-',
+        #          label='fit[a * exp(-a * x) ]: a=%5.3f' % tuple(popt))
+        # plt.yscale("log")
+        # plt.legend()
+        
         
         #attenuation
         attenuation_events_hist=self.calculate_attenuation_events_histogram()
         attenuation_events_precentage=len(attenuation_events_hist[attenuation_events_hist>0])/len(attenuation_events_hist)
         counts, bins = np.histogram(attenuation_events_hist)
         counts = [x / sum(counts) for x in counts]
-        self.attenuation_a, self.attenuation_b, self.attenuation_c = popt
+        self.attenuation_a = popt
     
         print(
             f"start:{config.start_date_str_rep_ddmmyyyy} end:{config.end_date_str_rep_ddmmyyyy} --- in total it is {config.coverage} days\n" \
@@ -200,9 +206,9 @@ class Extractor:
         metadata = {}
         try:
             station_name_splited = station_name.split('_')
-            metadata["logitude"] = station_name_splited[1] if config.export_type=="dutch" else station_name_splited[3]
-            metadata["latitude"] = station_name_splited[2].replace(".csv", "") if config.export_type=="dutch" else station_name_splited[4].replace(".csv", "")
-            metadata["gauge_name"] = f"{station_name_splited[0]}" if config.export_type=="dutch" else f"{station_name_splited[2]}"
+            metadata["logitude"] = station_name_splited[1]
+            metadata["latitude"] = station_name_splited[2].replace(".csv", "")
+            metadata["gauge_name"] = f"{station_name_splited[0]}"
             metadata["vector"] = np.array(
                 [float(metadata['logitude']), float(metadata['latitude']), float(metadata['logitude']),
                  float(metadata['latitude'])])
@@ -228,22 +234,45 @@ class Extractor:
             ims_matrix = {}
             for index, station_file_name in enumerate(os.listdir(f'{config.ims_root_files}/raw')):
                 print("now processing gauge: {}".format(station_file_name))
+                col='RainAmount[mm/h]'
                 try:
                     metadata = self.get_ims_metadata(f'{station_file_name}')
                     if metadata:
                         df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
                         
-                        if self.export_type=="israel":
-                            ims_vec = np.array([])
-                            time = np.array([" ".join(t.split('+')[0].split('T')) for t in df.datetime])
-                            if (ims_vec, df) is not (None, None):
-                                for row in list(df.channels):
-                                    ims_vec = np.append(ims_vec,
-                                                        np.array([self.get_entry(ast.literal_eval(row), type='Rain')['value']]))
-                            
-                        elif self.export_type=="dutch":
-                            time=df.Time.to_numpy()
-                            ims_vec=df["RainAmout[mm/h]"].to_numpy()
+
+                        # Set 'Time' as the index
+                        df.set_index('Time', inplace=True)
+
+                        # Create a new DataFrame with a 10-minute interval
+                        idx = pd.date_range(start=df.index.min(), end=df.index.max(), freq='15T')
+                        df_resampled = df.reindex(idx)
+
+                        # Interpolate: 'mean of **:10 and **:20 for **:15' logic
+                        for time in df_resampled.index:
+                            try:
+                                minute = time.minute
+                                if minute == 15 or minute == 45:
+                                    prev_time = time - pd.Timedelta(minutes=5)
+                                    next_time = time + pd.Timedelta(minutes=5)
+                                    if prev_time in df_resampled.index and next_time in df_resampled.index:
+                                        df_resampled.loc[time] = (df_resampled.loc[str(prev_time)][0] + df_resampled.loc[str(next_time)][0])/2
+                                else:
+                                    df_resampled.loc[time]=df.loc[str(time)][0]
+                            except KeyError:
+                                continue
+
+
+                        # Forward-fill remaining NaNs and output the result
+                        df_resampled.fillna(0.0, inplace=True)
+
+                        # Reset the index
+                        df_resampled.reset_index(inplace=True)
+                        df_resampled.columns = ['Time', 'RainAmount[mm/h]']
+
+
+                        time=df_resampled.Time.dt.strftime('%Y-%m-%d %H:%M:%S').to_numpy()
+                        ims_vec=df_resampled["RainAmount[mm/h]"].to_numpy()
                             
                         
                         ims_matrix[metadata["gauge_name"]] = \
@@ -263,8 +292,24 @@ class Extractor:
             
             s = pd.Series(ims_matrix)
 
-            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=False)]
-            dataset = training_data if is_train else validation_data  
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.000001, shuffle=False)]
+            
+            #Conditional dataset
+            validation_data["LAHAV"]=training_data["LAHAV"]
+            validation_data["NIZZAN"]=training_data["NIZZAN"]
+            validation_data["SHANI"]=training_data["SHANI"]
+            
+            #train pop
+            training_data.pop("LAHAV",None)
+            training_data.pop("NIZZAN",None)
+            training_data.pop("SHANI",None)
+
+            #validation pop
+            validation_data.pop("ZOMVET HANEGEV",None)
+            
+            dataset = training_data if is_train else validation_data
+                            
+            
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
                 pickle.dump(dataset, f)
 
@@ -320,21 +365,21 @@ class Extractor:
 
                     df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
                     #print(f"df:{df.head()}")
-                    if 'PowerRLTMmax[dBm]_baseline' in df and 'PowerRLTMmin[dBm]_baseline' in df :
+                    if 'PowerRLTMmax' in df and 'PowerRLTMmin' in df :
                         
 
-                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax[dBm]_baseline"].isnull()]["PowerTLTMmax[dBm]_baseline"].astype(float))
+                        PowerTLTMmax = np.array(df[~df["PowerTLTMmax"].isnull()]["PowerTLTMmax"].astype(float))
 
-                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin[dBm]_baseline"].isnull()]["PowerTLTMmin[dBm]_baseline"].astype(float))
+                        PowerTLTMmin = np.array(df[~df["PowerTLTMmin"].isnull()]["PowerTLTMmin"].astype(float))
 
-                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax[dBm]_baseline"].isnull()]["PowerRLTMmax[dBm]_baseline"].astype(float))
+                        PowerRLTMmax = np.array(df[~df["PowerRLTMmax"].isnull()]["PowerRLTMmax"].astype(float))
 
-                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin[dBm]_baseline"].isnull()]["PowerRLTMmin[dBm]_baseline"].astype(float))
+                        PowerRLTMmin = np.array(df[~df["PowerRLTMmin"].isnull()]["PowerRLTMmin"].astype(float))
 
                         
                         
 
-                        Time = np.array(df[~df["PowerRLTMmin[dBm]_baseline"].isnull()].Time)[:len(PowerTLTMmax)*smoothing_n:smoothing_n]
+                        Time = df.Time.to_numpy()
                         data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T #
                           
                         
@@ -350,7 +395,7 @@ class Extractor:
                                 "metadata": metadata["vector"]
                             }
 
-                            data = {'Time': Time, 'PowerTLTMmax[dBm]': PowerTLTMmax, 'PowerTLTMmin[dBm]': PowerTLTMmin, 'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin} ,
+                            data = {'Time': Time, 'PowerTLTMmax[dBm]': PowerTLTMmax, 'PowerTLTMmin[dBm]': PowerTLTMmin, 'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin}
                             pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{link_file_name}", index=False)
 
 
@@ -360,7 +405,16 @@ class Extractor:
                             f"Not all fields [PowerRLTMmax | PowerRLTMmax] were provided in link:{metadata['link_name']}")
 
             s = pd.Series(dme_matrix)
-            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.3, shuffle=True)]
+            training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.000001, shuffle=False)]
+            
+            #Conditional dataset
+            validation_data["b394-ts04"]=training_data["b394-ts04"]
+            #validation_data["b459-a690"]=training_data["b459-a690"]
+            validation_data["j033-261c"]=training_data["j033-261c"]
+            training_data.pop("b394-ts04",None)
+            #training_data.pop("b459-a690",None)
+            training_data.pop("j033-261c",None)
+            
             dataset = training_data if is_train else validation_data
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:
                 pickle.dump(dataset, f)
@@ -370,7 +424,9 @@ class Extractor:
 
 if __name__ == "__main__":
     dataset = Extractor(is_train=IS_TRAIN)
-    #dataset.stats()
-    # dataset.visualize_dme(link_name='a459-6879')
-    # dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
+    #dataset.visualize_dme(link_name='a459-6879')
+    #dataset.visualize_ims(gauge_name='71-232-NEOT SMADAR')
+
+    dataset.stats()
     plt.show()
+    
