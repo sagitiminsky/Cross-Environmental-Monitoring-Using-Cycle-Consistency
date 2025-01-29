@@ -297,10 +297,12 @@ class Extractor:
             #Conditional dataset
             validation_data["LAHAV"]=training_data["LAHAV"]
             validation_data["NIZZAN"]=training_data["NIZZAN"]
+            validation_data["SHANI"]=training_data["SHANI"]
             
             #train pop
             training_data.pop("LAHAV",None)
             training_data.pop("NIZZAN",None)
+            training_data.pop("SHANI",None)
 
             #validation pop
             validation_data.pop("ZOMVET HANEGEV",None)

@@ -46,6 +46,7 @@ class Visualizer:
         self.color_of_links = 'red'
         self.color_of_gauges = 'blue'
         self.color_of_produced_gauges = 'green'
+        self.color_of_validation = 'black'
         self.gridlines_on = False
         self.num_of_gridlines = 30
     
@@ -245,6 +246,8 @@ class Visualizer:
                     p = folium.Popup(max_width=1150)
 
                     if station_type == "link":
+                        if instace_dict["ID"] in ['b394_ts04', 'j033_261c']: #'c409_d063'
+                            color='black'
                         pl = folium.PolyLine([(instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']),
                                               (instace_dict['Tx Site Longitude'], instace_dict['Tx Site Latitude'])
                                               ],
@@ -252,6 +255,8 @@ class Visualizer:
                                              opacity=1.0
                                              ).add_to(map_1)
                     else:
+                        if instace_dict["ID"] in ['LAHAV', 'NIZZAN']: #SHANI
+                            color='black'
                         pl = folium.Marker(
                             location=[instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']],
                             popup=folium.Popup(f"ID:{instace_dict['ID']}"),
