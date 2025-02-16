@@ -8,6 +8,8 @@
 /CellEnMon/libs/relics/radar
 /CellEnMon/libs/relics/*/raw
 
+CDEM/CellEnMon/datasets/visualize
+
 
 /venv
 .idea
