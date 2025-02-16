@@ -33,7 +33,8 @@ def add_days_to_date(date, delta_days=0):
         'str_rep_mmddyyyy': f"{str(res.month).zfill(2)}{str(res.day).zfill(2)}{res.year}"
     }
 
-
+#09062011_13082011 dutch
+#01012013_01022013 israel
 smoothing_dme=1
 smoothing_ims="xx" # not used yet
 
