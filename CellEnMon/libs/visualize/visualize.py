@@ -246,7 +246,8 @@ class Visualizer:
                     p = folium.Popup(max_width=1150)
 
                     if station_type == "link":
-                        if instace_dict["ID"] in ['b394_ts04', 'j033_261c']: #'c409_d063'
+                        to_mark=['hOQe_gKVi', 'QLPN_NBOl', 'NBOl_QLPN'] if config.export_type=="dutch" else ['b394_ts04', 'j033_261c']
+                        if instace_dict["ID"] in to_mark: 
                             color='black'
                         pl = folium.PolyLine([(instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']),
                                               (instace_dict['Tx Site Longitude'], instace_dict['Tx Site Latitude'])
@@ -255,7 +256,8 @@ class Visualizer:
                                              opacity=1.0
                                              ).add_to(map_1)
                     else:
-                        if instace_dict["ID"] in ['LAHAV', 'NIZZAN']: #SHANI
+                        to_mark=['260', '348'] if config.export_type == "dutch" else ['LAHAV', 'NIZZAN']
+                        if instace_dict["ID"] in to_mark: 
                             color='black'
                         pl = folium.Marker(
                             location=[instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']],

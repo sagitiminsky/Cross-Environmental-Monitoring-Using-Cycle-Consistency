@@ -20,7 +20,7 @@ class BaseOptions():
         """Define the common options that are used in both training and test."""
         # basic parameters
         is_only_dynamic=True
-        slice_dist=2048
+        slice_dist=256
         parser.add_argument('--is_only_dynamic', default=is_only_dynamic, help='indicated if the dataest constain only dynamic data or both dynamic and static dadta')
         parser.add_argument('--slice_dist', type=int, default=slice_dist, 
                             help='Number of samples taken for ims and dme data in a single dataload')

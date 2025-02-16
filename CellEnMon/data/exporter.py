@@ -240,38 +240,43 @@ class Extractor:
                     if metadata:
                         df = pd.read_csv(f'{config.ims_root_files}/raw/{station_file_name}')
                         
+                        if config.export_type=="israel":
+                            # Set 'Time' as the index
+                            df.set_index('Time', inplace=True)
 
-                        # Set 'Time' as the index
-                        df.set_index('Time', inplace=True)
+                            # Create a new DataFrame with a 10-minute interval
+                            idx = pd.date_range(start=df.index.min(), end=df.index.max(), freq='15T')
+                            df_resampled = df.reindex(idx)
 
-                        # Create a new DataFrame with a 10-minute interval
-                        idx = pd.date_range(start=df.index.min(), end=df.index.max(), freq='15T')
-                        df_resampled = df.reindex(idx)
-
-                        # Interpolate: 'mean of **:10 and **:20 for **:15' logic
-                        for time in df_resampled.index:
-                            try:
-                                minute = time.minute
-                                if minute == 15 or minute == 45:
-                                    prev_time = time - pd.Timedelta(minutes=5)
-                                    next_time = time + pd.Timedelta(minutes=5)
-                                    if prev_time in df_resampled.index and next_time in df_resampled.index:
-                                        df_resampled.loc[time] = (df_resampled.loc[str(prev_time)][0] + df_resampled.loc[str(next_time)][0])/2
-                                else:
-                                    df_resampled.loc[time]=df.loc[str(time)][0]
-                            except KeyError:
-                                continue
-
-
-                        # Forward-fill remaining NaNs and output the result
-                        df_resampled.fillna(0.0, inplace=True)
-
-                        # Reset the index
-                        df_resampled.reset_index(inplace=True)
-                        df_resampled.columns = ['Time', 'RainAmount[mm/h]']
+                            # Interpolate: 'mean of **:10 and **:20 for **:15' logic
+                            for time in df_resampled.index:
+                                try:
+                                    minute = time.minute
+                                    if minute == 15 or minute == 45:
+                                        prev_time = time - pd.Timedelta(minutes=5)
+                                        next_time = time + pd.Timedelta(minutes=5)
+                                        if prev_time in df_resampled.index and next_time in df_resampled.index:
+                                            df_resampled.loc[time] = (df_resampled.loc[str(prev_time)][0] + df_resampled.loc[str(next_time)][0])/2
+                                    else:
+                                        df_resampled.loc[time]=df.loc[str(time)][0]
+                                except KeyError:
+                                    continue
 
 
-                        time=df_resampled.Time.dt.strftime('%Y-%m-%d %H:%M:%S').to_numpy()
+                            # Forward-fill remaining NaNs and output the result
+                            df_resampled.fillna(0.0, inplace=True)
+
+                            # Reset the index
+                            df_resampled.reset_index(inplace=True)
+                            df_resampled.columns = ['Time', 'RainAmount[mm/h]']
+
+                            time=df_resampled.Time.dt.strftime('%Y-%m-%d %H:%M:%S').to_numpy()
+
+                        else:
+                            df_resampled=df
+                            df_resampled["Time"] = pd.to_datetime(df_resampled["Time"], format='%d-%m-%Y %H:%M')
+                            time=df_resampled.Time.dt.strftime('%d-%m-%Y %H:%M').to_numpy()
+
                         ims_vec=df_resampled["RainAmount[mm/h]"].to_numpy()
                             
                         
@@ -295,18 +300,31 @@ class Extractor:
             training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.000001, shuffle=False)]
             
             #Conditional dataset
-            validation_data["LAHAV"]=training_data["LAHAV"]
-            validation_data["NIZZAN"]=training_data["NIZZAN"]
-            validation_data["SHANI"]=training_data["SHANI"]
-            
-            #train pop
-            training_data.pop("LAHAV",None)
-            training_data.pop("NIZZAN",None)
-            training_data.pop("SHANI",None)
+            ## DUTCH
+            if config.export_type == "dutch":
+                validation_data["260"]=training_data["260"]
+                validation_data["348"]=training_data["348"]
 
-            #validation pop
-            validation_data.pop("ZOMVET HANEGEV",None)
-            
+                
+                training_data.pop("260",None)
+                training_data.pop("348",None)
+
+                validation_data.pop("270")
+
+            ## ISRAEL
+            else:
+                validation_data["LAHAV"]=training_data["LAHAV"]
+                validation_data["NIZZAN"]=training_data["NIZZAN"]
+                validation_data["SHANI"]=training_data["SHANI"]
+                
+                #train pop
+                training_data.pop("LAHAV",None)
+                training_data.pop("NIZZAN",None)
+                training_data.pop("SHANI",None)
+
+                #validation pop
+                validation_data.pop("ZOMVET HANEGEV",None)
+                
             dataset = training_data if is_train else validation_data
                             
             
@@ -361,7 +379,7 @@ class Extractor:
                 metadata = self.get_dme_metadata(link_file_name)
                 print(f"metadata:{metadata}")
                 if metadata:
-                    #print(f"preprocessing: now processing link: {metadata['link_name']}")
+                    print(f"preprocessing: now processing link: {metadata['link_name']}")
 
                     df = pd.read_csv(f"{config.dme_root_files}/raw/{link_file_name}")
                     #print(f"df:{df.head()}")
@@ -408,12 +426,22 @@ class Extractor:
             training_data, validation_data = [i.to_dict() for i in train_test_split(s, test_size=0.000001, shuffle=False)]
             
             #Conditional dataset
-            validation_data["b394-ts04"]=training_data["b394-ts04"]
-            #validation_data["b459-a690"]=training_data["b459-a690"]
-            validation_data["j033-261c"]=training_data["j033-261c"]
-            training_data.pop("b394-ts04",None)
-            #training_data.pop("b459-a690",None)
-            training_data.pop("j033-261c",None)
+            if config.export_type == "dutch":
+                validation_data["hOQe-gKVi"]=training_data["hOQe-gKVi"]
+                validation_data["QLPN-NBOl"]=training_data["QLPN-NBOl"]
+                training_data.pop("hOQe-gKVi",None)
+                training_data.pop("QLPN-NBOl",None)
+
+                validation_data.pop("rrFO-WPMD", None)
+
+
+            else:
+                validation_data["b394-ts04"]=training_data["b394-ts04"]
+                #validation_data["b459-a690"]=training_data["b459-a690"]
+                validation_data["j033-261c"]=training_data["j033-261c"]
+                training_data.pop("b394-ts04",None)
+                #training_data.pop("b459-a690",None)
+                training_data.pop("j033-261c",None)
             
             dataset = training_data if is_train else validation_data
             with open(f'{temp_str}/{dataset_type_str}.pkl', 'wb') as f:

@@ -69,38 +69,24 @@ GROUPS = {
 
 
 # Validation Matching
-all_link_to_gauge_matching ={
-    "a479-b477": ["NEOT SMADAR","PARAN"],
-    "a477-b379": ["NEOT SMADAR","PARAN"],
-    "b459-a690": ["NEOT SMADAR","PARAN"],
-    "a459-803b": ["NEOT SMADAR","PARAN"],
-    "b480-a458": ["NEOT SMADAR","PARAN"],
-    "a473-b119": ["NEOT SMADAR","PARAN"],
-    
-    "b465-d481": ["SEDE BOQER","EZUZ"],
-    "c078-d088": ["SEDE BOQER","EZUZ"],
-    "462d-c088": ["SEDE BOQER","EZUZ"],
-    
-    "b394-ts04": ["LAHAV", "NEVATIM", "BEER SHEVA", "SHANI" "ZOMET HANEGEV", "ZOVA"],
-    "f483-ts05": ["LAHAV", "NEVATIM", "BEER SHEVA", "SHANI" "ZOMET HANEGEV", "ZOVA"],
-    "f350-e483": ["LAHAV", "NEVATIM", "BEER SHEVA", "SHANI" "ZOMET HANEGEV", "ZOVA"],
-    "b451-a350": ["LAHAV", "NEVATIM", "BEER SHEVA", "SHANI" "ZOMET HANEGEV", "ZOVA"],
-    "b412-c349": ["LAHAV", "NEVATIM", "BEER SHEVA", "SHANI" "ZOMET HANEGEV", "ZOVA"],
-    "a063-b349": ["LAHAV", "NEVATIM", "BEER SHEVA", "SHANI" "ZOMET HANEGEV", "ZOVA"],
-    "d063-c409": ["LAHAV", "NEVATIM", "BEER SHEVA", "SHANI" "ZOMET HANEGEV", "ZOVA"],
-    
-    "j033-261c": ["NEGBA", "ASHQELON PORT", "NIZZAN"]
-}
+if config.export_type == "dutch":
+    validation_link_to_gauge_matching ={
+        "rrFO-WPMD":[],
+        "QLPN-NBOl": ["260"],
+        "hOQe-gKVi": ["348"]
 
-validation_link_to_gauge_matching ={
-#     "c078-d088": [], 
-#     "a473-b119": [], 
-    "b394-ts04": [], #LAHAV
-    "b459-a690": [], #"NEOT SMADAR",
-    "c409-d063": [],
-    "j033-261c": ["NIZZAN"]
 
-}
+    }    
+else:
+    validation_link_to_gauge_matching ={
+    #     "c078-d088": [], 
+    #     "a473-b119": [], 
+        "b394-ts04": [], #LAHAV
+        "b459-a690": [], #"NEOT SMADAR",
+        "c409-d063": [],
+        "j033-261c": ["NIZZAN"]
+
+    }
 
 
 ### TO RUN:
