@@ -33,8 +33,7 @@ def add_days_to_date(date, delta_days=0):
         'str_rep_mmddyyyy': f"{str(res.month).zfill(2)}{str(res.day).zfill(2)}{res.year}"
     }
 
-#09062011_13082011 dutch
-#01012013_01022013 israel
+
 smoothing_dme=1
 smoothing_ims="xx" # not used yet
 
@@ -51,17 +50,20 @@ def func_fit(x, a):
 
 VALIDATION_RADIUS=100
 
-export_type="israel"
+
+#09062011_13082011 dutch
+#01012013_01022013 israel
+export_type="dutch"
 date = {
     'value': {
-        'dd': '01',
-        'mm': '01',
-        'yyyy': '2015'
+        'dd': '09',
+        'mm': '06',
+        'yyyy': '2011'
     },
     'value_range': {
-        'dd': '01',
-        'mm': '02',
-        'yyyy': '2015'
+        'dd': '13',
+        'mm': '08',
+        'yyyy': '2011'
     }
 }
 
