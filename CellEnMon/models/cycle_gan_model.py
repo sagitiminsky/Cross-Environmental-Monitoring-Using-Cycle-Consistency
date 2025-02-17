@@ -314,7 +314,9 @@ class CycleGANModel(BaseModel):
 
         lambda_A = 10
         lambda_B = 10
-        # Identity loss
+        #######################
+        #### Identity loss ####
+        #######################
         L1_idt=nn.L1Loss(reduction='none')
         self.loss_idt_A = torch.sum(L1_idt(self.fake_A, self.real_A))
         self.loss_idt_B = torch.sum(L1_idt(self.fake_B, self.real_B)) #* self.rain_rate_prob
@@ -324,9 +326,19 @@ class CycleGANModel(BaseModel):
 
         targets=(self.real_B >= threshold).float()
         
+        gamma = 0.1 if config.export_type=='israel' else 0.1
 
         # BCE for detector
-        self.loss_bce_rec_B  = 0.1 * BCE(self.rec_B_det, targets)
+        self.loss_bce_rec_B  = gamma * BCE(self.rec_B_det, targets)
+
+        if self.loss_bce_rec_B > 1000:
+            print(f"rec_B_det: {self.rec_B_det}")
+            print(f"targets: {targets}")
+            print(f"rain_rate_prob: {self.rain_rate_prob}")
+            assert(False)
+            # Make sure to set LAMBDA properly,
+            # a good place to start Israel: 1 | Ducth: 0.1
+
 
 
         L1=nn.L1Loss(reduction='none')
@@ -334,24 +346,33 @@ class CycleGANModel(BaseModel):
 
 
         # Backward cycle loss
-        self.loss_cycle_A = torch.mean(L2(self.rec_A, self.real_A))
-        self.loss_cycle_B = 1000 * torch.mean(L2(self.rec_B, self.real_B)) #
+        alpha_A=1 if config.export_type=='israel' else 1
+        alpha_B=1000 if config.export_type=='israel' else 1000
+
+        self.loss_cycle_A = alpha_A * torch.mean(L2(self.rec_A, self.real_A))
+        self.loss_cycle_B = alpha_B * torch.mean(L2(self.rec_B, self.real_B))
 
         # gamma=2        
         # residual = torch.abs(self.rec_B - self.real_B)  # L1 loss
         # modulating_factor = (1 - torch.exp(-residual)) ** gamma # Modulating factor
         # self.loss_cycle_B = torch.mean(modulating_factor * self.rain_rate_prob * residual)
         
+        beta_A = 1 if config.export_type=="israel" else 1
+        beta_B = 1 if config.export_type=="israel" else 1
         
+
+        #######################
+        ####### GAN loss ######
+        #######################
         # GAN loss D_B(G_A(A))
         self.D_B=self.netD_B(self.fake_B) # self.fake_B_dot_detection
         targets = torch.full_like(self.D_B, 1.0).to(self.D_B.device)
-        self.loss_G_B_only = torch.mean(L2(self.D_B, targets))
+        self.loss_G_B_only = beta_B * torch.mean(L2(self.D_B, targets))
 
         # GAN loss D_A(G_B(B))
         self.D_A=self.netD_A(self.fake_A)
         targets = torch.full_like(self.D_A, 1.0).to(self.D_A.device)
-        self.loss_G_A = torch.mean(L2(self.D_A, targets)) #weight=self.rr_norm.max(), weight=self.att_norm.mean()
+        self.loss_G_A = beta_A * torch.mean(L2(self.D_A, targets)) #weight=self.rr_norm.max(), weight=self.att_norm.mean()
         
 
 

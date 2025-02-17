@@ -72,8 +72,8 @@ GROUPS = {
 if config.export_type == "dutch":
     validation_link_to_gauge_matching ={
         "rrFO-WPMD":[],
-        "QLPN-NBOl": [], #"260"
-        "hOQe-gKVi": ["348"]
+        "QLPN-NBOl": ["260"], #"260"
+        "hOQe-gKVi": [] #"348"
 
 
     }    
@@ -105,7 +105,7 @@ SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
-os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1000"
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="100"
 ITERS_BETWEEN_VALIDATIONS=10
 
 DME_KEYS = {0: 'PowerTLTMmax[dBm]', 1: 'PowerTLTMmin[dBm]', 2: 'PowerRLTMmax[dBm]', 3: 'PowerRLTMmin[dBm]'}
@@ -399,9 +399,9 @@ if __name__ == '__main__':
 
 
                         wandb.log({title: fig})
-                        with np.printoptions(threshold=np.inf):
-                            print(f"Fake | batch #{batch_counter}:{np.round(fake_detection_add, 2)}")
-                            print(f"Rec | batch#{batch_counter}:{np.round(rec_detection_add, 2)}")
+                        # with np.printoptions(threshold=np.inf):
+                        #     print(f"Fake | batch #{batch_counter}:{np.round(fake_detection_add, 2)}")
+                        #     print(f"Rec | batch#{batch_counter}:{np.round(rec_detection_add, 2)}")
                     
 
                     
