@@ -286,7 +286,7 @@ class CycleGANModel(BaseModel):
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B) # self.fake_B_dot_detection
+        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B_dot_detection) # self.fake_B_dot_detection
 
     def backward_G(self):
         """Calculate the losses"""
@@ -365,7 +365,7 @@ class CycleGANModel(BaseModel):
         ####### GAN loss ######
         #######################
         # GAN loss D_B(G_A(A))
-        self.D_B=self.netD_B(self.fake_B) # self.fake_B_dot_detection
+        self.D_B=self.netD_B(self.fake_B_dot_detection) # self.fake_B_dot_detection
         targets = torch.full_like(self.D_B, 1.0).to(self.D_B.device)
         self.loss_G_B_only = beta_B * torch.mean(L2(self.D_B, targets))
 
