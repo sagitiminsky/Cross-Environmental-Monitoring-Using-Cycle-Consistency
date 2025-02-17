@@ -32,12 +32,14 @@ class Domain:
         # Data Normalization
         for station_name, value in db.items():
             data_max, data_min, data_normalized = self.normalizer(np.array(list(value['data'].values())))
+            time=np.array(list(value['data'].keys()))
             self.db_normalized[station_name] = {
-                "data": dict(zip(np.array(list(value['data'].keys())), data_normalized)),
-                "time": np.array(list(value['data'].keys())),
+                "data": dict(zip(time, data_normalized)),
+                "time": time,
                 "data_min": data_min,
                 "data_max": data_max,
             }
+            
             # Find min-max for metadata normalization
             self.metadata_min_max_finder(value['metadata'])
             self.data_min=min(self.data_min, data_min)
@@ -270,13 +272,11 @@ class Extractor:
                             df_resampled.reset_index(inplace=True)
                             df_resampled.columns = ['Time', 'RainAmount[mm/h]']
 
-                            time=df_resampled.Time.dt.strftime('%Y-%m-%d %H:%M:%S').to_numpy()
-
                         else:
                             df_resampled=df
                             df_resampled["Time"] = pd.to_datetime(df_resampled["Time"], format='%d-%m-%Y %H:%M')
-                            time=df_resampled.Time.dt.strftime('%d-%m-%Y %H:%M').to_numpy()
-
+                            
+                        time=df_resampled.Time.dt.strftime('%Y-%m-%d %H:%M').to_numpy()
                         ims_vec=df_resampled["RainAmount[mm/h]"].to_numpy()
                             
                         
@@ -394,10 +394,13 @@ class Extractor:
 
                         PowerRLTMmin = np.array(df[~df["PowerRLTMmin"].isnull()]["PowerRLTMmin"].astype(float))
 
-                        
+                        if config.export_type=="israel":
+                            df["Time"] = pd.to_datetime(df["Time"], format='%Y-%m-%d %H:%M')
+                        else:
+                            df["Time"] = pd.to_datetime(df["Time"], format='%d-%m-%Y %H:%M')
                         
 
-                        Time = df.Time.to_numpy()
+                        Time = df.Time.dt.strftime('%Y-%m-%d %H:%M').to_numpy()
                         data = np.vstack((PowerTLTMmax, PowerTLTMmin, PowerRLTMmax, PowerRLTMmin)).T #
                           
                         
@@ -405,13 +408,14 @@ class Extractor:
                         
                         if len(PowerRLTMmax)==len(PowerRLTMmin) and len(PowerRLTMmin)==len(Time):
                             #len(PowerTLTMmax)==len(PowerTLTMmin) and len(PowerTLTMmin)==len(PowerRLTMmax) and len(PowerRLTMmax)==len(PowerRLTMmin) and
-                          
+
                             dme_matrix[metadata["link_name"]] = {
                                 'metadata_len': len(metadata["vector"]),
                                 'data_len': len(PowerRLTMmin),
                                 "data": dict(zip(Time, data)),
                                 "metadata": metadata["vector"]
                             }
+                            
 
                             data = {'Time': Time, 'PowerTLTMmax[dBm]': PowerTLTMmax, 'PowerTLTMmin[dBm]': PowerTLTMmin, 'PowerRLTMmax[dBm]': PowerRLTMmax, 'PowerRLTMmin[dBm]': PowerRLTMmin}
                             pd.DataFrame.from_dict(data).to_csv(f"{temp_str}/{link_file_name}", index=False)

@@ -72,7 +72,7 @@ GROUPS = {
 if config.export_type == "dutch":
     validation_link_to_gauge_matching ={
         "rrFO-WPMD":[],
-        "QLPN-NBOl": ["260"],
+        "QLPN-NBOl": [], #"260"
         "hOQe-gKVi": ["348"]
 
 
@@ -105,11 +105,8 @@ SELECT_JOB = int(os.environ["SELECT_JOB"])
 LAMBDA=float(os.environ["LAMBDA"])
 
 # see: __getitem__ in cellenmon_dataset - We randomize the pair and the time
-os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="1000"
+os.environ["NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH"]="10"
 ITERS_BETWEEN_VALIDATIONS=10
-
-#Formatting Date
-date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
 
 DME_KEYS = {0: 'PowerTLTMmax[dBm]', 1: 'PowerTLTMmin[dBm]', 2: 'PowerRLTMmax[dBm]', 3: 'PowerRLTMmin[dBm]'}
 IMS_KEYS = {0: 'RainAmout[mm/h]'}
@@ -142,7 +139,9 @@ NUMBER_OF_CML_GAUGE_RANDOM_SELECTIONS_IN_EACH_EPOCH = int(os.environ["NUMBER_OF_
 if __name__ == '__main__':
     real_fake_gauge_metric={}
     dates_range = f"{config.start_date_str_rep_ddmmyyyy}_{config.end_date_str_rep_ddmmyyyy}"
-    datetime_format='%Y-%m-%d %H:%M:%S' if config.export_type=="israel" else '%d-%m-%Y %H:%M' # no seconds required
+    datetime_format='%Y-%m-%d %H:%M'
+    date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M')
+
     train_opt = TrainOptions().parse()  # get training options
     validation_opt = TestOptions().parse()
     experiment_name = "only_dynamic" if train_opt.is_only_dynamic else "dynamic_and_static"
@@ -254,8 +253,8 @@ if __name__ == '__main__':
                     
                         except RuntimeError:
                             break
-
                         
+
                         attenuation_sample=torch.unsqueeze(A.T,0)
                         attenuation_sample_unnormalized = attenuation_sample
                         rain_sample=torch.unsqueeze(B.T,0)
@@ -263,7 +262,7 @@ if __name__ == '__main__':
                         loader={"link":link, "attenuation_sample":attenuation_sample,\
                          "gague":gauge,\
                          "rain_rate_sample":rain_sample,\
-                         "Time":slice_time,\
+                         "Time": slice_time,\
                          "rain_rate_prob": config.func_fit(rain_sample_unnormalized, LAMBDA),
                          "distance": torch.tensor([3], device='cuda:0', dtype=torch.float64), # in KM
                          "slice_dist": train_opt.slice_dist
@@ -310,8 +309,7 @@ if __name__ == '__main__':
                             rec_gauge_vec=np.append(rec_gauge_vec,rec_rain_add)
                             fake_gauge_vec_det=np.append(fake_gauge_vec_det,fake_detection_add)
                             rec_gauge_vec_det=np.append(rec_gauge_vec_det, rec_detection_add)
-                            T=np.append(T,model.t)
-
+                            T=np.append(T,slice_time)
 
                             # rec_A=visuals['rec_A'][0].cpu().detach().numpy()
                             # rec_A_unnorm=min_max_inv_transform(rec_A, mmin=-50.8, mmax=17)
@@ -354,10 +352,10 @@ if __name__ == '__main__':
                                         label = IMS_KEYS[0]
                                         data_vector = torch.tensor(data[0])
 
-                                    model_t=model.t
+
                                     
                                     if key!="fake_B" and key!="rec_B":
-                                        ax.plot([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
+                                        ax.plot(mpl_dates.date2num(slice_time),
                                                 data_vector,
                                                 marker='o',
                                                 linestyle='dashed',
@@ -379,7 +377,7 @@ if __name__ == '__main__':
                                         mask=(mask >= probability_threshold).astype(int)
                                         cmap=["red" if m else "black" for m in mask]
                                         
-                                        ax.scatter([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in model_t],
+                                        ax.scatter(mpl_dates.date2num(slice_time),
                                                 data_vector,
                                                 marker='o',
                                                 linestyle='dashed',
@@ -459,7 +457,8 @@ if __name__ == '__main__':
 
 
 
-                    preprocessed_time_wanb=np.array([mpl_dates.date2num(datetime.strptime(t, datetime_format)) for t in T])
+                    preprocessed_time_wanb=np.array(mpl_dates.date2num(T))
+
                     
                     fig_preprocessed, axs_preprocessed = plt.subplots(1, 1, figsize=(15, 15))
                     

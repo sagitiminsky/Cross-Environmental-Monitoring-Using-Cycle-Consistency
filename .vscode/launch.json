@@ -20,7 +20,7 @@
                 "DEBUG": "0",
                 "threshold": "0.3",
                 "rec_probability_threshold": "0.5",
-                "fake_probability_threshold": "0.25"
+                "fake_probability_threshold": "0.5"
             },
             "args": []
         }

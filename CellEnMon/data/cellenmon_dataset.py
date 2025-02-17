@@ -215,7 +215,7 @@ class CellenmonDataset(BaseDataset):
         return {
             'A': A,
             'B': B,
-            'Time': list(data_dict_A['data'].keys())[slice_start_A:slice_end_A],
+            'Time': list(data_dict_A["time"])[slice_start_A:slice_end_A],
             'link': selected_link,
             'link_norm_metadata': data_dict_A["norm_metadata"],
             'link_metadata':link_metadata,
