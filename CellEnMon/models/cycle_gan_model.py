@@ -281,12 +281,12 @@ class CycleGANModel(BaseModel):
     def backward_D_A(self):
         """Calculate GAN loss for discriminator D_A"""
         #fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_A, self.fake_A)
+        self.loss_D_A = 10 * self.backward_D_basic(self.netD_A, self.real_A, self.fake_A)
 
     def backward_D_B(self):
         """Calculate GAN loss for discriminator D_B"""
         #fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_B, self.fake_B_dot_detection) # self.fake_B_dot_detection
+        self.loss_D_B = 10 * self.backward_D_basic(self.netD_B, self.real_B, self.fake_B_dot_detection) # self.fake_B_dot_detection
 
     def backward_G(self):
         """Calculate the losses"""
@@ -326,7 +326,7 @@ class CycleGANModel(BaseModel):
 
         targets=(self.real_B >= threshold).float()
         
-        gamma = 0.1 if config.export_type=='israel' else 0.1
+        gamma = 0.1 if config.export_type=='israel' else 0.01
 
         # BCE for detector
         self.loss_bce_rec_B  = gamma * BCE(self.rec_B_det, targets)
@@ -346,8 +346,8 @@ class CycleGANModel(BaseModel):
 
 
         # Backward cycle loss
-        alpha_A=1 if config.export_type=='israel' else 1
-        alpha_B=1000 if config.export_type=='israel' else 1000
+        alpha_A=1 if config.export_type=='israel' else 100
+        alpha_B=1000 if config.export_type=='israel' else 1
 
         self.loss_cycle_A = alpha_A * torch.mean(L2(self.rec_A, self.real_A))
         self.loss_cycle_B = alpha_B * torch.mean(L2(self.rec_B, self.real_B))
@@ -357,8 +357,8 @@ class CycleGANModel(BaseModel):
         # modulating_factor = (1 - torch.exp(-residual)) ** gamma # Modulating factor
         # self.loss_cycle_B = torch.mean(modulating_factor * self.rain_rate_prob * residual)
         
-        beta_A = 1 if config.export_type=="israel" else 1
-        beta_B = 1 if config.export_type=="israel" else 1
+        beta_A = 1 if config.export_type=="israel" else 10
+        beta_B = 1 if config.export_type=="israel" else 10
         
 
         #######################
