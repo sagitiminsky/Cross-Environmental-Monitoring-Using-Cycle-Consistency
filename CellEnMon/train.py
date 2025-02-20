@@ -72,8 +72,8 @@ GROUPS = {
 if config.export_type == "dutch":
     validation_link_to_gauge_matching ={
         "rrFO-WPMD":[],
-        "QLPN-NBOl": ["260"], #"260"
-        "hOQe-gKVi": [] #"348"
+        "QLPN-NBOl": [], #"260"
+        "hOQe-gKVi": ["348"] #"348"
 
 
     }    
