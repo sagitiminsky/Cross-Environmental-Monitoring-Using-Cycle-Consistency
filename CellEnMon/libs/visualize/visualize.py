@@ -229,7 +229,7 @@ class Visualizer:
                     ## create json of each cml timeseries for plotting
 
                     df_ts = pd.read_csv(data_path.joinpath(str(instance)))
-                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%Y-%m-%d %H:%M')
+                    df_ts['Time'] = pd.to_datetime(df_ts['Time'], format='%d-%m-%Y %H:%M')
                     df_ts.set_index('Time', inplace=True, drop=True)
                     timeseries = vincent.Scatter(
                         df_ts,
@@ -257,8 +257,8 @@ class Visualizer:
                                              ).add_to(map_1)
                     else:
                         to_mark=['260', '348'] if config.export_type == "dutch" else ['LAHAV', 'NIZZAN']
-                        if instace_dict["ID"] in to_mark: 
-                            color='black'
+                        # if instace_dict["ID"] in to_mark: 
+                        #     color='black'
                         pl = folium.Marker(
                             location=[instace_dict['Rx Site Longitude'], instace_dict['Rx Site Latitude']],
                             popup=folium.Popup(f"ID:{instace_dict['ID']}"),
